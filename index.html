@@ -26,7 +26,7 @@
     }
     .text-3xl { font-weight: 700; } /* Make titles bolder */
     
-    /* ⚙️ FIX 1: Smooth Sidebar Transitions */
+    /* ⚙️ FIX 1: Smooth Sidebar Transitions (CSS remains correct) */
     .sidebar-wrapper {
       position: fixed;
       left: 0;
@@ -61,11 +61,11 @@
       pointer-events: auto; /* Blocks clicks when open */
     }
 
-    /* 🌟 ANIMATION 2: Cart Pulse when adding item */
+    /* 🌟 ANIMATION 2: Cart Pulse Jiggle (ENHANCED) */
     @keyframes pulse-cart {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.15); }
-      100% { transform: scale(1); }
+      0% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.15) rotate(5deg); } /* Added rotation for a "jiggle" */
+      100% { transform: scale(1) rotate(0deg); }
     }
     .cart-pulse {
         animation: pulse-cart 0.3s ease-in-out;
@@ -79,6 +79,23 @@
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
+    
+    /* 🌟 ANIMATION 4: Sidebar Staggered Menu Item Entry (NEWLY ADDED) */
+    @keyframes slideInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .staggered-item {
+      opacity: 0; /* Hide items initially */
+    }
+    .sidebar-open .staggered-item {
+      /* Apply slide up animation when the sidebar is open */
+      animation: slideInUp 0.3s ease-out forwards;
+    }
+    /* Apply staggered delays */
+    .sidebar-open .staggered-item:nth-child(1) { animation-delay: 0.1s; } /* Auth/User Block */
+    .sidebar-open .staggered-item:nth-child(2) { animation-delay: 0.15s; } /* Categories Block */
+    .sidebar-open .staggered-item:nth-child(3) { animation-delay: 0.2s; } /* About Us Link */
 
 
     /* General purpose fade-in */
@@ -274,7 +291,7 @@
         render();
       }
 
-      // Add Pulse Animation
+      // Add Pulse Jiggle Animation
       const cartIcon = document.getElementById('cart-icon-container');
       if (cartIcon) {
           cartIcon.classList.add('cart-pulse');
@@ -362,16 +379,19 @@
               </button>
             </div>
             <nav class="p-4 space-y-4 overflow-y-auto flex-grow">
-              ${state.user ? `
-                <div style="background-color: #f0f4f8;" class="p-3 rounded-lg mb-4 border border-gray-200">
-                  <p class="text-sm font-semibold text-gray-800 truncate">${state.user.email}</p>
-                  <button onclick="handleLogout()" class="text-xs text-red-600 mt-1 hover:underline">Sign Out</button>
-                </div>
-              ` : `
-                <button onclick="navigate('auth')" class="w-full text-white py-2 rounded-lg font-semibold mb-4 hover:bg-indigo-700 transition-colors" style="background-color: var(--color-primary); hover-background-color: var(--color-secondary);">Sign In / Register</button>
-              `}
               
-              <div class="mb-4">
+              <div class="staggered-item"> 
+                ${state.user ? `
+                  <div style="background-color: #f0f4f8;" class="p-3 rounded-lg mb-4 border border-gray-200">
+                    <p class="text-sm font-semibold text-gray-800 truncate">${state.user.email}</p>
+                    <button onclick="handleLogout()" class="text-xs text-red-600 mt-1 hover:underline">Sign Out</button>
+                  </div>
+                ` : `
+                  <button onclick="navigate('auth')" class="w-full text-white py-2 rounded-lg font-semibold mb-4 hover:bg-indigo-700 transition-colors" style="background-color: var(--color-primary); hover-background-color: var(--color-secondary);">Sign In / Register</button>
+                `}
+              </div>
+              
+              <div class="mb-4 staggered-item">
                 <div class="font-semibold mb-2 flex items-center gap-2 text-gray-500 uppercase text-xs tracking-wider border-b pb-1">
                   Categories
                 </div>
@@ -383,12 +403,12 @@
                   `).join('')}
                 </div>
               </div>
-              <a href="#" onclick="navigate('about'); return false;" class="block py-2 font-semibold hover:text-indigo-600 transition-colors" style="color: var(--color-primary);">
+
+              <a href="#" onclick="navigate('about'); return false;" class="block py-2 font-semibold hover:text-indigo-600 transition-colors staggered-item" style="color: var(--color-primary);">
                 About Us
               </a>
             </nav>
           </div>
-        </div>
       `;
     }
 
@@ -640,7 +660,6 @@
     }
 
     // --- Render Loop ---
-    // --- Render Loop ---
     function render() {
       let content = '';
       switch(state.currentPage) {
@@ -656,7 +675,7 @@
       const appContainer = document.getElementById('app');
       
       // 2. Set the class dynamically based on the menu state
-      // This is the FIX: it applies the 'sidebar-open' class which triggers the CSS transition.
+      // This applies the 'sidebar-open' class which triggers the CSS transition.
       const appClass = state.menuOpen 
         ? 'min-h-screen flex flex-col font-sans sidebar-open' 
         : 'min-h-screen flex flex-col font-sans';
