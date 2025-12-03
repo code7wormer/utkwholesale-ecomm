@@ -351,15 +351,11 @@
     }
 
     function Sidebar() {
-      // FIX: Added inline style to conditionally apply the transform based on state.menuOpen,
-      // and made the backdrop also dependent on the state for correct display.
-      const transformStyle = state.menuOpen ? 'translateX(0)' : 'translateX(-100%)';
-      const backdropDisplay = state.menuOpen ? 'block' : 'hidden';
-
       return `
         <div class="lg:hidden">
-          <div class="backdrop" style="display: ${backdropDisplay};" onclick="toggleMenu()"></div>
-          <div class="sidebar-wrapper" style="transform: ${transformStyle};">
+          <div class="backdrop" onclick="toggleMenu()"></div> 
+          
+          <div class="sidebar-wrapper">
             <div class="p-4 border-b flex justify-between items-center flex-shrink-0">
               <h2 class="text-xl font-bold">Menu</h2>
               <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
