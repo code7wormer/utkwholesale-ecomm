@@ -26,7 +26,7 @@
     }
     .text-3xl { font-weight: 700; } /* Make titles bolder */
     
-    /* ⚙️ FIX 1: Smooth Sidebar Transitions (CSS remains correct) */
+    /* ⚙️ FIX 1: Smooth Sidebar Transitions (Main slide) */
     .sidebar-wrapper {
       position: fixed;
       left: 0;
@@ -88,8 +88,8 @@
     .staggered-item {
       opacity: 0; /* Hide items initially */
     }
+    /* Apply animation when the sidebar-open class is on the #app container */
     .sidebar-open .staggered-item {
-      /* Apply slide up animation when the sidebar is open */
       animation: slideInUp 0.3s ease-out forwards;
     }
     /* Apply staggered delays */
@@ -97,6 +97,14 @@
     .sidebar-open .staggered-item:nth-child(2) { animation-delay: 0.15s; } /* Categories Block */
     .sidebar-open .staggered-item:nth-child(3) { animation-delay: 0.2s; } /* About Us Link */
 
+    /* 🌟 ANIMATION 5: Page Entry Animation (for Cart Page/general content) (NEWLY ADDED) */
+    @keyframes slideInFromTop {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .page-enter {
+        animation: slideInFromTop 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
 
     /* General purpose fade-in */
     @keyframes fadeIn {
@@ -529,7 +537,7 @@
       const products = state.products.filter(p => p.category_id === category.id);
       
       return `
-        <div class="flex-1">
+        <div class="flex-1 page-enter">
           <div class="text-white py-12" style="background-color: var(--color-secondary);">
             <div class="max-w-7xl mx-auto px-4">
               <h1 class="text-4xl font-extrabold">${category.name}</h1>
@@ -553,7 +561,7 @@
       if (!product) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Product not found</div></div>';
       
       return `
-        <div class="flex-1 max-w-7xl mx-auto px-4 py-12">
+        <div class="flex-1 max-w-7xl mx-auto px-4 py-12 page-enter">
           <div class="grid md:grid-cols-2 gap-10">
             <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
               <img src="${product.image_url}" alt="${product.name}" class="w-full rounded-lg object-contain max-h-[40rem] shadow-lg">
@@ -583,7 +591,7 @@
 
     function AboutPage() {
         return `
-        <div class="flex-1">
+        <div class="flex-1 page-enter">
           <div class="py-12" style="background-color: #f0f4f8;">
             <div class="max-w-7xl mx-auto px-4">
               <h1 class="text-4xl font-extrabold" style="color: var(--color-primary);">About Us</h1>
@@ -609,7 +617,7 @@
       const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
       return `
-        <div class="flex-1 max-w-4xl mx-auto px-4 py-12">
+        <div class="flex-1 max-w-4xl mx-auto px-4 py-12 page-enter">
           <h1 class="text-3xl font-extrabold mb-8 border-b pb-3" style="color: var(--color-primary);">Shopping Cart</h1>
           ${state.cart.length === 0 ? `
             <div class="text-center py-16 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
@@ -675,7 +683,7 @@
       const appContainer = document.getElementById('app');
       
       // 2. Set the class dynamically based on the menu state
-      // This applies the 'sidebar-open' class which triggers the CSS transition.
+      // This is the FIX: it applies the 'sidebar-open' class which triggers the CSS transition.
       const appClass = state.menuOpen 
         ? 'min-h-screen flex flex-col font-sans sidebar-open' 
         : 'min-h-screen flex flex-col font-sans';
