@@ -389,5 +389,18 @@
 
     init();
   </script>
+  <button onclick="testSignup()">Test Signup</button>
+  <script>
+async function testSignup() {
+  const { data, error } = await supabase.auth.signUp({
+    email: "testuser@example.com",
+    password: "password123"
+  });
+
+  console.log("Signup data:", data);
+  console.log("Signup error:", error);
+}
+</script>
+
 </body>
 </html>
