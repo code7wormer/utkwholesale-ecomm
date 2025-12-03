@@ -645,6 +645,7 @@
     }
 
     // --- Render Loop ---
+    // --- Render Loop ---
     function render() {
       let content = '';
       switch(state.currentPage) {
@@ -656,7 +657,19 @@
         case 'auth': content = AuthPage(); break;
       }
 
-      document.getElementById('app').innerHTML = `
+      // 1. Get the app container element
+      const appContainer = document.getElementById('app');
+      
+      // 2. Set the class dynamically based on the menu state
+      // This is the FIX: it applies the 'sidebar-open' class which triggers the CSS transition.
+      const appClass = state.menuOpen 
+        ? 'min-h-screen flex flex-col font-sans sidebar-open' 
+        : 'min-h-screen flex flex-col font-sans';
+      
+      appContainer.className = appClass;
+
+      // 3. Update the inner HTML
+      appContainer.innerHTML = `
         ${Header()}
         ${Sidebar()}
         <main class="flex-grow">
@@ -665,7 +678,6 @@
         ${Footer()}
       `;
     }
-
     // --- Global Helpers ---
     window.toggleMenu = () => { state.menuOpen = !state.menuOpen; render(); };
     window.navigate = navigate;
