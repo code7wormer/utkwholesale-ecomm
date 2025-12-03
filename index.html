@@ -1,650 +1,700 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShopHub - Your Online Store</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    .fade-in {
-      animation: fadeIn 0.2s ease-in;
-    }
-    /* Spinner for loading states */
-    .loader {
-      border: 3px solid #f3f3f3;
-      border-radius: 50%;
-      border-top: 3px solid #4f46e5;
-      width: 20px;
-      height: 20px;
-      -webkit-animation: spin 1s linear infinite; /* Safari */
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopHub - Your Online Store</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    /* --- GLOBAL ANIMATIONS & CORE STYLES --- */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Standard element fade-in for smooth loading */
+    .fade-in {
+      animation: fadeIn 0.4s ease-out; /* Slower, smoother fade */
+    }
+
+    /* Animation for Cart item count update */
+    @keyframes cartPulse {
+      0% { transform: scale(1); background-color: #f87171; } /* Red */
+      50% { transform: scale(1.1); background-color: #ef4444; } /* Brighter Red */
+      100% { transform: scale(1); background-color: #f87171; } /* Red */
+    }
+
+    /* Class to be toggled by JS when an item is added */
+    .cart-count-pulse {
+      animation: cartPulse 0.3s ease-in-out;
+    }
+
+    /* New animation for button click feedback */
+    @keyframes buttonClick {
+      0% { transform: scale(1); }
+      50% { transform: scale(0.98); }
+      100% { transform: scale(1); }
+    }
+
+    /* Apply click animation to all interactive buttons */
+    button:not(.loader-button), a.btn, a:not(.no-animation):hover, button:not(.no-animation):hover {
+      transition: all 0.2s ease-in-out;
+    }
+    
+    button:active, a.btn:active {
+      animation: buttonClick 0.1s ease-out;
+    }
+    
+    /* Spinner for loading states - Kept original styles for function */
+    .loader {
+      border: 3px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 3px solid #4f46e5;
+      width: 20px;
+      height: 20px;
+      -webkit-animation: spin 1s linear infinite;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
-  <div id="app"></div>
+  <div id="app"></div>
 
-  <script type="module">
-    // --- Configuration (Update with your actual keys if they changed) ---
-    const SUPABASE_URL = 'https://thzmryhnyzhfewsyamjh.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoem1yeWhueXpoZmV3c3lhbWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NTgwMTAsImV4cCI6MjA4MDMzNDAxMH0.qvCid4pmsdcRogce4RZH5adl90Eq5d3ibwVoJI5qr-I';
+  <script type="module">
+    // --- Configuration (Update with your actual keys if they changed) ---
+    const SUPABASE_URL = 'https://thzmryhnyzhfewsyamjh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoem1yeWhueXpoZmV3c3lhbWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NTgwMTAsImV4cCI6MjA4MDMzNDAxMH0.qvCid4pmsdcRogce4RZH5adl90Eq5d3ibwVoJI5qr-I';
 
-    // Initialize real Supabase Client
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Initialize real Supabase Client
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- Icons ---
-    const Icon = {
-      Menu: () => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>',
-      X: () => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
-      Cart: () => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>',
-      ChevronDown: () => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>',
-      User: () => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>',
-      Google: () => '<svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>'
-    };
+    // --- Icons ---
+    const Icon = {
+      Menu: () => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>',
+      X: () => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
+      Cart: () => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>',
+      ChevronDown: () => '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>',
+      User: () => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>',
+      Google: () => '<svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>'
+    };
 
-    // --- State ---
-    let state = {
-      user: null, // Logged in user
-      currentPage: 'home',
-      currentSlug: null,
-      categories: [],
-      products: [],
-      cart: [], // Contains mixed local or DB items
-      menuOpen: false,
-      authMode: 'signin', // 'signin' or 'signup'
-      loading: false
-    };
+    // --- State ---
+    let state = {
+      user: null, // Logged in user
+      currentPage: 'home',
+      currentSlug: null,
+      categories: [],
+      products: [],
+      cart: [], // Contains mixed local or DB items
+      menuOpen: false,
+      authMode: 'signin', // 'signin' or 'signup'
+      loading: false
+    };
 
-    // --- Router ---
-    function navigate(page, slug = null) {
-      state.currentPage = page;
-      state.currentSlug = slug;
-      state.menuOpen = false;
-      window.scrollTo(0, 0);
-      render();
-    }
+    // --- Router ---
+    function navigate(page, slug = null) {
+      state.currentPage = page;
+      state.currentSlug = slug;
+      state.menuOpen = false;
+      window.scrollTo(0, 0);
+      render();
+    }
 
-    // --- Auth Functions ---
-    async function handleAuth(e) {
-      e.preventDefault();
-      const email = e.target.email.value;
-      const password = e.target.password.value;
-      state.loading = true;
-      render();
+    // --- Auth Functions ---
+    async function handleAuth(e) {
+      e.preventDefault();
+      const email = e.target.email.value;
+      const password = e.target.password.value;
+      state.loading = true;
+      render();
 
-      let error = null;
+      let error = null;
 
-      if (state.authMode === 'signup') {
-        const { data, error: suError } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (!suError) alert('Registration successful! Please sign in.');
-        error = suError;
-      } else {
-        const { data, error: siError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        error = siError;
-      }
+      if (state.authMode === 'signup') {
+        const { data, error: suError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (!suError) alert('Registration successful! Please sign in.');
+        error = suError;
+      } else {
+        const { data, error: siError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        error = siError;
+      }
 
-      state.loading = false;
-      if (error) {
-        alert(error.message);
-        render();
-      } else if (state.authMode === 'signin') {
-        navigate('home'); // Redirect after login
-      }
-    }
+      state.loading = false;
+      if (error) {
+        alert(error.message);
+        render();
+      } else if (state.authMode === 'signin') {
+        navigate('home'); // Redirect after login
+      }
+    }
 
-    async function handleGoogleLogin() {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.href // Redirect back to this page
-        }
-      });
-      if (error) alert(error.message);
-    }
+    async function handleGoogleLogin() {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.href // Redirect back to this page
+        }
+      });
+      if (error) alert(error.message);
+    }
 
-    async function handleLogout() {
-      await supabase.auth.signOut();
-      state.cart = []; // Clear DB cart from state
-      navigate('home');
-    }
+    async function handleLogout() {
+      await supabase.auth.signOut();
+      state.cart = []; // Clear DB cart from state
+      navigate('home');
+    }
 
-    // --- Cart Functions (Hybrid: Local + DB) ---
-    
-    // Fetch cart from DB for logged in users
-    async function fetchCart() {
-      if (!state.user) return;
-      const { data, error } = await supabase
-        .from('cart_items')
-        .select(`
-          *,
-          products:product_id (*)
-        `);
+    // --- Cart Functions (Hybrid: Local + DB) ---
+    
+    // Fetch cart from DB for logged in users
+    async function fetchCart() {
+      if (!state.user) return;
+      const { data, error } = await supabase
+        .from('cart_items')
+        .select(`
+          *,
+          products:product_id (*)
+        `);
+      
+      if (data) {
+        // Transform DB structure to UI structure
+        state.cart = data.map(item => ({
+          ...item.products, // spread product details
+          id: item.product_id, // ensure ID is product ID for consistency
+          quantity: item.quantity
+        }));
+      }
+      render();
+    }
+
+    // Merge local guest cart into DB upon login
+    async function mergeCart() {
+      const localCart = state.cart;
+      if (localCart.length === 0) return;
+
+      // Upsert each item
+      for (const item of localCart) {
+        // This is a simplified merge: local cart quantity overrides or adds to DB cart.
+        // A more complex merge would sum quantities, but for simplicity, we use upsert.
+        await supabase.from('cart_items').upsert({
+          user_id: state.user.id,
+          product_id: item.id,
+          quantity: item.quantity
+        }, { onConflict: 'user_id, product_id' });
+      }
+      
+      // Clear local cart (which is now in the DB)
+      state.cart = [];
+      
+      // Re-fetch final source of truth
+      await fetchCart();
+    }
+
+    async function addToCart(product) {
+      // 1. Check if item exists in UI state first for immediate feedback
+      const existing = state.cart.find(item => item.id === product.id);
+      let newQuantity = existing ? existing.quantity + 1 : 1;
       
-      if (data) {
-        // Transform DB structure to UI structure
-        state.cart = data.map(item => ({
-          ...item.products, // spread product details
-          id: item.product_id, // ensure ID is product ID for consistency
-          quantity: item.quantity
-        }));
+      // --- VISUAL FIX: Apply pulse animation before update ---
+      const cartCountSpan = document.getElementById('cart-count-badge');
+      if (cartCountSpan) {
+          cartCountSpan.classList.add('cart-count-pulse');
+          setTimeout(() => {
+              cartCountSpan.classList.remove('cart-count-pulse');
+          }, 400); // Animation duration is 300ms, use 400ms for safety
       }
-      render();
-    }
+      // --- END VISUAL FIX ---
 
-    // Merge local guest cart into DB upon login
-    async function mergeCart() {
-      const localCart = state.cart;
-      if (localCart.length === 0) return;
+      if (state.user) {
+        // DB Operation
+        const { error } = await supabase
+          .from('cart_items')
+          .upsert({ 
+            user_id: state.user.id, 
+            product_id: product.id, 
+            quantity: newQuantity 
+          }, { onConflict: 'user_id, product_id' });
 
-      // Upsert each item
-      for (const item of localCart) {
-        // This is a simplified merge: local cart quantity overrides or adds to DB cart.
-        // A more complex merge would sum quantities, but for simplicity, we use upsert.
-        await supabase.from('cart_items').upsert({
-          user_id: state.user.id,
-          product_id: item.id,
-          quantity: item.quantity
-        }, { onConflict: 'user_id, product_id' });
-      }
-      
-      // Clear local cart (which is now in the DB)
-      state.cart = [];
-      
-      // Re-fetch final source of truth
-      await fetchCart();
-    }
+        if (error) {
+          console.error("Cart error", error);
+          alert("Failed to update cart");
+          return;
+        }
+        await fetchCart(); // Sync
+      } else {
+        // Local Operation
+        if (existing) {
+          existing.quantity++;
+        } else {
+          state.cart.push({ ...product, quantity: 1 });
+        }
+        render();
+      }
+    }
 
-    async function addToCart(product) {
-      // 1. Check if item exists in UI state first for immediate feedback
-      const existing = state.cart.find(item => item.id === product.id);
-      let newQuantity = existing ? existing.quantity + 1 : 1;
+    async function removeFromCart(id) {
+      if (state.user) {
+        await supabase.from('cart_items').delete().match({ user_id: state.user.id, product_id: id });
+        await fetchCart();
+      } else {
+        state.cart = state.cart.filter(item => item.id !== id);
+        render();
+      }
+    }
 
-      if (state.user) {
-        // DB Operation
-        const { error } = await supabase
-          .from('cart_items')
-          .upsert({ 
-            user_id: state.user.id, 
-            product_id: product.id, 
-            quantity: newQuantity 
-          }, { onConflict: 'user_id, product_id' });
+    async function updateQuantity(id, quantity) {
+      if (quantity < 1) {
+        removeFromCart(id);
+        return;
+      }
 
-        if (error) {
-          console.error("Cart error", error);
-          alert("Failed to update cart");
-          return;
-        }
-        await fetchCart(); // Sync
-      } else {
-        // Local Operation
-        if (existing) {
-          existing.quantity++;
-        } else {
-          state.cart.push({ ...product, quantity: 1 });
-        }
-        render();
-      }
-    }
+      if (state.user) {
+        await supabase
+          .from('cart_items')
+          .update({ quantity })
+          .match({ user_id: state.user.id, product_id: id });
+        await fetchCart();
+      } else {
+        const item = state.cart.find(item => item.id === id);
+        if (item) item.quantity = quantity;
+        render();
+      }
+    }
 
-    async function removeFromCart(id) {
-      if (state.user) {
-        await supabase.from('cart_items').delete().match({ user_id: state.user.id, product_id: id });
-        await fetchCart();
-      } else {
-        state.cart = state.cart.filter(item => item.id !== id);
-        render();
-      }
-    }
+    // --- Components ---
 
-    async function updateQuantity(id, quantity) {
-      if (quantity < 1) {
-        removeFromCart(id);
-        return;
-      }
+    function Header() {
+      return `
+        <header class="bg-white shadow-lg sticky top-0 z-40 border-b border-gray-100">
+          <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                ${Icon.Menu()}
+              </button>
+              <a href="#" onclick="navigate('home'); return false;" class="text-3xl font-extrabold text-indigo-700 tracking-tight">ShopHub</a>
+            </div>
+            <div class="flex items-center gap-2">
+              ${state.user ? `
+                <div class="hidden md:flex items-center gap-4 mr-4 bg-indigo-50 p-2 rounded-full px-4 border border-indigo-100">
+                  <span class="text-sm font-medium text-indigo-700 truncate">Hi, ${state.user.email.split('@')[0]}</span>
+                  <button onclick="handleLogout()" class="text-sm font-medium text-red-600 hover:text-red-700 hover:underline">Logout</button>
+                </div>
+              ` : `
+                <button onclick="navigate('auth'); return false;" class="flex items-center gap-2 p-2 hover:bg-indigo-50 text-indigo-600 rounded-lg mr-2 transition-colors">
+                  ${Icon.User()}
+                  <span class="hidden md:inline text-sm font-semibold">Sign In</span>
+                </button>
+              `}
 
-      if (state.user) {
-        await supabase
-          .from('cart_items')
-          .update({ quantity })
-          .match({ user_id: state.user.id, product_id: id });
-        await fetchCart();
-      } else {
-        const item = state.cart.find(item => item.id === id);
-        if (item) item.quantity = quantity;
-        render();
-      }
-    }
+              <button onclick="navigate('cart'); return false;" class="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                ${Icon.Cart()}
+                ${state.cart.length > 0 ? `
+                  <span id="cart-count-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-md fade-in">
+                    ${state.cart.reduce((acc, item) => acc + item.quantity, 0)}
+                  </span>
+                ` : ''}
+              </button>
+            </div>
+          </div>
+        </header>
+      `;
+    }
 
-    // --- Components ---
+    function Sidebar() {
+      if (!state.menuOpen) return '';
+      return `
+        <div class="fixed inset-0 bg-black bg-opacity-40 z-40 lg:hidden" onclick="toggleMenu()"></div>
+        <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-2xl z-50 transform transition-transform duration-300 ${state.menuOpen ? 'translate-x-0' : '-translate-x-full'}">
+          <div class="p-4 border-b flex justify-between items-center">
+            <h2 class="text-xl font-extrabold text-indigo-700">ShopHub Menu</h2>
+            <button onclick="toggleMenu()" class="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors">
+              ${Icon.X()}
+            </button>
+          </div>
+          <nav class="p-4 space-y-4">
+            ${state.user ? `
+              <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 mb-4">
+                <p class="text-sm font-semibold text-indigo-900 truncate">${state.user.email}</p>
+                <button onclick="handleLogout()" class="text-xs text-red-600 mt-1 hover:underline font-medium">Sign Out</button>
+              </div>
+            ` : `
+              <button onclick="navigate('auth')" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold mb-4 hover:bg-indigo-700 transition-colors shadow-md">Sign In / Register</button>
+            `}
+            
+            <div class="mb-4">
+              <div class="font-semibold mb-2 flex items-center gap-2 text-indigo-500 uppercase text-xs tracking-wider border-b pb-2">
+                Categories
+              </div>
+              <div class="space-y-1">
+                ${state.categories.map(cat => `
+                  <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="block py-2 px-2 hover:bg-indigo-50 rounded text-gray-700 font-medium transition-colors">
+                    ${cat.name}
+                  </a>
+                `).join('')}
+              </div>
+            </div>
+            <a href="#" onclick="navigate('about'); return false;" class="block py-2 font-semibold hover:text-indigo-600 transition-colors">
+              About Us
+            </a>
+          </nav>
+        </div>
+      `;
+    }
 
-    function Header() {
-      return `
-        <header class="bg-white shadow-md sticky top-0 z-40">
-          <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg">
-                ${Icon.Menu()}
-              </button>
-              <a href="#" onclick="navigate('home'); return false;" class="text-2xl font-bold text-indigo-600">ShopHub</a>
-            </div>
-            <div class="flex items-center gap-2">
-              ${state.user ? `
-                <div class="hidden md:flex items-center gap-4 mr-4">
-                  <span class="text-sm text-gray-600">Hi, ${state.user.email.split('@')[0]}</span>
-                  <button onclick="handleLogout()" class="text-sm font-medium text-red-600 hover:text-red-700">Logout</button>
-                </div>
-              ` : `
-                <button onclick="navigate('auth'); return false;" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg mr-2 transition-colors">
-                  ${Icon.User()}
-                  <span class="hidden md:inline text-sm font-medium">Sign In</span>
-                </button>
-              `}
+    function AuthPage() {
+      const isSignIn = state.authMode === 'signin';
+      return `
+        <div class="flex-1 flex items-center justify-center px-4 py-12 bg-gray-50">
+          <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full border border-gray-100 fade-in">
+            <h2 class="text-3xl font-extrabold text-center mb-2 text-gray-900">${isSignIn ? 'Welcome Back' : 'Create Account'}</h2>
+            <p class="text-center text-gray-500 mb-8">
+              ${isSignIn ? 'Sign in to access your cart and orders' : 'Register to start shopping with us'}
+            </p>
 
-              <button onclick="navigate('cart'); return false;" class="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                ${Icon.Cart()}
-                ${state.cart.length > 0 ? `
-                  <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in">
-                    ${state.cart.reduce((acc, item) => acc + item.quantity, 0)}
-                  </span>
-                ` : ''}
-              </button>
-            </div>
-          </div>
-        </header>
-      `;
-    }
+            <form onsubmit="handleAuth(event)" class="space-y-5">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <input type="email" name="email" required class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input type="password" name="password" required minlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors">
+              </div>
+              
+              <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors flex justify-center items-center h-12 shadow-lg shadow-indigo-200">
+                ${state.loading ? '<div class="loader"></div>' : (isSignIn ? 'Sign In' : 'Sign Up')}
+              </button>
+            </form>
 
-    function Sidebar() {
-      if (!state.menuOpen) return '';
-      return `
-        <div class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onclick="toggleMenu()"></div>
-        <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300">
-          <div class="p-4 border-b flex justify-between items-center">
-            <h2 class="text-xl font-bold">Menu</h2>
-            <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg">
-              ${Icon.X()}
-            </button>
-          </div>
-          <nav class="p-4 space-y-4">
-            ${state.user ? `
-              <div class="bg-indigo-50 p-3 rounded-lg mb-4">
-                <p class="text-sm font-semibold text-indigo-900 truncate">${state.user.email}</p>
-                <button onclick="handleLogout()" class="text-xs text-red-600 mt-1 hover:underline">Sign Out</button>
-              </div>
-            ` : `
-              <button onclick="navigate('auth')" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold mb-4 hover:bg-indigo-700 transition-colors">Sign In / Register</button>
-            `}
-            
-            <div class="mb-4">
-              <div class="font-semibold mb-2 flex items-center gap-2 text-gray-500 uppercase text-xs tracking-wider">
-                Categories
-              </div>
-              <div class="space-y-1">
-                ${state.categories.map(cat => `
-                  <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="block py-2 px-2 hover:bg-gray-50 rounded text-gray-700 transition-colors">
-                    ${cat.name}
-                  </a>
-                `).join('')}
-              </div>
-            </div>
-            <a href="#" onclick="navigate('about'); return false;" class="block py-2 font-semibold hover:text-indigo-600 transition-colors">
-              About Us
-            </a>
-          </nav>
-        </div>
-      `;
-    }
+            <div class="relative my-6">
+              <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+              <div class="relative flex justify-center text-sm"><span class="px-3 bg-white text-gray-500 font-medium">OR</span></div>
+            </div>
 
-    function AuthPage() {
-      const isSignIn = state.authMode === 'signin';
-      return `
-        <div class="flex-1 flex items-center justify-center px-4 py-12 bg-gray-50">
-          <div class="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
-            <h2 class="text-3xl font-bold text-center mb-2">${isSignIn ? 'Welcome Back' : 'Create Account'}</h2>
-            <p class="text-center text-gray-600 mb-8">
-              ${isSignIn ? 'Sign in to access your cart and orders' : 'Register to start shopping with us'}
-            </p>
+            <button onclick="handleGoogleLogin()" class="w-full border border-gray-300 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 shadow-sm">
+              ${Icon.Google()}
+              Continue with Google
+            </button>
 
-            <form onsubmit="handleAuth(event)" class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                <input type="email" name="email" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input type="password" name="password" required minlength="6" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-              </div>
-              
-              <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors flex justify-center items-center h-10">
-                ${state.loading ? '<div class="loader"></div>' : (isSignIn ? 'Sign In' : 'Sign Up')}
-              </button>
-            </form>
+            <div class="mt-6 text-center text-sm">
+              ${isSignIn ? 'Don\'t have an account?' : 'Already have an account?'}
+              <button onclick="setAuthMode('${isSignIn ? 'signup' : 'signin'}')" class="text-indigo-600 font-bold hover:text-indigo-800 hover:underline">
+                ${isSignIn ? 'Sign up' : 'Sign in'}
+              </button>
+            </div>
+        </div>
+        </div>
+      `;
+    }
 
-            <div class="relative my-6">
-              <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
-              <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500">Or continue with</span></div>
-            </div>
+    function ProductCard(product) {
+      return `
+        <div class="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-2xl group fade-in">
+          <div class="relative">
+            <img src="${product.image_url}" alt="${product.name}" class="w-full h-64 object-cover group-hover:scale-[1.03] transition-transform duration-300">
+            <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <button onclick="navigate('product', '${product.slug}'); return false;" class="bg-white text-gray-900 px-5 py-2 rounded-full font-semibold text-sm hover:bg-gray-200 transition-colors shadow-lg">
+                View Details
+              </button>
+              <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="bg-red-500 text-white px-5 py-2 rounded-full font-semibold text-sm hover:bg-red-600 transition-colors shadow-lg">
+                Add to Cart
+              </button>
+            </div>
+          </div>
+          <div class="p-5">
+            <h3 class="font-extrabold text-xl mb-1 truncate text-gray-900">${product.name}</h3>
+            <p class="text-gray-500 text-sm mb-3 line-clamp-2 h-10">${product.description}</p>
+            <div class="flex items-center justify-between">
+              <span class="text-2xl font-bold text-indigo-700">$${product.price}</span>
+              ${product.stock_status === 'in_stock' ? '<span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full border border-green-200">In Stock</span>' : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
-            <button onclick="handleGoogleLogin()" class="w-full border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-              ${Icon.Google()}
-              Google
-            </button>
+    function Footer() {
+      return `
+        <footer class="bg-gray-900 text-white mt-auto border-t border-indigo-700">
+          <div class="max-w-7xl mx-auto px-6 py-10">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+              <div class="text-center md:text-left mb-6 md:mb-0">
+                <h3 class="text-3xl font-extrabold text-indigo-400">ShopHub</h3>
+                <p class="text-gray-400 text-sm mt-2">Quality products, excellent service.</p>
+              </div>
+              <div class="space-y-2 md:space-y-0 md:space-x-8 flex flex-col md:flex-row text-center">
+                <a href="#" onclick="navigate('home'); return false;" class="text-gray-300 hover:text-indigo-400 transition-colors font-medium">Home</a>
+                <a href="#" onclick="navigate('about'); return false;" class="text-gray-300 hover:text-indigo-400 transition-colors font-medium">About</a>
+                <a href="#" onclick="navigate('cart'); return false;" class="text-gray-300 hover:text-indigo-400 transition-colors font-medium">Cart</a>
+              </div>
+            </div>
+            <div class="text-center mt-8 pt-4 border-t border-gray-700">
+              <p class="text-sm text-gray-500">© 2024 ShopHub. All rights reserved.</p>
+            </div>
+          </div>
+        </footer>
+      `;
+    }
 
-            <div class="mt-6 text-center text-sm">
-              ${isSignIn ? 'Don\'t have an account?' : 'Already have an account?'}
-              <button onclick="setAuthMode('${isSignIn ? 'signup' : 'signin'}')" class="text-indigo-600 font-semibold hover:underline">
-                ${isSignIn ? 'Sign up' : 'Sign in'}
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-    }
+    function HomePage() {
+      return `
+        <div class="flex-1">
+          <div class="bg-gray-900 text-white py-24 shadow-inner fade-in" style="background-image: url('https://images.unsplash.com/photo-1555529693-18a00f2795a9?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); background-size: cover; background-position: center; position: relative;">
+            <div class="absolute inset-0 bg-black opacity-60"></div>
+            <div class="relative max-w-7xl mx-auto px-6 text-center">
+              <h1 class="text-5xl md:text-7xl font-extrabold mb-4 tracking-tighter drop-shadow-lg">Welcome to ShopHub</h1>
+              <p class="text-xl md:text-2xl text-indigo-200 mb-10 drop-shadow">Discover amazing products at unbeatable prices</p>
+              <button onclick="window.scrollTo({top: 800, behavior: 'smooth'})" class="bg-red-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-red-600 transition-colors shadow-xl shadow-red-300/50">Shop Now</button>
+            </div>
+          </div>
+          <div class="max-w-7xl mx-auto px-6 py-16">
+            <h2 class="text-4xl font-bold mb-10 text-gray-900 border-b pb-3">🔥 Featured Products</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              ${state.products.map(product => ProductCard(product)).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
-    function ProductCard(product) {
-      return `
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl group">
-          <div class="relative">
-            <img src="${product.image_url}" alt="${product.name}" class="w-full h-64 object-cover">
-            <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <button onclick="navigate('product', '${product.slug}'); return false;" class="bg-white text-gray-900 px-4 py-2 rounded-full font-medium text-sm hover:bg-gray-100 transition-colors">
-                View Details
-              </button>
-              <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="bg-indigo-600 text-white px-4 py-2 rounded-full font-medium text-sm hover:bg-indigo-700 transition-colors">
-                Add to Cart
-              </button>
-            </div>
-          </div>
-          <div class="p-4">
-            <h3 class="font-semibold text-lg mb-1 truncate">${product.name}</h3>
-            <p class="text-gray-500 text-sm mb-3 line-clamp-2 h-10">${product.description}</p>
-            <div class="flex items-center justify-between">
-              <span class="text-xl font-bold text-gray-900">$${product.price}</span>
-              ${product.stock_status === 'in_stock' ? '<span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">In Stock</span>' : ''}
-            </div>
-          </div>
-        </div>
-      `;
-    }
+    function CategoryPage() {
+      const category = state.categories.find(c => c.slug === state.currentSlug);
+      if (!category) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Category not found</div></div>';
+      
+      const products = state.products.filter(p => p.category_id === category.id);
+      
+      return `
+        <div class="flex-1 fade-in">
+          <div class="bg-indigo-700 text-white py-16 shadow-lg">
+            <div class="max-w-7xl mx-auto px-6">
+              <h1 class="text-4xl font-extrabold">${category.name}</h1>
+              ${category.description ? `<p class="mt-3 text-lg text-indigo-200">${category.description}</p>` : ''}
+            </div>
+          </div>
+          <div class="max-w-7xl mx-auto px-6 py-16">
+            ${products.length === 0 ? 
+              '<p class="text-center text-gray-600 py-12 text-xl font-medium">No products in this category yet. Check back soon!</p>' :
+              `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                ${products.map(product => ProductCard(product)).join('')}
+              </div>`
+            }
+          </div>
+        </div>
+      `;
+    }
 
-    function Footer() {
-      return `
-        <footer class="bg-gray-800 text-white mt-auto">
-          <div class="max-w-7xl mx-auto px-4 py-8">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-              <div class="text-center md:text-left mb-4 md:mb-0">
-                <h3 class="text-lg font-bold">ShopHub</h3>
-                <p class="text-gray-400 text-sm mt-1">Your trusted online shopping destination</p>
-              </div>
-              <div class="text-sm text-gray-400">
-                © 2024 ShopHub. All rights reserved.
-              </div>
-            </div>
-          </div>
-        </footer>
-      `;
-    }
+    function ProductPage() {
+      const product = state.products.find(p => p.slug === state.currentSlug);
+      if (!product) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Product not found</div></div>';
+      
+      return `
+        <div class="flex-1 max-w-7xl mx-auto px-6 py-16 fade-in">
+          <div class="grid md:grid-cols-2 gap-12 bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+            <div class="p-4 bg-gray-50 rounded-xl shadow-inner flex items-center justify-center">
+              <img src="${product.image_url}" alt="${product.name}" class="w-full rounded-lg object-contain h-96 transition-transform duration-300 hover:scale-[1.05]">
+            </div>
+            <div class="pt-4">
+              <div class="mb-4">
+                <span class="text-red-600 font-bold tracking-widest text-sm uppercase border-b-2 border-red-200 pb-1">Detailed View</span>
+                <h1 class="text-5xl font-extrabold text-gray-900 mt-2 leading-tight">${product.name}</h1>
+              </div>
+              <p class="text-4xl font-extrabold text-indigo-700 mb-8">$${product.price}</p>
+              
+              <div class="text-gray-600 space-y-4 mb-10 border-t border-b py-6">
+                <p class="text-lg font-medium leading-relaxed">${product.description}</p>
+                ${product.detailed_description ? `<p class="mt-4 text-sm">${product.detailed_description}</p>` : ''}
+              </div>
 
-    function HomePage() {
-      return `
-        <div class="flex-1">
-          <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-20">
-            <div class="max-w-7xl mx-auto px-4 text-center">
-              <h1 class="text-4xl md:text-6xl font-bold mb-4">Welcome to ShopHub</h1>
-              <p class="text-xl opacity-90 mb-8">Discover amazing products at great prices</p>
-              <button onclick="window.scrollTo({top: 600, behavior: 'smooth'})" class="bg-white text-indigo-600 px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition shadow-lg">Start Shopping</button>
-            </div>
-          </div>
-          <div class="max-w-7xl mx-auto px-4 py-12">
-            <h2 class="text-3xl font-bold mb-8 text-gray-900">Featured Products</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              ${state.products.map(product => ProductCard(product)).join('')}
-            </div>
-          </div>
-        </div>
-      `;
-    }
+              <div class="flex items-center gap-4">
+                <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="flex-1 bg-red-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-red-700 transition-colors text-xl shadow-2xl shadow-red-300/60">
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
-    function CategoryPage() {
-      const category = state.categories.find(c => c.slug === state.currentSlug);
-      if (!category) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Category not found</div></div>';
-      
-      const products = state.products.filter(p => p.category_id === category.id);
-      
-      return `
-        <div class="flex-1">
-          <div class="bg-indigo-600 text-white py-12">
-            <div class="max-w-7xl mx-auto px-4">
-              <h1 class="text-4xl font-bold">${category.name}</h1>
-              ${category.description ? `<p class="mt-2 text-lg opacity-90">${category.description}</p>` : ''}
-            </div>
-          </div>
-          <div class="max-w-7xl mx-auto px-4 py-12">
-            ${products.length === 0 ? 
-              '<p class="text-center text-gray-600 py-12">No products in this category yet.</p>' :
-              `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                ${products.map(product => ProductCard(product)).join('')}
-              </div>`
-            }
-          </div>
-        </div>
-      `;
-    }
+    function AboutPage() {
+       return `
+        <div class="flex-1 fade-in">
+          <div class="bg-gray-100 py-16 shadow-inner">
+            <div class="max-w-7xl mx-auto px-6">
+              <h1 class="text-4xl font-extrabold text-gray-900">Our Story</h1>
+            </div>
+            </div>
+          <div class="max-w-4xl mx-auto px-6 py-16 space-y-10">
+            <section class="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+              <h2 class="text-3xl font-bold mb-4 text-indigo-700">Who We Are</h2>
+              <p class="text-gray-700 leading-relaxed text-lg">
+                We are a passionate team dedicated to bringing you the best online shopping experience. Our mission is to connect you with quality products quickly and reliably.
+              </p>
+            </section>
+             <section class="bg-indigo-50 p-8 rounded-2xl shadow-lg border border-indigo-100">
+              <h2 class="text-3xl font-bold mb-4 text-indigo-800">Get in Touch</h2>
+              <p class="text-indigo-700 font-medium">Email: <a href="mailto:support@shophub.com" class="hover:underline">support@shophub.com</a></p>
+            </section>
+          </div>
+        </div>
+      `;
+    }
 
-    function ProductPage() {
-      const product = state.products.find(p => p.slug === state.currentSlug);
-      if (!product) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Product not found</div></div>';
-      
-      return `
-        <div class="flex-1 max-w-7xl mx-auto px-4 py-12">
-          <div class="grid md:grid-cols-2 gap-8">
-            <div class="bg-white p-4 rounded-xl shadow-sm">
-              <img src="${product.image_url}" alt="${product.name}" class="w-full rounded-lg object-contain h-96">
-            </div>
-            <div>
-              <div class="mb-4">
-                <span class="text-indigo-600 font-semibold tracking-wide text-sm uppercase">Detailed View</span>
-                <h1 class="text-4xl font-bold text-gray-900 mt-2">${product.name}</h1>
-              </div>
-              <p class="text-3xl font-bold text-indigo-600 mb-6">$${product.price}</p>
-              
-              <div class="prose max-w-none text-gray-600 mb-8">
-                <p class="text-lg leading-relaxed">${product.description}</p>
-                ${product.detailed_description ? `<p class="mt-4">${product.detailed_description}</p>` : ''}
-              </div>
+    function CartPage() {
+      const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      return `
+        <div class="flex-1 max-w-4xl mx-auto px-6 py-16 fade-in">
+          <h1 class="text-4xl font-extrabold mb-10 text-gray-900 border-b pb-3">🛒 Your Shopping Cart</h1>
+          ${state.cart.length === 0 ? `
+            <div class="text-center py-20 bg-white rounded-2xl shadow-xl border border-dashed border-gray-200">
+              <div class="text-indigo-400 mb-6 mx-auto w-12 h-12">${Icon.Cart()}</div>
+              <p class="text-xl text-gray-700 mb-4 font-semibold">Your cart is empty!</p>
+              <a href="#" onclick="navigate('home'); return false;" class="text-red-600 hover:text-red-800 font-bold underline transition-colors">Start Browsing Our Products</a>
+            </div>
+          ` : `
+            <div class="space-y-6 mb-10">
+              ${state.cart.map(item => `
+                <div class="flex flex-col sm:flex-row gap-6 bg-white p-6 rounded-2xl shadow-lg border border-gray-100 items-center transition-shadow hover:shadow-xl">
+                  <img src="${item.image_url}" alt="${item.name}" class="w-full sm:w-28 h-28 object-cover rounded-xl border border-gray-200">
+                  <div class="flex-1 text-center sm:text-left">
+                    <h3 class="font-extrabold text-xl text-gray-900">${item.name}</h3>
+                    <p class="text-indigo-700 font-bold text-lg mt-1">$${item.price.toFixed(2)}</p>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <button onclick="updateQuantity('${item.id}', ${item.quantity - 1})" class="w-9 h-9 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">-</button>
+                    <span class="w-8 text-center font-bold text-xl">${item.quantity}</span>
+                    <button onclick="updateQuantity('${item.id}', ${item.quantity + 1})" class="w-9 h-9 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">+</button>
+                  </div>
+                  <button onclick="removeFromCart('${item.id}')" class="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-colors">
+                    ${Icon.X()}
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+            <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-100 sticky top-20">
+              <h2 class="text-2xl font-bold mb-4 border-b pb-3 text-gray-900">Order Summary</h2>
+              <div class="flex justify-between text-xl mb-6">
+                <span class="text-gray-600 font-medium">Total</span>
+                <span class="text-3xl font-extrabold text-red-600">$${total.toFixed(2)}</span>
+              </div>
+              ${!state.user ? `
+                <div class="bg-yellow-100 border border-yellow-300 p-4 rounded-xl mb-4 text-sm text-yellow-800 font-medium">
+                  <span class="font-bold">Note:</span> Please <button onclick="navigate('auth')" class="underline font-extrabold text-yellow-900">sign in</button> to checkout and save your cart permanently.
+                </div>
+              ` : ''}
+              <button class="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-xl hover:bg-red-700 transition-colors shadow-2xl shadow-red-300/60">
+                Proceed to Checkout
+              </button>
+            </div>
+          `}
+        </div>
+      `;
+    }
 
-              <div class="flex items-center gap-4 border-t pt-8">
-                <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="flex-1 bg-indigo-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-indigo-700 transition-colors text-lg shadow-lg shadow-indigo-200">
-                  Add to Cart
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
+    // --- Render Loop ---
+    function render() {
+      let content = '';
+      switch(state.currentPage) {
+        case 'home': content = HomePage(); break;
+        case 'category': content = CategoryPage(); break;
+        case 'product': content = ProductPage(); break;
+        case 'about': content = AboutPage(); break;
+        case 'cart': content = CartPage(); break;
+        case 'auth': content = AuthPage(); break;
+      }
 
-    function AboutPage() {
-       return `
-        <div class="flex-1">
-          <div class="bg-gray-100 py-12">
-            <div class="max-w-7xl mx-auto px-4">
-              <h1 class="text-4xl font-bold text-gray-900">About Us</h1>
-            </div>
-          </div>
-          <div class="max-w-4xl mx-auto px-4 py-12 space-y-8">
-            <section>
-              <h2 class="text-2xl font-bold mb-4">Who We Are</h2>
-              <p class="text-gray-700 leading-relaxed">
-                We are a passionate team dedicated to bringing you the best online shopping experience. 
-              </p>
-            </section>
-             <section class="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 class="text-2xl font-bold mb-4">Contact</h2>
-              <p class="text-gray-700">Email: support@shophub.com</p>
-            </section>
-          </div>
-        </div>
-      `;
-    }
+      document.getElementById('app').innerHTML = `
+        <div class="min-h-screen flex flex-col font-sans">
+          ${Header()}
+          ${Sidebar()}
+          ${content}
+          ${Footer()}
+        </div>
+      `;
+    }
 
-    function CartPage() {
-      const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      
-      return `
-        <div class="flex-1 max-w-4xl mx-auto px-4 py-12">
-          <h1 class="text-3xl font-bold mb-8">Shopping Cart</h1>
-          ${state.cart.length === 0 ? `
-            <div class="text-center py-16 bg-white rounded-xl shadow-sm border border-dashed border-gray-300">
-              <div class="text-gray-400 mb-4">${Icon.Cart()}</div>
-              <p class="text-xl text-gray-600 mb-4">Your cart is empty</p>
-              <a href="#" onclick="navigate('home'); return false;" class="text-indigo-600 hover:text-indigo-800 font-semibold underline">Continue Shopping</a>
-            </div>
-          ` : `
-            <div class="space-y-4 mb-8">
-              ${state.cart.map(item => `
-                <div class="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 items-center">
-                  <img src="${item.image_url}" alt="${item.name}" class="w-full sm:w-24 h-24 object-cover rounded-lg">
-                  <div class="flex-1 text-center sm:text-left">
-                    <h3 class="font-semibold text-lg">${item.name}</h3>
-                    <p class="text-indigo-600 font-bold">$${item.price.toFixed(2)}</p>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <button onclick="updateQuantity('${item.id}', ${item.quantity - 1})" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition">-</button>
-                    <span class="w-8 text-center font-medium">${item.quantity}</span>
-                    <button onclick="updateQuantity('${item.id}', ${item.quantity + 1})" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition">+</button>
-                  </div>
-                  <button onclick="removeFromCart('${item.id}')" class="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition">
-                    ${Icon.X()}
-                  </button>
-                </div>
-              `).join('')}
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div class="flex justify-between text-xl mb-6">
-                <span class="text-gray-600">Total</span>
-                <span class="text-2xl font-bold text-indigo-600">$${total.toFixed(2)}</span>
-              </div>
-              ${!state.user ? `
-                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4 text-sm text-yellow-800">
-                  <span class="font-bold">Note:</span> Please <button onclick="navigate('auth')" class="underline font-semibold">sign in</button> to checkout and save your cart permanently.
-                </div>
-              ` : ''}
-              <button class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
-                Proceed to Checkout
-              </button>
-            </div>
-          `}
-        </div>
-      `;
-    }
+    // --- Global Helpers ---
+    window.toggleMenu = () => { state.menuOpen = !state.menuOpen; render(); };
+    window.navigate = navigate;
+    window.addToCart = addToCart;
+    window.removeFromCart = removeFromCart;
+    window.updateQuantity = updateQuantity;
+    window.handleAuth = handleAuth;
+    window.handleGoogleLogin = handleGoogleLogin;
+    window.handleLogout = handleLogout;
+    window.setAuthMode = (mode) => { state.authMode = mode; render(); };
 
-    // --- Render Loop ---
-    function render() {
-      let content = '';
-      switch(state.currentPage) {
-        case 'home': content = HomePage(); break;
-        case 'category': content = CategoryPage(); break;
-        case 'product': content = ProductPage(); break;
-        case 'about': content = AboutPage(); break;
-        case 'cart': content = CartPage(); break;
-        case 'auth': content = AuthPage(); break;
-      }
+    // --- Initialization ---
+    async function init() {
+  // Temporarily remove the Auth Listener for the test, 
+  // as asynchronous functions can complicate debugging.
+  
+  try {
+    console.log("Starting data fetch...");
+    
+    const [categoriesRes, productsRes] = await Promise.all([
+      supabase.from('categories').select('*').order('display_order'),
+      supabase.from('products').select('*').eq('is_active', true)
+    ]);
+    
+    // Check for RLS/Network errors explicitly
+    if (categoriesRes.error) {
+      console.error("Categories Fetch Error:", categoriesRes.error);
+      alert("Error loading categories! Check RLS policy.");
+      return; // Stop if there's an error
+    }
+    if (productsRes.error) {
+      console.error("Products Fetch Error:", productsRes.error);
+      alert("Error loading products! Check RLS policy.");
+      return; // Stop if there's an error
+    }
 
-      document.getElementById('app').innerHTML = `
-        <div class="min-h-screen flex flex-col font-sans">
-          ${Header()}
-          ${Sidebar()}
-          ${content}
-          ${Footer()}
-        </div>
-      `;
-    }
+    state.categories = categoriesRes.data || [];
+    state.products = productsRes.data || [];
+    
+    console.log("Data loaded successfully. Categories found:", state.categories.length);
 
-    // --- Global Helpers ---
-    window.toggleMenu = () => { state.menuOpen = !state.menuOpen; render(); };
-    window.navigate = navigate;
-    window.addToCart = addToCart;
-    window.removeFromCart = removeFromCart;
-    window.updateQuantity = updateQuantity;
-    window.handleAuth = handleAuth;
-    window.handleGoogleLogin = handleGoogleLogin;
-    window.handleLogout = handleLogout;
-    window.setAuthMode = (mode) => { state.authMode = mode; render(); };
+  } catch (e) {
+    // Catch any unexpected Promise.all execution errors
+    console.error("CRITICAL INIT ERROR:", e);
+    alert("Critical application error during initialization. Check console.");
+  } finally {
+    // RENDER IS ALWAYS CALLED, even if data is empty!
+    // This ensures you see the basic site structure.
+    render(); 
+  }
 
-    // --- Initialization ---
-    async function init() {
-  // Temporarily remove the Auth Listener for the test, 
-  // as asynchronous functions can complicate debugging.
-  
-  try {
-    console.log("Starting data fetch...");
-    
-    const [categoriesRes, productsRes] = await Promise.all([
-      supabase.from('categories').select('*').order('display_order'),
-      supabase.from('products').select('*').eq('is_active', true)
-    ]);
-    
-    // Check for RLS/Network errors explicitly
-    if (categoriesRes.error) {
-      console.error("Categories Fetch Error:", categoriesRes.error);
-      alert("Error loading categories! Check RLS policy.");
-      return; // Stop if there's an error
-    }
-    if (productsRes.error) {
-      console.error("Products Fetch Error:", productsRes.error);
-      alert("Error loading products! Check RLS policy.");
-      return; // Stop if there's an error
-    }
-
-    state.categories = categoriesRes.data || [];
-    state.products = productsRes.data || [];
-    
-    console.log("Data loaded successfully. Categories found:", state.categories.length);
-
-  } catch (e) {
-    // Catch any unexpected Promise.all execution errors
-    console.error("CRITICAL INIT ERROR:", e);
-    alert("Critical application error during initialization. Check console.");
-  } finally {
-    // RENDER IS ALWAYS CALLED, even if data is empty!
-    // This ensures you see the basic site structure.
-    render(); 
-  }
-
-  // Rerun the Auth Listener setup after initial render
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    const previousUser = state.user;
-    state.user = session?.user || null;
-    
-    if (!previousUser && state.user) {
-      await mergeCart();
-    }
-    
-    if (state.user) {
-      await fetchCart();
-    }
-    
-    render();
-  });
+  // Rerun the Auth Listener setup after initial render
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    const previousUser = state.user;
+    state.user = session?.user || null;
+    
+    if (!previousUser && state.user) {
+      await mergeCart();
+    }
+    
+    if (state.user) {
+      await fetchCart();
+    }
+    
+    render();
+  });
 }
-    init();
-  
-  </script>
+    init();
+  
+  </script>
 </body>
 </html>
