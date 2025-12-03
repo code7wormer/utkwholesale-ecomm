@@ -69,6 +69,9 @@
       user: null // will be set by auth code (non-module auth listener below)
     };
 
+    // Expose state and render globally for auth functions
+    window.state = state;
+
     // Router
     function navigate(page, slug = null) {
       state.currentPage = page;
@@ -308,6 +311,9 @@
       `;
     }
 
+    // Expose render globally
+    window.render = render;
+
     // Global functions
     window.toggleMenu = () => { state.menuOpen = !state.menuOpen; render(); };
     window.navigate = navigate;
@@ -316,7 +322,7 @@
     window.updateQuantity = updateQuantity;
 
     // Checkout placeholder (will require server-side validation in prod)
-    async function checkout() {
+    window.checkout = async function() {
       if (!state.user) {
         openAuthModal('signup');
         return;
@@ -355,22 +361,24 @@
   <!-- ---------------------------
        AUTH MODAL + AUTH LOGIC (non-module so it's available globally)
        --------------------------- -->
-  <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white p-6 rounded shadow-lg w-80">
-      <h2 id="authTitle" class="text-xl font-bold mb-4">Login</h2>
+  <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white p-6 rounded shadow-lg w-full max-w-md">
+        <h2 id="authTitle" class="text-xl font-bold mb-4">Login</h2>
 
-      <input id="authEmail" type="email" placeholder="Email" class="w-full p-2 border rounded mb-2" />
-      <input id="authPassword" type="password" placeholder="Password" class="w-full p-2 border rounded mb-4" />
+        <input id="authEmail" type="email" placeholder="Email" class="w-full p-2 border rounded mb-2" />
+        <input id="authPassword" type="password" placeholder="Password" class="w-full p-2 border rounded mb-4" />
 
-      <button id="authPrimary" class="w-full bg-blue-600 text-white p-2 rounded mb-2">Continue</button>
+        <button id="authPrimary" class="w-full bg-blue-600 text-white p-2 rounded mb-2 hover:bg-blue-700">Continue</button>
 
-      <button id="authGoogle" class="w-full bg-red-600 text-white p-2 rounded mb-4">Continue with Google</button>
+        <button id="authGoogle" class="w-full bg-red-600 text-white p-2 rounded mb-4 hover:bg-red-700">Continue with Google</button>
 
-      <p class="text-center text-sm">
-        <span id="toggleAuthMode" class="text-blue-600 cursor-pointer">Create an account</span>
-      </p>
+        <p class="text-center text-sm">
+          <span id="toggleAuthMode" class="text-blue-600 cursor-pointer hover:underline">Create an account</span>
+        </p>
 
-      <button onclick="closeAuthModal()" class="mt-4 w-full bg-gray-300 p-2 rounded">Close</button>
+        <button onclick="closeAuthModal()" class="mt-4 w-full bg-gray-300 p-2 rounded hover:bg-gray-400">Close</button>
+      </div>
     </div>
   </div>
 
@@ -383,12 +391,18 @@
       authMode = mode;
       document.getElementById('authTitle').innerText = mode === 'login' ? 'Login' : 'Sign Up';
       document.getElementById('toggleAuthMode').innerText = mode === 'login' ? 'Create an account' : 'Already have an account? Login';
-      document.getElementById('authModal').classList.remove('hidden');
+      const modal = document.getElementById('authModal');
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
     }
+    window.openAuthModal = openAuthModal;
 
     function closeAuthModal() {
-      document.getElementById('authModal').classList.add('hidden');
+      const modal = document.getElementById('authModal');
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
     }
+    window.closeAuthModal = closeAuthModal;
 
     document.getElementById('toggleAuthMode').onclick = () => {
       openAuthModal(authMode === 'login' ? 'signup' : 'login');
@@ -403,13 +417,13 @@
         const { data, error } = await authClient.auth.signUp({ email, password });
         console.log('signUp ->', data, error);
         if (error) return alert(error.message);
-        alert('Sign up successful. Check your email if confirmation is enabled.');
+        alert('Sign up successful! Check your email to confirm your account.');
         closeAuthModal();
       } else {
         const { data, error } = await authClient.auth.signInWithPassword({ email, password });
         console.log('signIn ->', data, error);
         if (error) return alert(error.message);
-        alert('Signed in');
+        alert('Signed in successfully!');
         closeAuthModal();
       }
     };
@@ -417,53 +431,62 @@
     document.getElementById('authGoogle').onclick = async () => {
       const { error } = await authClient.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin }
+        options: { 
+          redirectTo: window.location.origin + window.location.pathname
+        }
       });
-      if (error) alert(error.message);
+      if (error) {
+        console.error('Google sign-in error:', error);
+        alert('Error signing in with Google: ' + error.message);
+      }
     };
 
     // Logout
     async function doLogout() {
       await authClient.auth.signOut();
-      state.user = null;
-      render(); // update header
-      alert('Logged out');
+      window.state.user = null;
+      window.render();
+      alert('Logged out successfully');
     }
+    window.doLogout = doLogout;
 
     // Open account page (placeholder)
     function openAccount() {
       alert('Account page - implement profile UI / order history as next step.');
     }
+    window.openAccount = openAccount;
 
     // On load - fetch session and user
     (async () => {
       try {
         const { data } = await authClient.auth.getSession();
         const session = data?.session ?? null;
-        if (session) {
-          // set state.user to the session object (keeps email & metadata)
-          state.user = session;
-          // try to fetch profile row if table exists (optional)
+        if (session && session.user) {
+          window.state.user = session.user;
+          
+          // Try to fetch profile row if table exists (optional)
           try {
             const user = session.user;
             const res = await fetch(`${AUTH_SUPABASE_URL}/rest/v1/profiles?id=eq.${user.id}`, {
               headers: {
                 apikey: AUTH_SUPABASE_ANON_KEY,
-                Authorization: `Bearer ${AUTH_SUPABASE_ANON_KEY}`
+                Authorization: `Bearer ${session.access_token}`
               }
             });
             if (res.ok) {
               const rows = await res.json();
               if (rows.length) {
-                // attach profile to user metadata for display
-                state.user.user_metadata = Object.assign({}, state.user.user_metadata || {}, rows[0]);
+                // Attach profile to user metadata for display
+                window.state.user.user_metadata = Object.assign({}, window.state.user.user_metadata || {}, rows[0]);
               }
             }
-          } catch(e) { /* ignore if profiles not setup */ }
+          } catch(e) { 
+            console.log('No profiles table or error fetching profile:', e);
+          }
         } else {
-          state.user = null;
+          window.state.user = null;
         }
-        render();
+        if (window.render) window.render();
       } catch(err) {
         console.error('auth init error', err);
       }
@@ -471,35 +494,14 @@
 
     // Auth state change listener: update header and state
     authClient.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
       if (session && session.user) {
-        state.user = session;
+        window.state.user = session.user;
       } else {
-        state.user = null;
+        window.state.user = null;
       }
-      render();
+      if (window.render) window.render();
     });
-
-    // Add a simple test signup button (keeps original behavior you used)
-    // placed now globally (doesn't conflict with your code)
-    window.testSignup = async function() {
-      const { data, error } = await authClient.auth.signUp({
-        email: 'testuser@example.com',
-        password: 'password123'
-      });
-      console.log('Signup data:', data);
-      console.log('Signup error:', error);
-      alert(error ? ('Signup error: ' + error.message) : 'Signup triggered (check dashboard)');
-    };
-
-    // expose doLogout for header button
-    window.doLogout = doLogout;
-    window.openAuthModal = openAuthModal;
   </script>
-
-  <!-- Test button (you can remove later) -->
-  <div style="position:fixed; right:8px; bottom:8px; z-index:60;">
-    <button onclick="testSignup()" class="bg-yellow-400 text-black px-3 py-2 rounded shadow">Run Test Signup</button>
-  </div>
-
 </body>
 </html>
