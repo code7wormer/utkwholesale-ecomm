@@ -34,7 +34,7 @@
   <div id="app"></div>
 
   <script type="module">
-    // --- Configuration ---
+    // --- Configuration (Update with your actual keys if they changed) ---
     const SUPABASE_URL = 'https://thzmryhnyzhfewsyamjh.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoem1yeWhueXpoZmV3c3lhbWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NTgwMTAsImV4cCI6MjA4MDMzNDAxMH0.qvCid4pmsdcRogce4RZH5adl90Eq5d3ibwVoJI5qr-I';
 
@@ -153,12 +153,17 @@
 
       // Upsert each item
       for (const item of localCart) {
+        // This is a simplified merge: local cart quantity overrides or adds to DB cart.
+        // A more complex merge would sum quantities, but for simplicity, we use upsert.
         await supabase.from('cart_items').upsert({
           user_id: state.user.id,
           product_id: item.id,
           quantity: item.quantity
         }, { onConflict: 'user_id, product_id' });
       }
+      
+      // Clear local cart (which is now in the DB)
+      state.cart = [];
       
       // Re-fetch final source of truth
       await fetchCart();
@@ -239,7 +244,7 @@
               
               <div class="hidden lg:flex items-center gap-6 ml-8">
                 ${state.categories.map(cat => `
-                  <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="text-gray-600 hover:text-indigo-600 font-medium">
+                  <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="text-gray-600 hover:text-indigo-600 font-medium transition-colors">
                     ${cat.name}
                   </a>
                 `).join('')}
@@ -253,13 +258,13 @@
                   <button onclick="handleLogout()" class="text-sm font-medium text-red-600 hover:text-red-700">Logout</button>
                 </div>
               ` : `
-                <button onclick="navigate('auth'); return false;" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg mr-2">
+                <button onclick="navigate('auth'); return false;" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg mr-2 transition-colors">
                   ${Icon.User()}
                   <span class="hidden md:inline text-sm font-medium">Sign In</span>
                 </button>
               `}
 
-              <button onclick="navigate('cart'); return false;" class="relative p-2 hover:bg-gray-100 rounded-lg">
+              <button onclick="navigate('cart'); return false;" class="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 ${Icon.Cart()}
                 ${state.cart.length > 0 ? `
                   <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in">
@@ -276,7 +281,7 @@
     function Sidebar() {
       if (!state.menuOpen) return '';
       return `
-        <div class="fixed inset-0 bg-black bg-opacity-50 z-40" onclick="toggleMenu()"></div>
+        <div class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onclick="toggleMenu()"></div>
         <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300">
           <div class="p-4 border-b flex justify-between items-center">
             <h2 class="text-xl font-bold">Menu</h2>
@@ -287,11 +292,11 @@
           <nav class="p-4 space-y-4">
             ${state.user ? `
               <div class="bg-indigo-50 p-3 rounded-lg mb-4">
-                <p class="text-sm font-semibold text-indigo-900">${state.user.email}</p>
+                <p class="text-sm font-semibold text-indigo-900 truncate">${state.user.email}</p>
                 <button onclick="handleLogout()" class="text-xs text-red-600 mt-1 hover:underline">Sign Out</button>
               </div>
             ` : `
-              <button onclick="navigate('auth')" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold mb-4">Sign In / Register</button>
+              <button onclick="navigate('auth')" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold mb-4 hover:bg-indigo-700 transition-colors">Sign In / Register</button>
             `}
             
             <div class="mb-4">
@@ -300,7 +305,7 @@
               </div>
               <div class="space-y-1">
                 ${state.categories.map(cat => `
-                  <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="block py-2 px-2 hover:bg-gray-50 rounded text-gray-700">
+                  <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="block py-2 px-2 hover:bg-gray-50 rounded text-gray-700 transition-colors">
                     ${cat.name}
                   </a>
                 `).join('')}
@@ -386,7 +391,6 @@
       `;
     }
 
-    // Reuse existing Footer, HomePage, CategoryPage, ProductPage, AboutPage with minor updates to rendering logic if needed.
     function Footer() {
       return `
         <footer class="bg-gray-800 text-white mt-auto">
@@ -485,7 +489,6 @@
     }
 
     function AboutPage() {
-      // (Kept simple for brevity, same as before but wrapped)
        return `
         <div class="flex-1">
           <div class="bg-gray-100 py-12">
@@ -528,7 +531,7 @@
                   <img src="${item.image_url}" alt="${item.name}" class="w-full sm:w-24 h-24 object-cover rounded-lg">
                   <div class="flex-1 text-center sm:text-left">
                     <h3 class="font-semibold text-lg">${item.name}</h3>
-                    <p class="text-indigo-600 font-bold">$${item.price}</p>
+                    <p class="text-indigo-600 font-bold">$${item.price.toFixed(2)}</p>
                   </div>
                   <div class="flex items-center gap-3">
                     <button onclick="updateQuantity('${item.id}', ${item.quantity - 1})" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full hover:bg-gray-200 transition">-</button>
@@ -600,7 +603,7 @@
         const previousUser = state.user;
         state.user = session?.user || null;
         
-        // If user just logged in, merge cart
+        // If user just logged in, merge local cart into DB
         if (!previousUser && state.user) {
           await mergeCart();
         } 
