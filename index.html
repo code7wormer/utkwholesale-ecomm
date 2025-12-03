@@ -26,7 +26,7 @@
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      100% { transform-rotate: rotate(360deg); }
     }
   </style>
 </head>
@@ -35,6 +35,7 @@
 
   <script type="module">
     // --- Configuration ---
+    // Note: These keys must match your project's keys
     const SUPABASE_URL = 'https://thzmryhnyzhfewsyamjh.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoem1yeWhueXpoZmV3c3lhbWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NTgwMTAsImV4cCI6MjA4MDMzNDAxMH0.qvCid4pmsdcRogce4RZH5adl90Eq5d3ibwVoJI5qr-I';
 
@@ -73,7 +74,7 @@
       render();
     }
 
-    // --- Auth Functions ---
+    // --- Auth Functions (Restored) ---
     async function handleAuth(e) {
       e.preventDefault();
       const email = e.target.email.value;
@@ -84,14 +85,14 @@
       let error = null;
 
       if (state.authMode === 'signup') {
-        const { data, error: suError } = await supabase.auth.signUp({
+        const { error: suError } = await supabase.auth.signUp({
           email,
           password,
         });
         if (!suError) alert('Registration successful! Please sign in.');
         error = suError;
       } else {
-        const { data, error: siError } = await supabase.auth.signInWithPassword({
+        const { error: siError } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -108,7 +109,7 @@
     }
 
     async function handleGoogleLogin() {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.href // Redirect back to this page
@@ -122,8 +123,8 @@
       state.cart = []; // Clear DB cart from state
       navigate('home');
     }
-
-    // --- Cart Functions (Hybrid: Local + DB) ---
+    
+    // --- Cart Functions (Hybrid: Local + DB) (Restored) ---
     
     // Fetch cart from DB for logged in users
     async function fetchCart() {
@@ -131,15 +132,15 @@
       const { data, error } = await supabase
         .from('cart_items')
         .select(`
-          *,
-          products:product_id (*)
+          quantity,
+          products:product_id (id, name, slug, description, price, image_url, stock_status)
         `);
       
       if (data) {
         // Transform DB structure to UI structure
         state.cart = data.map(item => ({
           ...item.products, // spread product details
-          id: item.product_id, // ensure ID is product ID for consistency
+          id: item.products.id, // ensure ID is product ID for consistency
           quantity: item.quantity
         }));
       }
@@ -148,17 +149,18 @@
 
     // Merge local guest cart into DB upon login
     async function mergeCart() {
+      // Find cart items that were added when the user was a guest
       const localCart = state.cart;
-      if (localCart.length === 0) return;
+      if (localCart.length === 0 || !state.user) return;
 
       // Upsert each item
-      for (const item of localCart) {
-        await supabase.from('cart_items').upsert({
-          user_id: state.user.id,
-          product_id: item.id,
-          quantity: item.quantity
-        }, { onConflict: 'user_id, product_id' });
-      }
+      const itemsToInsert = localCart.map(item => ({
+        user_id: state.user.id,
+        product_id: item.id,
+        quantity: item.quantity
+      }));
+
+      await supabase.from('cart_items').upsert(itemsToInsert, { onConflict: 'user_id, product_id' });
       
       // Re-fetch final source of truth
       await fetchCart();
@@ -225,7 +227,7 @@
       }
     }
 
-    // --- Components ---
+    // --- Components (Updated with Auth UI) ---
 
     function Header() {
       return `
@@ -386,7 +388,6 @@
       `;
     }
 
-    // Reuse existing Footer, HomePage, CategoryPage, ProductPage, AboutPage with minor updates to rendering logic if needed.
     function Footer() {
       return `
         <footer class="bg-gray-800 text-white mt-auto">
@@ -485,7 +486,6 @@
     }
 
     function AboutPage() {
-      // (Kept simple for brevity, same as before but wrapped)
        return `
         <div class="flex-1">
           <div class="bg-gray-100 py-12">
@@ -595,12 +595,12 @@
 
     // --- Initialization ---
     async function init() {
-      // 1. Setup Auth Listener
+      // 1. Setup Auth Listener (Crucial for user state and cart merge)
       supabase.auth.onAuthStateChange(async (event, session) => {
         const previousUser = state.user;
         state.user = session?.user || null;
         
-        // If user just logged in, merge cart
+        // If user just logged in, merge local cart into DB
         if (!previousUser && state.user) {
           await mergeCart();
         } 
@@ -608,6 +608,11 @@
         // If user exists, fetch their cart
         if (state.user) {
           await fetchCart();
+        } else {
+            // If user logged out, clear DB cart (local cart remains if it had items)
+            if (previousUser) {
+                state.cart = state.cart.filter(item => !item.user_id); // keep local items if any
+            }
         }
         
         render();
@@ -621,6 +626,14 @@
       
       state.categories = categoriesRes.data || [];
       state.products = productsRes.data || [];
+
+      // Initial check for session (needed for first load)
+      const { data: { session } } = await supabase.auth.getSession();
+      state.user = session?.user || null;
+      if (state.user) {
+          await fetchCart(); // Fetch DB cart if user is already logged in
+      }
+
       render();
     }
 
