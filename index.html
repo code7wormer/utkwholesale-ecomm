@@ -386,10 +386,7 @@
       state.products = productsRes.data || [];
       render();
     }
-
-    init();
-  </script>
-  <button onclick="testSignup()">Test Signup</button>
+    <button onclick="testSignup()">Test Signup</button>
   <script>
 async function testSignup() {
   const { data, error } = await supabase.auth.signUp({
@@ -402,5 +399,7 @@ async function testSignup() {
 }
 </script>
 
+    init();
+  </script>
 </body>
 </html>
