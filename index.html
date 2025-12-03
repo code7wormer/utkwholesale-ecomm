@@ -237,20 +237,11 @@
         <header class="bg-white shadow-md sticky top-0 z-40">
           <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-4">
-              <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg lg:hidden">
+              <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg">
                 ${Icon.Menu()}
               </button>
               <a href="#" onclick="navigate('home'); return false;" class="text-2xl font-bold text-indigo-600">ShopHub</a>
-              
-              <div class="hidden lg:flex items-center gap-6 ml-8">
-                ${state.categories.map(cat => `
-                  <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="text-gray-600 hover:text-indigo-600 font-medium transition-colors">
-                    ${cat.name}
-                  </a>
-                `).join('')}
-              </div>
             </div>
-
             <div class="flex items-center gap-2">
               ${state.user ? `
                 <div class="hidden md:flex items-center gap-4 mr-4">
