@@ -598,37 +598,61 @@
 
     // --- Initialization ---
     async function init() {
-      // 1. Setup Auth Listener
-      supabase.auth.onAuthStateChange(async (event, session) => {
-        const previousUser = state.user;
-        state.user = session?.user || null;
-        
-        // If user just logged in, merge local cart into DB
-        if (!previousUser && state.user) {
-          await mergeCart();
-        } 
-        
-        // If user exists, fetch their cart
-        if (state.user) {
-          await fetchCart();
-        }
-        
-        render();
-      });
-
-      // 2. Fetch Initial Data
-      const [categoriesRes, productsRes] = await Promise.all([
-        supabase.from('categories').select('*').order('display_order'),
-        supabase.from('products').select('*').eq('is_active', true)
-      ]);
-      
-      state.categories = categoriesRes.data || [];
-      state.products = productsRes.data || [];
-      render();
+  // Temporarily remove the Auth Listener for the test, 
+  // as asynchronous functions can complicate debugging.
+  
+  try {
+    console.log("Starting data fetch...");
+    
+    const [categoriesRes, productsRes] = await Promise.all([
+      supabase.from('categories').select('*').order('display_order'),
+      supabase.from('products').select('*').eq('is_active', true)
+    ]);
+    
+    // Check for RLS/Network errors explicitly
+    if (categoriesRes.error) {
+      console.error("Categories Fetch Error:", categoriesRes.error);
+      alert("Error loading categories! Check RLS policy.");
+      return; // Stop if there's an error
+    }
+    if (productsRes.error) {
+      console.error("Products Fetch Error:", productsRes.error);
+      alert("Error loading products! Check RLS policy.");
+      return; // Stop if there's an error
     }
 
-   // init();
+    state.categories = categoriesRes.data || [];
+    state.products = productsRes.data || [];
+    
+    console.log("Data loaded successfully. Categories found:", state.categories.length);
+
+  } catch (e) {
+    // Catch any unexpected Promise.all execution errors
+    console.error("CRITICAL INIT ERROR:", e);
+    alert("Critical application error during initialization. Check console.");
+  } finally {
+    // RENDER IS ALWAYS CALLED, even if data is empty!
+    // This ensures you see the basic site structure.
+    render(); 
+  }
+
+  // Rerun the Auth Listener setup after initial render
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    const previousUser = state.user;
+    state.user = session?.user || null;
+    
+    if (!previousUser && state.user) {
+      await mergeCart();
+    }
+    
+    if (state.user) {
+      await fetchCart();
+    }
+    
     render();
+  });
+}
+    init();
   
   </script>
 </body>
