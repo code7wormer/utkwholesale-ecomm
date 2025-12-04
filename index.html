@@ -75,7 +75,7 @@
       z-index: 100;
     }
 
-    /* 🌟 Loading Overlay Animation (SLOWER AND SMOOTHER: 1.5s) */
+    /* 🌟 Loading Overlay Animation */
     .overlay-enter { animation: overlayIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
     .overlay-exit { animation: overlayOut 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
@@ -149,6 +149,16 @@
     .toggle-checkbox:checked + .toggle-label {
       background-color: var(--color-primary);
     }
+
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .scrollbar-hide {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -186,6 +196,8 @@
       X: () => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
       Cart: () => '<svg id="cart-icon-svg" class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>',
       ChevronDown: () => '<svg class="w-4 h-4 ml-1 mt-0.5 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>',
+      ChevronLeft: () => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>',
+      ChevronRight: () => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>',
       User: () => '<svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>',
       Google: () => '<svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>',
       Edit: () => '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-7-7l5-5m0 0l-5 5m5-5h-4.586a1 1 0 00-.707.293l-4.707 4.707a1 1 0 00-.293.707V13z" /></svg>',
@@ -314,7 +326,17 @@
       if (!state.user) return;
       const { data } = await supabase.from('cart_items').select(`*, products:product_id (*)`);
       if (data) {
-        state.cart = data.map(item => ({ ...item.products, id: item.product_id, quantity: item.quantity }));
+        state.cart = data.map(item => {
+           // 🌟 LOGIC UPDATE: Normalize price on fetch from DB. If it is a deal, use deal_price.
+           const product = item.products;
+           const finalPrice = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
+           return { 
+               ...product, 
+               id: item.product_id, 
+               quantity: item.quantity, 
+               price: finalPrice // Override price for cart consistency
+           };
+        });
       }
       render();
     }
@@ -331,15 +353,32 @@
     }
 
     async function addToCart(product) {
-      const existing = state.cart.find(item => item.id === product.id);
+      // 🌟 LOGIC UPDATE: Use Deal Price if applicable
+      const priceToUse = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
+      
+      // Create a copy of the product with the correct price for the cart
+      const cartProduct = { ...product, price: priceToUse };
+
+      const existing = state.cart.find(item => item.id === cartProduct.id);
       let newQuantity = existing ? existing.quantity + 1 : 1;
 
       if (state.user) {
-        const { error } = await supabase.from('cart_items').upsert({ user_id: state.user.id, product_id: product.id, quantity: newQuantity }, { onConflict: 'user_id, product_id' });
-        if (!error) await fetchCart();
+        // Upsert to Supabase
+        const { error } = await supabase.from('cart_items').upsert({ 
+            user_id: state.user.id, 
+            product_id: cartProduct.id, 
+            quantity: newQuantity 
+        }, { onConflict: 'user_id, product_id' });
+        
+        if (!error) await fetchCart(); // Re-fetch ensures we get clean data
       } else {
-        if (existing) existing.quantity++;
-        else state.cart.push({ ...product, quantity: 1 });
+        // Local State logic
+        if (existing) {
+            existing.quantity++;
+            existing.price = priceToUse; // Ensure price is updated
+        } else {
+            state.cart.push({ ...cartProduct, quantity: 1 });
+        }
         render();
       }
 
@@ -738,22 +777,128 @@
       `;
     }
 
+    // 🌟 Helper for Scrolling
+    window.scrollSection = (id, direction) => {
+        const container = document.getElementById(id);
+        if (container) {
+            const scrollAmount = 320; // Width of a card + gap
+            container.scrollBy({ 
+                left: direction === 'left' ? -scrollAmount : scrollAmount, 
+                behavior: 'smooth' 
+            });
+        }
+    };
+
     function HomePage() {
+      // Filter Data
+      const bestsellers = state.products.filter(p => p.is_bestseller);
+      const monthlyDeals = state.products.filter(p => p.is_deal);
+
+      // Helper for Product Card in Sliders (Internal to HomePage for specific styling)
+      const renderSliderCard = (product, showDealPrice = false) => {
+        // Calculate display prices
+        const displayPrice = showDealPrice && product.deal_price ? product.deal_price : product.price;
+        
+        return `
+        <div class="min-w-[280px] w-[280px] bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden group flex flex-col h-full snap-start">
+          <div class="relative h-48 overflow-hidden">
+             <img src="${product.image_url}" alt="${product.name}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+             ${showDealPrice ? '<div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">DEAL</div>' : ''}
+          </div>
+          <div class="p-4 flex flex-col flex-grow">
+            <h3 class="font-bold text-gray-800 truncate mb-1">${product.name}</h3>
+            
+            <div class="mt-auto pt-2">
+                ${showDealPrice ? `
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-400 line-through">$${product.price.toFixed(2)}</span>
+                        <span class="text-xl font-extrabold text-red-600">$${displayPrice.toFixed(2)}</span>
+                    </div>
+                ` : `
+                    <span class="text-xl font-extrabold" style="color: var(--color-secondary);">$${displayPrice.toFixed(2)}</span>
+                `}
+                
+                <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' 
+                    class="w-full mt-3 py-2 rounded-lg text-sm font-bold text-white shadow-md hover:shadow-lg transition-all transform active:scale-95"
+                    style="background-color: var(--color-primary);">
+                    Add to Cart
+                </button>
+            </div>
+          </div>
+        </div>
+        `;
+      };
+
       return `
-        <div class="flex-1">
-          <div class="py-20 text-white transition-all duration-500" style="background-image: linear-gradient(to right, var(--color-primary), var(--color-secondary));">
-            <div class="max-w-7xl mx-auto px-4 text-center">
-              <h1 class="text-5xl md:text-6xl font-extrabold mb-4">Experience Premium Shopping</h1>
-              <p class="text-xl opacity-90 mb-8 font-light">Hand-picked collections, just for you.</p>
-              <button onclick="window.scrollTo({top: 600, behavior: 'smooth'})" class="bg-white px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition shadow-2xl" style="color: var(--color-primary);">Start Discovering</button>
+        <div class="flex-1 pb-12">
+          <div class="py-16 text-white transition-all duration-500 mb-8" style="background-image: linear-gradient(to right, var(--color-primary), var(--color-secondary));">
+            <div class="max-w-7xl mx-auto px-6 text-center md:text-left">
+              <h1 class="text-4xl md:text-6xl font-extrabold mb-4">The Premium Collection</h1>
+              <p class="text-lg opacity-90 mb-8 max-w-xl">Discover exclusive items curated for your lifestyle.</p>
             </div>
           </div>
-          <div class="max-w-7xl mx-auto px-4 py-12">
-            <h2 class="text-3xl font-extrabold mb-8 border-b pb-3" style="color: var(--color-primary);">Featured Collections</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              ${state.products.map(product => ProductCard(product)).join('')}
+
+          <div class="max-w-7xl mx-auto px-4 mb-12">
+            <div class="flex items-center justify-between mb-4 px-2">
+                 <h2 class="text-2xl font-extrabold text-gray-800 flex items-center gap-2">🔥 Bestsellers</h2>
+                 <div class="hidden md:flex gap-2">
+                    <button onclick="scrollSection('bestsellers-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
+                    <button onclick="scrollSection('bestsellers-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
+                 </div>
+            </div>
+            
+            <div class="relative group">
+                <button onclick="scrollSection('bestsellers-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
+                
+                <div id="bestsellers-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide scroll-smooth snap-x">
+                    ${bestsellers.length > 0 ? bestsellers.map(p => renderSliderCard(p, false)).join('') : '<p class="text-gray-500 pl-2">No bestsellers marked yet.</p>'}
+                </div>
+
+                <button onclick="scrollSection('bestsellers-scroll', 'right')" class="md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronRight()}</button>
             </div>
           </div>
+
+          <hr class="border-gray-100 max-w-7xl mx-auto mb-12" />
+
+          <div class="max-w-7xl mx-auto px-4 mb-12">
+            <div class="flex items-center justify-between mb-4 px-2">
+                 <h2 class="text-2xl font-extrabold text-gray-800 flex items-center gap-2">⚡ Monthly Deals</h2>
+                 <div class="hidden md:flex gap-2">
+                    <button onclick="scrollSection('deals-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
+                    <button onclick="scrollSection('deals-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
+                 </div>
+            </div>
+            
+            <div class="relative group">
+                <button onclick="scrollSection('deals-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
+
+                <div id="deals-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide scroll-smooth snap-x">
+                    ${monthlyDeals.length > 0 ? monthlyDeals.map(p => renderSliderCard(p, true)).join('') : '<p class="text-gray-500 pl-2">No active deals right now.</p>'}
+                </div>
+                
+                <button onclick="scrollSection('deals-scroll', 'right')" class="md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronRight()}</button>
+            </div>
+          </div>
+
+          <hr class="border-gray-100 max-w-7xl mx-auto mb-12" />
+
+          <div class="max-w-7xl mx-auto px-4">
+             <h2 class="text-2xl font-extrabold text-gray-800 mb-6 px-2">Browse by Category</h2>
+             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                ${state.categories.map(cat => {
+                    const theme = CATEGORY_THEMES[cat.slug] || CATEGORY_THEMES['default'];
+                    return `
+                    <div onclick="navigate('category', '${cat.slug}')" 
+                         class="cursor-pointer bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center justify-center gap-3 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                         style="border-bottom: 4px solid ${theme.primary}">
+                        <div class="text-4xl group-hover:scale-110 transition-transform duration-300">${theme.icon || '📦'}</div>
+                        <span class="font-bold text-center text-gray-800 group-hover:text-indigo-600">${cat.name}</span>
+                    </div>
+                    `;
+                }).join('')}
+             </div>
+          </div>
+
         </div>
       `;
     }
