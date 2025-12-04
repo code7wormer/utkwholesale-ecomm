@@ -10,6 +10,7 @@ TODO
 [ ] - algo for adding products
 
 [ ] - implement search
+[ ] - email order
 
 few more pages so the site looks fuller
 
