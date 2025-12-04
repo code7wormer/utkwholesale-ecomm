@@ -390,7 +390,9 @@
         category_id: form.category_id.value,
         slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000), // Append random number to ensure unique slug
         stock_status: form.stock_status.value,
-        is_active: form.is_active.checked
+        is_active: form.is_active.checked,
+        is_monthly_deal: form.is_monthly_deal.checked,
+        deal_price: form.deal_price.value ? parseFloat(form.deal_price.value) : null
       };
 
       const { error } = await supabase.from('products').insert([newProduct]);
@@ -417,6 +419,8 @@
         document.getElementById('edit-category_id').value = product.category_id;
         document.getElementById('edit-stock_status').value = product.stock_status;
         document.getElementById('edit-is_active').checked = product.is_active;
+        document.getElementById('edit-is_monthly_deal').checked = product.is_monthly_deal || false;
+        document.getElementById('edit-deal_price').value = product.deal_price || '';
         modal.classList.remove('hidden');
     }
 
@@ -441,7 +445,9 @@
             image_url: form.image_url.value,
             category_id: form.category_id.value,
             stock_status: form.stock_status.value,
-            is_active: form.is_active.checked
+            is_active: form.is_active.checked,
+            is_monthly_deal: form.is_monthly_deal.checked,
+            deal_price: form.deal_price.value ? parseFloat(form.deal_price.value) : null
         };
 
         const { error } = await supabase.from('products').update(updates).eq('id', id);
@@ -822,6 +828,16 @@
                             <input type="number" name="price" required step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
                         </div>
                     </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center pt-6">
+                            <input type="checkbox" name="is_monthly_deal" id="is_monthly_deal" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                            <label for="is_monthly_deal" class="ml-2 block text-sm font-medium text-gray-700">Monthly Deal?</label>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Deal Price</label>
+                            <input type="number" name="deal_price" step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        </div>
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Image URL</label>
                         <input type="url" name="image_url" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
@@ -899,6 +915,16 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Price</label>
                                 <input type="number" name="price" id="edit-price" required step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                            </div>
+                        </div>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="flex items-center pt-6">
+                                <input type="checkbox" name="is_monthly_deal" id="edit-is_monthly_deal" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                <label for="edit-is_monthly_deal" class="ml-2 block text-sm font-medium text-gray-700">Monthly Deal?</label>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Deal Price</label>
+                                <input type="number" name="deal_price" id="edit-deal_price" step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
                             </div>
                         </div>
                         <div>
@@ -1092,4 +1118,3 @@
   </script>
 </body>
 </html>
-  
