@@ -75,7 +75,7 @@
       z-index: 100;
     }
 
-    /* 🌟 Loading Overlay Animation (SLOWER AND SMOOTHER: 1.5s) */
+    /* 🌟 Loading Overlay Animation */
     .overlay-enter { animation: overlayIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
     .overlay-exit { animation: overlayOut 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
@@ -217,7 +217,7 @@
         loader.classList.remove('hidden', 'overlay-exit');
         loader.classList.add('flex', 'overlay-enter');
         
-        // ✨ SMOOTHER DELAY: Increased to 1600ms to match CSS
+        // ✨ SMOOTHER DELAY
         await new Promise(resolve => setTimeout(resolve, 1600));
 
         updateTheme(slug);
@@ -234,7 +234,7 @@
           setTimeout(() => {
             loader.classList.add('hidden');
             loader.classList.remove('flex');
-          }, 1500); // Wait for CSS exit animation
+          }, 1500); 
         }, 500);
 
       } else {
@@ -374,6 +374,7 @@
       if (error) console.error("Admin fetch error:", error);
     }
     
+    // 🌟 FIX: Updated Add Product (Removed Deals Logic dependencies)
     async function handleAddProduct(e) {
       e.preventDefault();
       if (!state.isAdmin) {
@@ -381,6 +382,7 @@
           return;
       }
       const form = e.target;
+      
       const newProduct = {
         name: form.name.value,
         description: form.description.value,
@@ -388,17 +390,18 @@
         price: parseFloat(form.price.value),
         image_url: form.image_url.value,
         category_id: form.category_id.value,
-        slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000), // Append random number to ensure unique slug
+        slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000), 
         stock_status: form.stock_status.value,
         is_active: form.is_active.checked,
-        is_monthly_deal: form.is_monthly_deal.checked,
-        deal_price: form.deal_price.value ? parseFloat(form.deal_price.value) : null
+        // 🌟 FIX: Force these to null/false for new products as requested
+        is_monthly_deal: false,
+        deal_price: null
       };
 
       const { error } = await supabase.from('products').insert([newProduct]);
       if (error) {
         console.error("Supabase Error:", error);
-        alert("Error adding product: " + error.message + "\nDetails: " + (error.details || 'Check console'));
+        alert("Error adding product: " + error.message);
       } else {
         alert("Product added successfully!");
         form.reset();
@@ -408,6 +411,7 @@
     }
 
     window.handleAddProduct = handleAddProduct;
+
     function openEditModal(product) {
         const modal = document.getElementById('edit-modal');
         document.getElementById('edit-id').value = product.id;
@@ -430,24 +434,27 @@
     window.openEditModal = openEditModal;
     window.closeEditModal = closeEditModal;
 
+    // 🌟 FIX: Updated Save Edit Function (ID retrieval fix)
     async function handleUpdateProduct(e) {
         e.preventDefault();
         if (!state.isAdmin) return;
 
         const form = e.target;
-        const id = form.id.value;
+        // 🌟 FIX: Get ID securely by ID attribute, not form.id (which can conflict with the form tag itself)
+        const id = document.getElementById('edit-id').value;
         
         const updates = {
-            name: form.name.value,
-            description: form.description.value,
-            detailed_description: form.detailed_description.value || null,
-            price: parseFloat(form.price.value),
-            image_url: form.image_url.value,
-            category_id: form.category_id.value,
-            stock_status: form.stock_status.value,
-            is_active: form.is_active.checked,
-            is_monthly_deal: form.is_monthly_deal.checked,
-            deal_price: form.deal_price.value ? parseFloat(form.deal_price.value) : null
+            name: form.querySelector('[id="edit-name"]').value,
+            description: form.querySelector('[id="edit-description"]').value,
+            detailed_description: form.querySelector('[id="edit-detailed_description"]').value || null,
+            price: parseFloat(form.querySelector('[id="edit-price"]').value),
+            image_url: form.querySelector('[id="edit-image_url"]').value,
+            category_id: parseInt(form.querySelector('[id="edit-category_id"]').value),
+            stock_status: form.querySelector('[id="edit-stock_status"]').value,
+            is_active: form.querySelector('[id="edit-is_active"]').checked,
+            // These exist in edit mode
+            is_monthly_deal: form.querySelector('[id="edit-is_monthly_deal"]').checked,
+            deal_price: form.querySelector('[id="edit-deal_price"]').value ? parseFloat(form.querySelector('[id="edit-deal_price"]').value) : null
         };
 
         const { error } = await supabase.from('products').update(updates).eq('id', id);
@@ -482,7 +489,6 @@
     // --- Components ---
 
     function Header() {
-      // 🌟 CHANGED: Replaced max-w-7xl with w-full and added px-6 to push menu to far left
       return `
         <header class="bg-white shadow-md sticky top-0 z-40 border-b border-gray-100">
           <div class="w-full px-6 py-3 flex items-center justify-between">
@@ -828,16 +834,7 @@
                             <input type="number" name="price" required step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="flex items-center pt-6">
-                            <input type="checkbox" name="is_monthly_deal" id="is_monthly_deal" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                            <label for="is_monthly_deal" class="ml-2 block text-sm font-medium text-gray-700">Monthly Deal?</label>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Deal Price</label>
-                            <input type="number" name="deal_price" step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
-                        </div>
-                    </div>
+                    
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Image URL</label>
                         <input type="url" name="image_url" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
@@ -917,7 +914,8 @@
                                 <input type="number" name="price" id="edit-price" required step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
                             </div>
                         </div>
-                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-yellow-50 p-2 rounded-lg border border-yellow-100">
                             <div class="flex items-center pt-6">
                                 <input type="checkbox" name="is_monthly_deal" id="edit-is_monthly_deal" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                                 <label for="edit-is_monthly_deal" class="ml-2 block text-sm font-medium text-gray-700">Monthly Deal?</label>
@@ -927,6 +925,7 @@
                                 <input type="number" name="deal_price" id="edit-deal_price" step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
                             </div>
                         </div>
+
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Image URL</label>
                             <input type="url" name="image_url" id="edit-image_url" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
