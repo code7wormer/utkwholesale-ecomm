@@ -202,6 +202,7 @@
     // --- Helper to toggle Deal Inputs ---
     window.toggleDealInputs = function(checkbox, containerId) {
         const container = document.getElementById(containerId);
+        if (!container) return; // Safety check
         const input = container.querySelector('input');
         if (checkbox.checked) {
             container.classList.remove('hidden');
@@ -379,57 +380,81 @@
     }
     
     // --- Admin Functions ---
-    async function fetchAdminProducts() {
-      if (!state.isAdmin) return;
-      const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
-      if (data) {
-        state.adminProducts = data;
-        render();
-      }
-      if (error) console.error("Admin fetch error:", error);
-    }
-    
     async function handleAddProduct(e) {
       e.preventDefault();
+      
+      // 1. Admin Check
       if (!state.isAdmin) {
-          alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
+          alert("Access Denied: You are not logged in as Admin.");
           return;
       }
+
       const form = e.target;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalBtnText = submitBtn.innerText;
+      
+      try {
+          // 2. Show Loading State
+          submitBtn.disabled = true;
+          submitBtn.innerText = "Adding...";
 
-      // Check deal status
-      const isDeal = form.is_deal.checked;
-      const dealPrice = isDeal ? parseFloat(form.deal_price.value) : null;
+          // 3. Secure Data Extraction
+          const isDeal = form.is_deal.checked;
+          let dealPrice = null;
 
-      const newProduct = {
-        name: form.name.value,
-        description: form.description.value,
-        detailed_description: form.detailed_description.value || null,
-        price: parseFloat(form.price.value),
-        image_url: form.image_url.value,
-        category_id: form.category_id.value,
-        slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000), 
-        stock_status: form.stock_status.value,
-        is_active: form.is_active.checked,
-        is_deal: isDeal,
-        deal_price: dealPrice
-      };
+          // Validate Deal Price if checked
+          if (isDeal) {
+              const rawPrice = form.deal_price.value;
+              if (!rawPrice) {
+                  throw new Error("Please enter a deal price or uncheck the Monthly Deal box.");
+              }
+              dealPrice = parseFloat(rawPrice);
+              if (isNaN(dealPrice)) throw new Error("Invalid Deal Price format.");
+          }
 
-      const { error } = await supabase.from('products').insert([newProduct]);
-      if (error) {
-        console.error("Supabase Error:", error);
-        alert("Error adding product: " + error.message + "\nDetails: " + (error.details || 'Check console'));
-      } else {
-        alert("Product added successfully!");
-        form.reset();
-        document.getElementById('add-deal-container').classList.add('hidden'); // Reset UI
-        await fetchAdminProducts();
-        await fetchInitialProducts();
+          const newProduct = {
+            name: form.name.value.trim(),
+            description: form.description.value.trim(),
+            detailed_description: form.detailed_description.value.trim() || null,
+            price: parseFloat(form.price.value),
+            image_url: form.image_url.value.trim(),
+            category_id: form.category_id.value,
+            // Create a unique slug
+            slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Date.now(),
+            stock_status: form.stock_status.value,
+            is_active: form.is_active.checked,
+            is_deal: isDeal,
+            deal_price: dealPrice
+          };
+
+          // 4. Send to Supabase
+          const { data, error } = await supabase.from('products').insert([newProduct]).select();
+
+          if (error) throw error;
+
+          // 5. Success Handling
+          alert("✅ Product added successfully!");
+          form.reset();
+          
+          // Reset Deal UI manually since form.reset() doesn't fire the onchange event
+          document.getElementById('add-deal-container').classList.add('hidden');
+          
+          await fetchAdminProducts();
+          await fetchInitialProducts();
+
+      } catch (error) {
+          console.error("Add Product Error:", error);
+          alert("❌ Error: " + (error.message || "Failed to add product"));
+      } finally {
+          // 6. Reset Button
+          submitBtn.disabled = false;
+          submitBtn.innerText = originalBtnText;
       }
     }
-
+    // ensure it's globally available
     window.handleAddProduct = handleAddProduct;
 
+  
     function openEditModal(product) {
         const modal = document.getElementById('edit-modal');
         document.getElementById('edit-id').value = product.id;
