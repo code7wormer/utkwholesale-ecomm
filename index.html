@@ -393,7 +393,7 @@
         detailed_description: form.detailed_description.value || null,
         price: parseFloat(form.price.value),
         image_url: form.image_url.value,
-        category_id: parseInt(form.category_id.value),
+        category_id: form.category_id.value,
         slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, ''),
         stock_status: form.stock_status.value,
         is_active: form.is_active.checked
@@ -435,7 +435,7 @@
         if (!state.isAdmin) return;
 
         const form = e.target;
-        const id = parseInt(form.id.value);
+        const id = form.id.value;
         
         const updates = {
             name: form.name.value,
@@ -443,7 +443,7 @@
             detailed_description: form.detailed_description.value || null,
             price: parseFloat(form.price.value),
             image_url: form.image_url.value,
-            category_id: parseInt(form.category_id.value),
+            category_id: form.category_id.value,
             slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, ''),
             stock_status: form.stock_status.value,
             is_active: form.is_active.checked
