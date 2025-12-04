@@ -376,8 +376,10 @@
     
     async function handleAddProduct(e) {
       e.preventDefault();
-      if (!state.isAdmin) return;
-      
+      if (!state.isAdmin) {
+          alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
+          return;
+      }
       const form = e.target;
       const newProduct = {
         name: form.name.value,
