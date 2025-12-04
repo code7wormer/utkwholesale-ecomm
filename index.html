@@ -199,10 +199,11 @@
       adminProducts: [],
     };
 
-    // --- Helper to toggle Deal Inputs ---
+    // --- FIXED: Toggle Input Function ---
     window.toggleDealInputs = function(checkbox, containerId) {
         const container = document.getElementById(containerId);
-        if (!container) return; // Safety check
+        if (!container) return;
+        
         const input = container.querySelector('input');
         if (checkbox.checked) {
             container.classList.remove('hidden');
@@ -210,7 +211,7 @@
         } else {
             container.classList.add('hidden');
             input.required = false;
-            input.value = '';
+            input.value = ''; // Clear value to prevent bad data
         }
     }
 
@@ -380,78 +381,90 @@
     }
     
     // --- Admin Functions ---
+    // --- FIXED: Add Product Function (Debugged) ---
     async function handleAddProduct(e) {
-      e.preventDefault();
+      e.preventDefault(); // Prevents page reload
       
-      // 1. Admin Check
+      // 1. Check Admin
       if (!state.isAdmin) {
           alert("Access Denied: You are not logged in as Admin.");
           return;
       }
 
-      const form = e.target;
-      const submitBtn = form.querySelector('button[type="submit"]');
-      const originalBtnText = submitBtn.innerText;
-      
+      // 2. UI Feedback (Disable button to prevent double-clicks)
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerText;
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Processing...";
+
       try {
-          // 2. Show Loading State
-          submitBtn.disabled = true;
-          submitBtn.innerText = "Adding...";
+          // 3. Use FormData for safer value extraction
+          const formData = new FormData(e.target);
+          
+          // Extract Checkbox values correctly
+          // (FormData only sends checkboxes if they are checked)
+          const isDeal = formData.get('is_deal') === 'on'; 
+          const isActive = formData.get('is_active') === 'on';
 
-          // 3. Secure Data Extraction
-          const isDeal = form.is_deal.checked;
+          // 4. Validate and Parse Numbers
           let dealPrice = null;
-
-          // Validate Deal Price if checked
           if (isDeal) {
-              const rawPrice = form.deal_price.value;
-              if (!rawPrice) {
-                  throw new Error("Please enter a deal price or uncheck the Monthly Deal box.");
-              }
-              dealPrice = parseFloat(rawPrice);
-              if (isNaN(dealPrice)) throw new Error("Invalid Deal Price format.");
+              const rawDealPrice = formData.get('deal_price');
+              if (!rawDealPrice) throw new Error("Please enter a Deal Price");
+              dealPrice = parseFloat(rawDealPrice);
           }
 
+          const price = parseFloat(formData.get('price'));
+          const name = formData.get('name');
+
+          if (!name) throw new Error("Product Name is required");
+          if (isNaN(price)) throw new Error("Invalid Price");
+
+          // 5. Construct Product Object
           const newProduct = {
-            name: form.name.value.trim(),
-            description: form.description.value.trim(),
-            detailed_description: form.detailed_description.value.trim() || null,
-            price: parseFloat(form.price.value),
-            image_url: form.image_url.value.trim(),
-            category_id: form.category_id.value,
-            // Create a unique slug
-            slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Date.now(),
-            stock_status: form.stock_status.value,
-            is_active: form.is_active.checked,
+            name: name,
+            description: formData.get('description'),
+            detailed_description: formData.get('detailed_description') || null,
+            price: price,
+            image_url: formData.get('image_url'),
+            category_id: formData.get('category_id'),
+            // Generate robust slug
+            slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Date.now(),
+            stock_status: formData.get('stock_status'),
+            is_active: isActive,
             is_deal: isDeal,
             deal_price: dealPrice
           };
 
-          // 4. Send to Supabase
+          console.log("Submitting Product:", newProduct); // Check Console if it fails
+
+          // 6. Send to Supabase
           const { data, error } = await supabase.from('products').insert([newProduct]).select();
 
           if (error) throw error;
 
-          // 5. Success Handling
+          // 7. Success
           alert("✅ Product added successfully!");
-          form.reset();
+          e.target.reset(); // Clear form
           
-          // Reset Deal UI manually since form.reset() doesn't fire the onchange event
-          document.getElementById('add-deal-container').classList.add('hidden');
-          
+          // Manually reset the hidden deal container
+          const dealContainer = document.getElementById('add-deal-container');
+          if(dealContainer) dealContainer.classList.add('hidden');
+
           await fetchAdminProducts();
           await fetchInitialProducts();
 
-      } catch (error) {
-          console.error("Add Product Error:", error);
-          alert("❌ Error: " + (error.message || "Failed to add product"));
+      } catch (err) {
+          console.error("Add Product Error:", err);
+          alert("❌ Error adding product: " + err.message);
       } finally {
-          // 6. Reset Button
+          // 8. Reset Button
           submitBtn.disabled = false;
-          submitBtn.innerText = originalBtnText;
+          submitBtn.innerText = originalText;
       }
     }
-    // ensure it's globally available
+    
+    // Ensure function is globally attached
     window.handleAddProduct = handleAddProduct;
 
   
