@@ -1318,7 +1318,7 @@
         const previousUser = state.user;
         state.user = session?.user || null;
         
-        state.isAdmin = state.user && state.user.email === ADMIN_EMAIL;
+        state.isAdmin = state.user && state.user.email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase();
         
         if (!previousUser && state.user) await mergeCart();
         if (state.user) await fetchCart();
