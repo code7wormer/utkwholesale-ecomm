@@ -512,7 +512,19 @@
     }
 
     async function handleGoogleLogin() {
-      await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({ 
+          provider: 'google', 
+          options: { 
+            // Redirect to the current URL, but stripped of any existing hash/query
+            redirectTo: window.location.origin + window.location.pathname 
+          } 
+        });
+        if (error) throw error;
+      } catch (e) {
+        alert('Error starting Google Login: ' + e.message);
+        console.error(e);
+      }
     }
 
     async function handleLogout() {
@@ -1609,36 +1621,41 @@
         const categoriesRes = await supabase.from('categories').select('*').order('display_order');
         state.categories = categoriesRes.data || [];
         await fetchInitialProducts();
-      } catch (e) { console.error(e); } 
+      } catch (e) { console.error("Init Error:", e); } 
       finally { render(); }
 
+      // 🌟 SETUP AUTH LISTENER
       supabase.auth.onAuthStateChange(async (event, session) => {
-        const previousUser = state.user;
-        state.user = session?.user || null;
-        
-       if (state.user && state.user.email) {
-         const userEmail = state.user.email.trim().toLowerCase();
-          const adminEmail = ADMIN_EMAIL.trim().toLowerCase();
-          
-          state.isAdmin = userEmail === adminEmail;
-          
-          console.log("👮 Admin Check Debug:");
-          console.log(`   Logged in as: '${userEmail}'`);
-          console.log(`   Admin is:     '${adminEmail}'`);
-          console.log(`   Is Admin?      ${state.isAdmin}`);
-      } else {
-          state.isAdmin = false;
-          console.log("👮 Admin Check: No user logged in.");
-      }
-        
-        if (!previousUser && state.user) await mergeCart();
-        if (state.user) await fetchCart();
-        
-        if (state.isAdmin && state.currentPage === 'admin') {
-            await fetchAdminProducts();
+        try {
+            const previousUser = state.user;
+            state.user = session?.user || null;
+            
+            // Handle Admin Check
+            if (state.user && state.user.email) {
+                const userEmail = state.user.email.trim().toLowerCase();
+                const adminEmail = ADMIN_EMAIL.trim().toLowerCase();
+                state.isAdmin = userEmail === adminEmail;
+            } else {
+                state.isAdmin = false;
+            }
+            
+            // Handle Data Sync (Cart, Admin Products)
+            // We await these, but if they fail, we catch the error so the UI still updates
+            if (state.user) {
+                if (!previousUser) await mergeCart();
+                await fetchCart();
+                
+                if (state.isAdmin && state.currentPage === 'admin') {
+                    await fetchAdminProducts();
+                }
+            }
+        } catch (err) {
+            console.error("Auth State Logic Error:", err);
+            // Optional: showToast("Error syncing data, but you are logged in.");
+        } finally {
+            // 🌟 ALWAYS RENDER to ensure UI updates
+            render();
         }
-
-        render();
       });
     }
     
