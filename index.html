@@ -614,103 +614,49 @@ window.handleVerifyOtp = async function() {
         btn.disabled = false;
     }
 };
-    // 3. Triggered by "Verify" button in popup
-  window.handleVerifyOtp = async function() {
-    const otpInput = document.getElementById('user-otp');
-    const btn = document.getElementById('btn-verify-otp');
-    const token = otpInput.value.trim();
-
-    if (token.length !== 6) {
-        alert("Please enter the 6-digit code.");
-        return;
-    }
-
-    btn.innerText = "Verifying...";
-    btn.disabled = true;
-
-    try {
-        console.log("Verifying OTP for:", window.pendingPhone);
-        
-        // Verify the OTP
-        const { data, error } = await supabase.auth.verifyOtp({
-            phone: window.pendingPhone,
-            token: token,
-            type: 'sms'
-        });
-
-        console.log("Verify response:", { data, error });
-
-        if (error) {
-            console.error("Verification failed:", error);
-            alert("Invalid code. Please try again.");
-            btn.innerText = "Verify & Complete Order";
-            btn.disabled = false;
-            return;
-        }
-
-        console.log("✅ Phone verified!");
-        
-        // Phone is verified, proceed with order
-        closePhonePopup();
-        
-        if (state.isCheckoutFlow && typeof finalizeOrder === 'function') {
-            await finalizeOrder(window.pendingPhone);
-        } else {
-            alert("Phone verified: " + window.pendingPhone);
-        }
-
-    } catch (err) {
-        console.error("Crash:", err);
-        alert("Error: " + err.message);
-        btn.innerText = "Verify & Complete Order";
-        btn.disabled = false;
-    }
-};
     // 4. The ACTUAL Order Processing (Sends Email + Clears Cart)
     async function finalizeOrder(verifiedPhone) {
-        showToast("Processing Order...");
+    showToast("Processing Order...");
+    
+    try {
+        // Calculate Totals
+        const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         
-        try {
-            // Calculate Totals
-            const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
-            // Prepare Email Content
-            const orderDetails = state.cart
-                .map(item => `${item.name} (x${item.quantity}) - $${(item.price * item.quantity).toFixed(2)}`)
-                .join('\n');
+        // Prepare Email Content
+        const orderDetails = state.cart
+            .map(item => `${item.name} (x${item.quantity}) - $${(item.price * item.quantity).toFixed(2)}`)
+            .join('\n');
 
-            const templateParams = {
-                to_name: "Admin",
-                from_name: state.user.email,
-                reply_to: state.user.email,
-                message: orderDetails,
-                total_amount: `$${total.toFixed(2)}`,
-                contact_phone: verifiedPhone // <--- ADDED PHONE HERE
-            };
+        const templateParams = {
+            to_name: "Admin",
+            from_name: state.user.email,
+            reply_to: state.user.email,
+            customer_email: state.user.email,  // ✅ ADD THIS
+            message: orderDetails,
+            total_amount: `$${total.toFixed(2)}`,
+            contact_phone: verifiedPhone  // ✅ This is already there
+        };
 
-            // Send Email
-            await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
+        // Send Email
+        await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
 
-            // Optional: Save to Supabase 'orders' table if you have one
-            // await supabase.from('orders').insert([{ user_id: state.user.id, contact_phone: verifiedPhone, total: total }]);
-
-            // Clear Cart
-            if (state.user) {
-                await supabase.from('cart_items').delete().eq('user_id', state.user.id);
-            }
-            state.cart = [];
-            
-            // Success Message
-            alert(`Order Placed Successfully!\nWe will contact you at: ${verifiedPhone}`);
-            navigate('home');
-
-        } catch (error) {
-            console.error('Order Error:', error);
-            alert("Failed to place order. Please try again.");
-        } finally {
-            state.isCheckoutFlow = false;
+        // Clear Cart
+        if (state.user) {
+            await supabase.from('cart_items').delete().eq('user_id', state.user.id);
         }
+        state.cart = [];
+        
+        // Success Message
+        alert(`Order Placed Successfully!\nWe will contact you at: ${verifiedPhone}`);
+        navigate('home');
+
+    } catch (error) {
+        console.error('Order Error:', error);
+        alert("Failed to place order. Please try again.");
+    } finally {
+        state.isCheckoutFlow = false;
     }
+}
 
     // --- Popup Helpers ---
     window.openPhonePopup = () => document.getElementById('phone-popup').classList.remove('hidden');
