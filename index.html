@@ -513,7 +513,12 @@
 
     async function handleUpdateProduct(e) {
         e.preventDefault();
-        if (!state.isAdmin) return;
+        console.log("🟢 Update button clicked!"); // Check console for this
+
+        if (!state.isAdmin) {
+            alert("⛔ ACCESS DENIED: The system does not recognize you as the admin.");
+            return;
+        }
 
         const form = e.target;
         const id = form.id.value;
