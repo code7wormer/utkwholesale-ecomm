@@ -841,14 +841,15 @@ async function ensureValidSession() {
     }
     
     async function handleAddProduct(e) {
+      const session = await ensureValidSession();
+      if (!session) {
+        alert("Session expired. Please log in again.");
+        navigate('auth');
+        return;
+      }
   console.log("=== handleAddProduct START ===");
-  e.preventDefault();
-  const session = await ensureValidSession();
-  if (!session) {
-    alert("Session expired. Please log in again.");
-    navigate('auth');
-    return;
-  }
+  // e.preventDefault();
+  
   const { data: sessionData } = await supabase.auth.getSession();
   console.log("🔑 Session exists:", !!sessionData.session);
   console.log("🔑 User email:", sessionData.session?.user?.email);
