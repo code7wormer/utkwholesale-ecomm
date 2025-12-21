@@ -1573,7 +1573,7 @@
       const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
       return `
-        <div class="flex-1 max-w-4xl mx-auto px-4 py-12 page-enter">
+        <div class="flex-1 max-w-4xl mx-auto px-4 py-12 page-enter relative">
           <h1 class="text-3xl font-extrabold mb-8 border-b pb-3" style="color: var(--color-primary);">Shopping Cart</h1>
           ${state.cart.length === 0 ? `
             <div class="text-center py-16 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
@@ -1611,33 +1611,64 @@
                 <span class="text-gray-600 font-semibold">Order Total</span>
                 <span id="cart-grand-total" class="text-3xl font-extrabold" style="color: var(--color-primary);">$${total.toFixed(2)}</span>
               </div>
-              ${!state.user ? `
-                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4 text-sm text-yellow-800">
-                  <span class="font-bold">Note:</span> Please <button onclick="navigate('auth')" class="underline font-semibold" style="color: var(--color-secondary);">sign in</button> to checkout.
-                </div>
-              ` : ''}
               
-              <button id="checkout-btn" onclick="handleCheckout()" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-xl hover:shadow-2xl" style="background-color: var(--color-secondary);">
+              <button onclick="openCheckoutModal()" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-xl hover:shadow-2xl" style="background-color: var(--color-secondary);">
                 Proceed to Checkout
               </button>
             </div>
           `}
+
+          <div id="checkout-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm transition-opacity">
+            <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full transform scale-100 transition-transform">
+              <h2 class="text-2xl font-bold mb-4" style="color: var(--color-primary);">Final Step</h2>
+              <p class="text-gray-600 mb-6">Please provide a phone number so we can contact you regarding delivery.</p>
+              
+              <label class="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+              <input type="tel" id="customer-phone" placeholder="+1 (555) 000-0000" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 mb-6 outline-none">
+              
+              <div class="flex gap-3">
+                <button onclick="closeCheckoutModal()" class="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition-colors">
+                  Cancel
+                </button>
+                <button id="confirm-order-btn" onclick="submitFinalOrder()" class="flex-1 py-3 text-white font-bold rounded-lg hover:shadow-lg transition-all" style="background-color: var(--color-secondary);">
+                  Confirm Order
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
       `;
-    }
-    // 🌟 CHECKOUT HANDLER
-    async function handleCheckout() {
-        if (state.cart.length === 0) {
-            showToast("Your cart is empty!");
-            return;
-        }
+    }    // 🌟 CHECKOUT HANDLER
+    // 1. Open the Popup
+    function openCheckoutModal() {
+        if (state.cart.length === 0) return showToast("Your cart is empty!");
         if (!state.user) {
-            showToast("Please login to checkout.");
+            showToast("Please login first.");
             navigate('auth');
             return;
         }
+        const modal = document.getElementById('checkout-modal');
+        if(modal) modal.classList.remove('hidden');
+    }
 
-        const btn = document.getElementById('checkout-btn');
+    // 2. Close the Popup
+    function closeCheckoutModal() {
+        const modal = document.getElementById('checkout-modal');
+        if(modal) modal.classList.add('hidden');
+    }
+
+    // 3. Submit Order (Replaces old handleCheckout)
+    async function submitFinalOrder() {
+        const phoneInput = document.getElementById('customer-phone');
+        const phone = phoneInput.value.trim();
+        
+        if (!phone) {
+            alert("Please enter a phone number to continue.");
+            return;
+        }
+
+        const btn = document.getElementById('confirm-order-btn');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<div class="loader" style="width: 20px; height: 20px; border-top-color: white; display: inline-block;"></div> Processing...';
         btn.disabled = true;
@@ -1645,45 +1676,46 @@
         try {
             const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             
-            // Format order details
             const orderDetails = state.cart.map(item => 
                 `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
             ).join('\n');
 
+            // 🌟 Prepare Email Params with Phone Number
             const templateParams = {
-                // Customer Details (For the email body)
                 customer_name: state.user.email.split('@')[0],
                 customer_email: state.user.email,
-                
-                // 🌟 CRITICAL: This makes the "Reply" button in your inbox email the Customer
                 reply_to: state.user.email,
-
-                // The Order Data
-                message: orderDetails,
+                
+                // We add the phone number to the MAIN message body so it appears 
+                // even if you don't update your EmailJS template.
+                message: `CUSTOMER PHONE: ${phone}\n\nORDER ITEMS:\n${orderDetails}`,
+                
                 total_amount: `$${total.toFixed(2)}`
             };
 
-            // Send Email (Ensure you used your REAL Public Key in emailjs.init previously)
             await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
 
-            // Clear Cart
             if (state.user) {
                 await supabase.from('cart_items').delete().eq('user_id', state.user.id);
             }
             
             state.cart = [];
-            showToast("Order placed successfully!, We will reach out to you soon!");
+            closeCheckoutModal(); // Hide modal
+            showToast("Order Confirmed! We will contact you soon.");
             navigate('home');
 
         } catch (error) {
             console.error('Checkout Error:', error);
-            showToast("Checkout failed. Please try again.");
-            alert("Error sending email: " + JSON.stringify(error));
+            showToast("Order failed. Please try again.");
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
     }
-    window.handleCheckout = handleCheckout;
+    
+    // Expose functions to window
+    window.openCheckoutModal = openCheckoutModal;
+    window.closeCheckoutModal = closeCheckoutModal;
+    window.submitFinalOrder = submitFinalOrder;
     function render() {
       let content = '';
       switch(state.currentPage) {
