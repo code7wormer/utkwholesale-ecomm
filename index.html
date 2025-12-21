@@ -1924,64 +1924,64 @@
       `;
     }
     // 🌟 CHECKOUT HANDLER
-    async function handleCheckout() {
-        if (state.cart.length === 0) {
-            showToast("Your cart is empty!");
-            return;
-        }
-        if (!state.user) {
-            showToast("Please login to checkout.");
-            navigate('auth');
-            return;
-        }
+    // async function handleCheckout() {
+    //     if (state.cart.length === 0) {
+    //         showToast("Your cart is empty!");
+    //         return;
+    //     }
+    //     if (!state.user) {
+    //         showToast("Please login to checkout.");
+    //         navigate('auth');
+    //         return;
+    //     }
 
-        const btn = document.getElementById('checkout-btn');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<div class="loader" style="width: 20px; height: 20px; border-top-color: white; display: inline-block;"></div> Processing...';
-        btn.disabled = true;
+    //     const btn = document.getElementById('checkout-btn');
+    //     const originalText = btn.innerHTML;
+    //     btn.innerHTML = '<div class="loader" style="width: 20px; height: 20px; border-top-color: white; display: inline-block;"></div> Processing...';
+    //     btn.disabled = true;
 
-        try {
-            const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    //     try {
+    //         const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             
-            // Format order details
-            const orderDetails = state.cart.map(item => 
-                `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
-            ).join('\n');
+    //         // Format order details
+    //         const orderDetails = state.cart.map(item => 
+    //             `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
+    //         ).join('\n');
 
-            const templateParams = {
-                // Customer Details (For the email body)
-                customer_name: state.user.email.split('@')[0],
-                customer_email: state.user.email,
+    //         const templateParams = {
+    //             // Customer Details (For the email body)
+    //             customer_name: state.user.email.split('@')[0],
+    //             customer_email: state.user.email,
                 
-                // 🌟 CRITICAL: This makes the "Reply" button in your inbox email the Customer
-                reply_to: state.user.email,
+    //             // 🌟 CRITICAL: This makes the "Reply" button in your inbox email the Customer
+    //             reply_to: state.user.email,
 
-                // The Order Data
-                message: orderDetails,
-                total_amount: `$${total.toFixed(2)}`
-            };
+    //             // The Order Data
+    //             message: orderDetails,
+    //             total_amount: `$${total.toFixed(2)}`
+    //         };
 
-            // Send Email (Ensure you used your REAL Public Key in emailjs.init previously)
-            await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
+    //         // Send Email (Ensure you used your REAL Public Key in emailjs.init previously)
+    //         await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
 
-            // Clear Cart
-            if (state.user) {
-                await supabase.from('cart_items').delete().eq('user_id', state.user.id);
-            }
+    //         // Clear Cart
+    //         if (state.user) {
+    //             await supabase.from('cart_items').delete().eq('user_id', state.user.id);
+    //         }
             
-            state.cart = [];
-            showToast("Order placed successfully!, We will reach out to you soon!");
-            navigate('home');
+    //         state.cart = [];
+    //         showToast("Order placed successfully!, We will reach out to you soon!");
+    //         navigate('home');
 
-        } catch (error) {
-            console.error('Checkout Error:', error);
-            showToast("Checkout failed. Please try again.");
-            alert("Error sending email: " + JSON.stringify(error));
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-    }
-    window.handleCheckout = handleCheckout;
+    //     } catch (error) {
+    //         console.error('Checkout Error:', error);
+    //         showToast("Checkout failed. Please try again.");
+    //         alert("Error sending email: " + JSON.stringify(error));
+    //         btn.innerHTML = originalText;
+    //         btn.disabled = false;
+    //     }
+    // }
+    // window.handleCheckout = handleCheckout;
     function render() {
       let content = '';
       switch(state.currentPage) {
