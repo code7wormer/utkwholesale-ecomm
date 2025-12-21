@@ -819,16 +819,19 @@
     }
     
     async function handleAddProduct(e) {
-  console.log("handleAddProduct called");
+  console.log("=== handleAddProduct START ===");
   e.preventDefault();
   
   if (!state.isAdmin) {
+      console.log("Admin check failed. isAdmin:", state.isAdmin);
       alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
       return;
   }
   
+  console.log("Admin check passed. User:", state.user?.email);
+  
   const form = e.target;
-  console.log("Form data being collected...");
+  console.log("Form element:", form);
   
   const isDeal = form.is_deal.checked;
   
@@ -847,23 +850,45 @@
     is_bestseller: form.is_bestseller.checked
   };
 
-  console.log("Product to be added:", newProduct);
+  console.log("Product object created:", JSON.stringify(newProduct, null, 2));
+  console.log("About to call Supabase insert...");
+  console.log("Supabase client:", supabase);
 
-  const { error } = await supabase.from('products').insert([newProduct]);
-  
-  if (error) {
-    console.error("Supabase Error:", error);
-    alert("Error adding product: " + error.message + "\nDetails: " + (error.details || 'Check console'));
-  } else {
-    console.log("Product added successfully!");
-    alert("Product added successfully!");
-    form.reset();
-    document.getElementById('add-deal-price-container').classList.add('hidden');
-    await fetchAdminProducts();
-    await fetchInitialProducts();
+  try {
+    // Add timeout wrapper
+    const insertPromise = supabase.from('products').insert([newProduct]);
+    console.log("Insert promise created:", insertPromise);
+    
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Timeout after 10 seconds')), 10000)
+    );
+    
+    const { data, error } = await Promise.race([insertPromise, timeoutPromise]);
+    
+    console.log("Supabase response - data:", data);
+    console.log("Supabase response - error:", error);
+    
+    if (error) {
+      console.error("Supabase Error Details:", error);
+      alert("Error adding product: " + error.message + "\nDetails: " + (error.details || JSON.stringify(error)));
+    } else {
+      console.log("Product added successfully!");
+      alert("Product added successfully!");
+      form.reset();
+      document.getElementById('add-deal-price-container').classList.add('hidden');
+      
+      console.log("Fetching updated product lists...");
+      await fetchAdminProducts();
+      await fetchInitialProducts();
+      console.log("Product lists refreshed");
+    }
+  } catch (err) {
+    console.error("Caught exception:", err);
+    alert("Error: " + err.message + "\n\nThis might be a Supabase configuration issue. Check your RLS policies.");
   }
+  
+  console.log("=== handleAddProduct END ===");
 }
-
     window.handleAddProduct = handleAddProduct;
 
     window.toggleDealInput = (checkbox, containerId) => {
