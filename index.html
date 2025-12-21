@@ -500,38 +500,60 @@
     const btn = document.getElementById('btn-send-otp');
     const phoneNumber = phoneInput.value.trim();
 
+    // 1. Basic Validation
     if (phoneNumber.length < 5) {
         alert("Please enter a valid phone number.");
         return;
     }
     
-    // Safety: Ensure user is actually logged in
+    // 2. Ensure User is Logged In (Required for updateUser)
     if (!state.user) {
-        alert("You must be logged in to verify a phone number.");
+        alert("Session lost. Please log in again.");
         return;
     }
 
+    // 3. Lock Button
     btn.innerText = "Sending...";
     btn.disabled = true;
 
-    console.log("Linking phone to current account:", phoneNumber);
+    try {
+        console.log("Linking Phone:", phoneNumber);
 
-    // ⚡ CHANGE: Use updateUser instead of signInWithOtp
-    const { error } = await supabase.auth.updateUser({
-        phone: phoneNumber
-    });
+        // 4. Call Supabase
+        const { data, error } = await supabase.auth.updateUser({
+            phone: phoneNumber
+        });
 
-    if (error) {
-        console.error("Send Error:", error);
-        alert("Error: " + error.message);
-        btn.innerText = "Send Verification Code";
-        btn.disabled = false;
-    } else {
+        // 5. Handle Known Errors
+        if (error) {
+            console.error("Supabase Error:", error);
+            
+            if (error.message.includes("already registered") || error.status === 422) {
+                alert("This phone number is already used by another account.\n\nSince you are testing, please go to your Supabase Dashboard -> Authentication -> Users and DELETE the old user with this phone number.");
+            } else {
+                alert("Error Sending Code: " + error.message);
+            }
+            return; // Stop here
+        }
+
+        // 6. Success
+        console.log("OTP Sent Successfully");
         alert("Code sent to " + phoneNumber);
         
         document.getElementById('step-phone-input').classList.add('hidden');
         document.getElementById('step-otp-input').classList.remove('hidden');
         phoneInput.value = phoneNumber; 
+
+    } catch (err) {
+        // 7. Catch Unexpected Crashes
+        console.error("CRASH:", err);
+        alert("Something went wrong: " + err.message);
+    } finally {
+        // 8. ALWAYS UNLOCK BUTTON (Fixes the "Stuck" issue)
+        if (btn.innerText === "Sending...") {
+            btn.innerText = "Send Verification Code";
+            btn.disabled = false;
+        }
     }
 };
     // 3. Triggered by "Verify" button in popup
