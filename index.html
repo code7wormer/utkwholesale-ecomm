@@ -736,7 +736,7 @@
 
         // 2. Optimistic Update: Update Local State immediately
         item.quantity = newQuantity;
-
+  
         // 3. Direct DOM Manipulation (Update numbers without re-rendering)
         const qtyEl = document.getElementById(`qty-${id}`);
         const itemTotalEl = document.getElementById(`item-total-${id}`);
@@ -755,13 +755,41 @@
             grandTotalEl.innerText = `$${newGrandTotal.toFixed(2)}`;
         }
 
+
+
+
+      const cartCountEl = document.getElementById('cart-count');
+        if (cartCountEl) {
+            const totalItems = state.cart.reduce((sum, i) => sum + i.quantity, 0);
+            cartCountEl.innerText = totalItems;
+            
+            // Show/Hide bubble based on count
+            if (totalItems > 0) {
+                cartCountEl.classList.remove('hidden');
+                // Optional: Trigger the pulse animation
+                const container = document.getElementById('cart-icon-container');
+                if(container) {
+                    container.classList.remove('cart-pulse');
+                    void container.offsetWidth; 
+                    container.classList.add('cart-pulse');
+                }
+            } else {
+                cartCountEl.classList.add('hidden');
+            }
+        }
+
+
+
+
+      
+
         // 4. Send update to Supabase in the background
         // Note: We do NOT call fetchCart() or render() here anymore
         try {
             const { error } = await supabase
                 .from('cart_items')
                 .update({ quantity: newQuantity })
-                .eq('id', id);
+                .eq('product_id', id);
 
             if (error) throw error;
         } catch (error) {
