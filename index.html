@@ -533,6 +533,8 @@
             } else {
                 alert("Error Sending Code: " + error.message);
             }
+          btn.innerText = "Send Verification Code";
+    btn.disabled = false;
             return; // Stop here
         }
 
