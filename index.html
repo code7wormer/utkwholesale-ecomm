@@ -305,8 +305,6 @@
       loading: false,
       isAdmin: false,
       adminProducts: [],
-      adminSearchQuery: '',
-      adminFilterCategory: 'all'
       searchResults: [],
       searchQuery: ''
     };
@@ -700,167 +698,154 @@
     }
     
     // --- Admin Functions ---
-
-    // 1. Fetch Logic
     async function fetchAdminProducts() {
-        if (!state.isAdmin) return;
-        const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
-        if (data) {
-            state.adminProducts = data;
-            // Initialize search state if missing
-            if (typeof state.adminSearchQuery === 'undefined') state.adminSearchQuery = '';
-            if (typeof state.adminFilterCategory === 'undefined') state.adminFilterCategory = 'all';
-            render();
-        }
-        if (error) console.error("Admin fetch error:", error);
-    }
-
-    // 2. Search & Filter Handlers
-    function handleAdminSearch(e) {
-        state.adminSearchQuery = e.target.value.toLowerCase();
+      if (!state.isAdmin) return;
+      const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
+      if (data) {
+        state.adminProducts = data;
         render();
-    }
-    function handleAdminFilter(e) {
-        state.adminFilterCategory = e.target.value;
-        render();
-    }
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text);
-        showToast("ID copied to clipboard!");
-    }
-
-    // 3. Modal Open/Close Logic
-    window.openAddModal = () => {
-        const modal = document.getElementById('add-modal');
-        if(modal) modal.classList.remove('hidden');
-    }
-    window.closeAddModal = () => {
-        const modal = document.getElementById('add-modal');
-        if(modal) modal.classList.add('hidden');
+      }
+      if (error) console.error("Admin fetch error:", error);
     }
     
-    window.openEditModal = (product) => {
-        const modal = document.getElementById('edit-modal');
-        if(!modal) return;
-
-        // Fill form with existing data
-        const form = document.getElementById('edit-product-form');
-        form.id.value = product.id;
-        form.name.value = product.name;
-        form.description.value = product.description;
-        form.detailed_description.value = product.detailed_description || '';
-        form.price.value = product.price;
-        form.image_url.value = product.image_url;
-        form.category_id.value = product.category_id;
-        form.stock_status.value = product.stock_status;
-        form.is_active.checked = product.is_active;
-        
-        // Handle Special Deal Fields
-        form.is_deal.checked = product.is_deal;
-        form.deal_price.value = product.deal_price || '';
-        
-        // Toggle the deal input visibility immediately
-        const dealContainer = document.getElementById('edit-deal-price-container');
-        if(dealContainer) dealContainer.style.display = product.is_deal ? 'block' : 'none';
-
-        form.is_bestseller.checked = product.is_bestseller;
-        
-        modal.classList.remove('hidden');
-    }
-    window.closeEditModal = () => {
-        const modal = document.getElementById('edit-modal');
-        if(modal) modal.classList.add('hidden');
-    }
-
-    // 4. Deal Price Toggles
-    window.toggleDealPriceAdd = () => {
-        const isDeal = document.getElementById('add-is_deal').checked;
-        const container = document.getElementById('add-deal-price-container');
-        if(container) container.style.display = isDeal ? 'block' : 'none';
-    }
-    window.toggleDealPriceEdit = () => {
-        const isDeal = document.getElementById('edit-is_deal').checked;
-        const container = document.getElementById('edit-deal-price-container');
-        if(container) container.style.display = isDeal ? 'block' : 'none';
-    }
-
-    // 5. DATABASE ACTIONS (Add, Edit, Delete)
     async function handleAddProduct(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        
-        // Generate a slug
-        const rawName = formData.get('name');
-        const slug = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000);
+      e.preventDefault();
+      if (!state.isAdmin) {
+          alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
+          return;
+      }
+      const form = e.target;
+      const isDeal = form.is_deal.checked;
+      
+      const newProduct = {
+        name: form.name.value,
+        description: form.description.value,
+        detailed_description: form.detailed_description.value || null,
+        price: parseFloat(form.price.value),
+        image_url: form.image_url.value,
+        category_id: form.category_id.value,
+        slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000), 
+        stock_status: form.stock_status.value,
+        is_active: form.is_active.checked,
+        is_deal: isDeal,
+        deal_price: isDeal && form.deal_price.value ? parseFloat(form.deal_price.value) : null,
+        is_bestseller: form.is_bestseller.checked
+      };
 
-        const newProduct = {
-            name: rawName,
-            slug: slug,
-            description: formData.get('description'),
-            detailed_description: formData.get('detailed_description'),
-            price: parseFloat(formData.get('price')),
-            image_url: formData.get('image_url'),
-            category_id: formData.get('category_id'),
-            stock_status: formData.get('stock_status'),
-            is_active: formData.get('is_active') === 'on',
-            is_bestseller: formData.get('is_bestseller') === 'on',
-            is_deal: formData.get('is_deal') === 'on',
-            deal_price: formData.get('deal_price') ? parseFloat(formData.get('deal_price')) : null
-        };
+      const { error } = await supabase.from('products').insert([newProduct]);
+      if (error) {
+        console.error("Supabase Error:", error);
+        alert("Error adding product: " + error.message + "\nDetails: " + (error.details || 'Check console'));
+      } else {
+        alert("Product added successfully!");
+        form.reset();
+        document.getElementById('add-deal-price-container').classList.add('hidden');
+        await fetchAdminProducts();
+        await fetchInitialProducts();
+      }
+    }
 
-        const { error } = await supabase.from('products').insert([newProduct]);
-        if (error) {
-            alert('Error adding product: ' + error.message);
+    window.handleAddProduct = handleAddProduct;
+
+    window.toggleDealInput = (checkbox, containerId) => {
+        const container = document.getElementById(containerId);
+        if (checkbox.checked) {
+            container.classList.remove('hidden');
         } else {
-            showToast('Product added successfully!');
-            closeAddModal();
-            e.target.reset();
-            const dealContainer = document.getElementById('add-deal-price-container');
-            if(dealContainer) dealContainer.style.display = 'none';
-            await fetchAdminProducts();
+            container.classList.add('hidden');
         }
     }
+
+    function openEditModal(product) {
+        const modal = document.getElementById('edit-modal');
+        document.getElementById('edit-id').value = product.id;
+        document.getElementById('edit-name').value = product.name;
+        document.getElementById('edit-description').value = product.description;
+        document.getElementById('edit-detailed_description').value = product.detailed_description || '';
+        document.getElementById('edit-price').value = product.price;
+        document.getElementById('edit-image_url').value = product.image_url;
+        document.getElementById('edit-category_id').value = product.category_id;
+        document.getElementById('edit-stock_status').value = product.stock_status;
+        document.getElementById('edit-is_active').checked = product.is_active;
+
+        const isDealCheckbox = document.getElementById('edit-is_deal');
+        isDealCheckbox.checked = product.is_deal || false;
+        
+        const dealPriceContainer = document.getElementById('edit-deal-price-container');
+        const dealPriceInput = document.getElementById('edit-deal_price');
+        dealPriceInput.value = product.deal_price || '';
+        
+        if (product.is_deal) {
+            dealPriceContainer.classList.remove('hidden');
+        } else {
+            dealPriceContainer.classList.add('hidden');
+        }
+
+        document.getElementById('edit-is_bestseller').checked = product.is_bestseller || false;
+
+        modal.classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('edit-modal').classList.add('hidden');
+    }
+    window.openEditModal = openEditModal;
+    window.closeEditModal = closeEditModal;
 
     async function handleUpdateProduct(e) {
         e.preventDefault();
-        const formData = new FormData(e.target);
-        const id = formData.get('id');
         
+        if (!state.isAdmin) {
+            alert("⛔ ACCESS DENIED: The system does not recognize you as the admin.");
+            return;
+        }
+
+        const form = e.target;
+        const id = form.id.value;
+        const isDeal = form.is_deal.checked;
+
         const updates = {
-            name: formData.get('name'),
-            description: formData.get('description'),
-            detailed_description: formData.get('detailed_description'),
-            price: parseFloat(formData.get('price')),
-            image_url: formData.get('image_url'),
-            category_id: formData.get('category_id'),
-            stock_status: formData.get('stock_status'),
-            is_active: formData.get('is_active') === 'on',
-            is_bestseller: formData.get('is_bestseller') === 'on',
-            is_deal: formData.get('is_deal') === 'on',
-            deal_price: formData.get('deal_price') ? parseFloat(formData.get('deal_price')) : null
+            name: form.name.value,
+            description: form.description.value,
+            detailed_description: form.detailed_description.value || null,
+            price: parseFloat(form.price.value),
+            image_url: form.image_url.value,
+            category_id: form.category_id.value,
+            stock_status: form.stock_status.value,
+            is_active: form.is_active.checked,
+            is_deal: isDeal,
+            deal_price: isDeal && form.deal_price.value ? parseFloat(form.deal_price.value) : null,
+            is_bestseller: form.is_bestseller.checked
         };
 
         const { error } = await supabase.from('products').update(updates).eq('id', id);
         if (error) {
-            alert('Error updating product: ' + error.message);
+            alert("Error updating product: " + error.message);
         } else {
-            showToast('Product updated successfully!');
+            alert("Product updated successfully!");
             closeEditModal();
             await fetchAdminProducts();
+            await fetchInitialProducts(); 
         }
     }
+    window.handleUpdateProduct = handleUpdateProduct;
 
-    async function deleteProduct(id) {
-        if(!confirm("Are you sure you want to delete this product? This cannot be undone.")) return;
-        
-        const { error } = await supabase.from('products').delete().eq('id', id);
-        if (error) {
-            alert('Error deleting product: ' + error.message);
-        } else {
-            showToast('Product deleted.');
-            await fetchAdminProducts();
+    async function handleDeleteProduct(id) {
+        if (!state.isAdmin) return;
+
+        if (confirm("Are you sure you want to delete this product?")) {
+            const { error } = await supabase.from('products').delete().eq('id', id);
+            if (error) {
+                alert("Error deleting product: " + error.message);
+            } else {
+                alert("Product deleted successfully!");
+                await fetchAdminProducts();
+                await fetchInitialProducts(); 
+            }
         }
     }
+    window.handleDeleteProduct = handleDeleteProduct;
+
 
     // --- Components ---
 
@@ -1334,288 +1319,226 @@
       `;
     }
 
-    
-    function AdminPage() {
-      if (!state.isAdmin) return '<div class="p-8 text-center text-red-600 font-bold">⛔ Access Denied</div>';
-      
-      const searchQuery = state.adminSearchQuery || '';
-      const filterCat = state.adminFilterCategory || 'all';
-
-      // 🌟 COMBINED FILTER LOGIC
-      const filteredProducts = state.adminProducts.filter(p => {
-          const matchesSearch = searchQuery === '' || 
-              p.name.toLowerCase().includes(searchQuery) || 
-              p.id.toString().includes(searchQuery);
-          
-          const matchesCategory = filterCat === 'all' || 
-              p.category_id === filterCat;
-
-          return matchesSearch && matchesCategory;
-      });
-
+    function AdminProductRow(product) {
       return `
-        <div class="max-w-7xl mx-auto px-4 py-8 page-enter">
-          
-          <div class="mb-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                <div>
-                    <h1 class="text-3xl font-extrabold text-gray-800 flex items-center gap-3">
-                      <span style="color: var(--color-primary);">📦</span> All Products
-                    </h1>
-                    <p class="text-gray-500 text-sm mt-1">Manage inventory, prices, and stock.</p>
-                </div>
-                
-                <button onclick="openAddModal()" class="flex items-center gap-2 px-6 py-3 text-white rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1" style="background-color: var(--color-secondary);">
-                  ${Icon.Plus()} Add New Product
-                </button>
-            </div>
-
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col sm:flex-row gap-4">
-                
-                <div class="flex-1 relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </div>
-                    <input type="text" 
-                           placeholder="Search by exact Name or ID..." 
-                           value="${searchQuery}"
-                           oninput="handleAdminSearch(event)"
-                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow"
-                    >
-                </div>
-
-                <div class="w-full sm:w-64">
-                    <select onchange="handleAdminFilter(event)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white cursor-pointer">
-                        <option value="all" ${filterCat === 'all' ? 'selected' : ''}>All Categories</option>
-                        ${state.categories.map(c => `
-                            <option value="${c.id}" ${filterCat === c.id ? 'selected' : ''}>${c.name}</option>
-                        `).join('')}
-                    </select>
-                </div>
-            </div>
-          </div>
-
-          <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
-                <thead>
-                  <tr class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider border-b border-gray-200">
-                    <th class="px-6 py-4 font-bold w-24">Image</th>
-                    <th class="px-6 py-4 font-bold">Product Details</th>
-                    <th class="px-6 py-4 font-bold">Category</th>
-                    <th class="px-6 py-4 font-bold">Price</th>
-                    <th class="px-6 py-4 font-bold">Stock</th>
-                    <th class="px-6 py-4 font-bold text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 text-sm">
-                  ${filteredProducts.length > 0 ? filteredProducts.map(p => {
-                      const cat = state.categories.find(c => c.id === p.category_id);
-                      return `
-                      <tr class="hover:bg-gray-50 transition-colors group">
-                        <td class="px-6 py-4">
-                            <img src="${p.image_url}" class="w-12 h-12 rounded-lg object-cover border border-gray-200">
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="font-bold text-gray-900 text-base mb-1">${p.name}</div>
-                            <div onclick="copyToClipboard('${p.id}')" 
-                                 title="Full ID: ${p.id} (Click to Copy)" 
-                                 class="font-normal text-xs text-gray-400 font-mono cursor-pointer hover:text-indigo-600 hover:underline truncate w-32">
-                                ID: ${p.id}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-bold">
-                                ${cat ? cat.name : 'Unknown'}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 font-medium">$${p.price.toFixed(2)}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-2 py-1 rounded text-xs font-bold ${
-                                p.stock_status === 'in_stock' ? 'bg-green-100 text-green-700' : 
-                                p.stock_status === 'low_stock' ? 'bg-yellow-100 text-yellow-700' : 
-                                'bg-red-100 text-red-700'
-                            }">
-                                ${p.stock_status.replace('_', ' ').toUpperCase()}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <button onclick='openEditModal(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="text-indigo-600 hover:text-indigo-900 font-bold mr-3">Edit</button>
-                            <button onclick="deleteProduct('${p.id}')" class="text-red-500 hover:text-red-700 font-bold">Delete</button>
-                        </td>
-                      </tr>
-                      `;
-                  }).join('') : 
-                    `<tr><td colspan="6" class="px-6 py-12 text-center text-gray-400">
-                        No products found.
-                     </td></tr>`
-                  }
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div id="add-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-[60] backdrop-blur-sm p-4">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative animate-fade-in-up">
-              <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center z-10">
-                <h2 class="text-2xl font-bold text-gray-800">Add New Product</h2>
-                <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 transition-colors">${Icon.X()}</button>
-              </div>
-              <form onsubmit="handleAddProduct(event)" class="p-8 space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div>
-                      <label class="block text-sm font-bold text-gray-700 mb-2">Product Name</label>
-                      <input type="text" name="name" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                   </div>
-                   <div>
-                      <label class="block text-sm font-bold text-gray-700 mb-2">Category</label>
-                      <select name="category_id" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                          ${state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-                      </select>
-                   </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Image URL</label>
-                    <input type="url" name="image_url" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="https://example.com/image.jpg">
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                   <div>
-                      <label class="block text-sm font-bold text-gray-700 mb-2">Price ($)</label>
-                      <input type="number" step="0.01" name="price" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                   </div>
-                   <div>
-                      <label class="block text-sm font-bold text-gray-700 mb-2">Stock Status</label>
-                      <select name="stock_status" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                          <option value="in_stock">In Stock</option>
-                          <option value="low_stock">Low Stock</option>
-                          <option value="out_of_stock">Out of Stock</option>
-                      </select>
-                   </div>
-                   <div class="flex items-center pt-8">
-                      <label class="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" name="is_active" checked class="w-5 h-5 text-indigo-600 rounded">
-                          <span class="font-medium text-gray-700">Active Listing</span>
-                      </label>
-                   </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Short Description</label>
-                    <textarea name="description" rows="2" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Detailed Description</label>
-                    <textarea name="detailed_description" rows="4" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-xl border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label class="flex items-center gap-2 mb-2 cursor-pointer">
-                          <input type="checkbox" name="is_bestseller" class="w-5 h-5 text-yellow-500 rounded">
-                          <span class="font-bold text-gray-700">Mark as Bestseller</span>
-                      </label>
-                    </div>
-                    <div>
-                      <label class="flex items-center gap-2 mb-2 cursor-pointer">
-                          <input type="checkbox" id="add-is_deal" name="is_deal" onchange="toggleDealPriceAdd()" class="w-5 h-5 text-red-500 rounded">
-                          <span class="font-bold text-gray-700">Mark as Special Deal</span>
-                      </label>
-                      <div id="add-deal-price-container" class="hidden mt-2">
-                          <input type="number" step="0.01" name="deal_price" placeholder="Deal Price ($)" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-                      </div>
-                    </div>
-                </div>
-                <div class="pt-4">
-                  <button type="submit" class="w-full py-4 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all" style="background-color: var(--color-primary);">
-                      Create Product
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-[60] backdrop-blur-sm p-4">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative animate-fade-in-up">
-              <div class="sticky top-0 bg-white px-8 py-5 border-b flex justify-between items-center z-10">
-                <h2 class="text-2xl font-bold text-gray-800">Edit Product</h2>
-                <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors">${Icon.X()}</button>
-              </div>
-              <form id="edit-product-form" onsubmit="handleUpdateProduct(event)" class="p-8 space-y-6">
-                <input type="hidden" name="id" id="edit-id">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div>
-                      <label class="block text-sm font-bold text-gray-700 mb-2">Product Name</label>
-                      <input type="text" name="name" id="edit-name" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                   </div>
-                   <div>
-                      <label class="block text-sm font-bold text-gray-700 mb-2">Category</label>
-                      <select name="category_id" id="edit-category_id" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                          ${state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-                      </select>
-                   </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Image URL</label>
-                    <input type="url" name="image_url" id="edit-image_url" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                   <div>
-                      <label class="block text-sm font-bold text-gray-700 mb-2">Price ($)</label>
-                      <input type="number" step="0.01" name="price" id="edit-price" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                   </div>
-                   <div>
-                      <label class="block text-sm font-bold text-gray-700 mb-2">Stock Status</label>
-                      <select name="stock_status" id="edit-stock_status" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                          <option value="in_stock">In Stock</option>
-                          <option value="low_stock">Low Stock</option>
-                          <option value="out_of_stock">Out of Stock</option>
-                      </select>
-                   </div>
-                   <div class="flex items-center pt-8">
-                      <label class="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" name="is_active" id="edit-is_active" class="w-5 h-5 text-indigo-600 rounded">
-                          <span class="font-medium text-gray-700">Active Listing</span>
-                      </label>
-                   </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Short Description</label>
-                    <textarea name="description" id="edit-description" rows="2" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Detailed Description</label>
-                    <textarea name="detailed_description" id="edit-detailed_description" rows="4" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
-                </div>
-                <div class="bg-gray-50 p-6 rounded-xl border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label class="flex items-center gap-2 mb-2 cursor-pointer">
-                          <input type="checkbox" name="is_bestseller" id="edit-is_bestseller" class="w-5 h-5 text-yellow-500 rounded">
-                          <span class="font-bold text-gray-700">Mark as Bestseller</span>
-                      </label>
-                    </div>
-                    <div>
-                      <label class="flex items-center gap-2 mb-2 cursor-pointer">
-                          <input type="checkbox" id="edit-is_deal" name="is_deal" onchange="toggleDealPriceEdit()" class="w-5 h-5 text-red-500 rounded">
-                          <span class="font-bold text-gray-700">Mark as Special Deal</span>
-                      </label>
-                      <div id="edit-deal-price-container" class="hidden mt-2">
-                          <input type="number" step="0.01" name="deal_price" id="edit-deal_price" placeholder="Deal Price ($)" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
-                      </div>
-                    </div>
-                </div>
-                <div class="pt-4">
-                  <button type="submit" class="w-full py-4 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all" style="background-color: var(--color-primary);">
-                      Save Changes
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-        </div>
+        <tr class="bg-white border-b hover:bg-gray-50 transition-colors ${!product.is_active ? 'opacity-60' : ''}">
+          <td class="px-6 py-4 font-bold text-gray-900">${product.id}</td>
+          <td class="px-6 py-4 text-gray-700">${product.name}</td>
+          <td class="px-6 py-4 text-gray-700">$${product.price.toFixed(2)}</td>
+          <td class="px-6 py-4">
+            <span class="px-3 py-1 text-xs font-semibold rounded-full ${product.stock_status === 'in_stock' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${product.stock_status.replace('_', ' ')}
+            </span>
+          </td>
+          <td class="px-6 py-4">
+            <span class="px-3 py-1 text-xs font-semibold rounded-full ${product.is_active ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+              ${product.is_active ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+            <button onclick='openEditModal(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50 transition-colors">
+              ${Icon.Edit()}
+            </button>
+            <button onclick="handleDeleteProduct('${product.id}')" class="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-50 transition-colors">
+              ${Icon.Trash()}
+            </button>
+          </td>
+        </tr>
       `;
     }
-    
+
+    function AdminPage() {
+        if (!state.isAdmin) {
+            return '<div class="flex-1 flex items-center justify-center py-16"><div class="text-2xl text-red-600">Access Denied. Admins only.</div></div>';
+        }
+
+        const categoriesHtml = state.categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+        
+        return `
+          <div class="flex-1 max-w-7xl mx-auto px-4 py-12 page-enter">
+            <h1 class="text-4xl font-extrabold mb-8" style="color: var(--color-primary);">Admin Dashboard</h1>
+
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 mb-10">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2" style="color: var(--color-secondary);">
+                    <span style="color: var(--color-primary);">${Icon.Plus()}</span> Add New Product
+                </h2>
+                <form onsubmit="handleAddProduct(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Name</label>
+                            <input type="text" name="name" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Price</label>
+                            <input type="number" name="price" required step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Image URL</label>
+                        <input type="url" name="image_url" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Short Description</label>
+                        <input type="text" name="description" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Detailed Description (Optional)</label>
+                        <textarea name="detailed_description" rows="3" class="w-full px-4 py-2 border rounded-lg input-focus-primary"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-900">Monthly Deal</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="is_deal" onchange="toggleDealInput(this, 'add-deal-price-container')" class="sr-only peer toggle-checkbox">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
+                            </label>
+                        </div>
+
+                         <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-900">Bestseller</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="is_bestseller" class="sr-only peer toggle-checkbox">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
+                            </label>
+                        </div>
+                        
+                        <div id="add-deal-price-container" class="hidden md:col-span-2 mt-2">
+                             <label class="block text-sm font-medium text-gray-700">Deal Price</label>
+                             <input type="number" name="deal_price" step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Category</label>
+                            <select name="category_id" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                ${categoriesHtml}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Stock Status</label>
+                            <select name="stock_status" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                <option value="in_stock">In Stock</option>
+                                <option value="out_of_stock">Out of Stock</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end pb-1">
+                            <input type="checkbox" name="is_active" checked id="is_active" class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700">Is Active</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-md hover:shadow-lg" style="background-color: var(--color-primary);">
+                        Add Product
+                    </button>
+                </form>
+            </div>
+
+            <h2 class="text-2xl font-bold mb-4" style="color: var(--color-primary);">All Products (${state.adminProducts.length})</h2>
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">ID</th>
+                            <th scope="col" class="px-6 py-3">Name</th>
+                            <th scope="col" class="px-6 py-3">Price</th>
+                            <th scope="col" class="px-6 py-3">Stock</th>
+                            <th scope="col" class="px-6 py-3">Status</th>
+                            <th scope="col" class="px-6 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${state.adminProducts.map(product => AdminProductRow(product)).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${EditProductModal(categoriesHtml)}
+          </div>
+        `;
+    }
+
+    function EditProductModal(categoriesHtml) {
+        return `
+            <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl shadow-2xl max-w-xl w-full p-6 relative">
+                    <h3 class="text-2xl font-bold mb-4" style="color: var(--color-primary);">Edit Product</h3>
+                    <button onclick="closeEditModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">${Icon.X()}</button>
+                    
+                    <form onsubmit="handleUpdateProduct(event)" class="space-y-4">
+                        <input type="hidden" name="id" id="edit-id">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Name</label>
+                                <input type="text" name="name" id="edit-name" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Price</label>
+                                <input type="number" name="price" id="edit-price" required step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Image URL</label>
+                            <input type="url" name="image_url" id="edit-image_url" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Short Description</label>
+                            <input type="text" name="description" id="edit-description" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Detailed Description (Optional)</label>
+                            <textarea name="detailed_description" id="edit-detailed_description" rows="3" class="w-full px-4 py-2 border rounded-lg input-focus-primary"></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-900">Monthly Deal</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="is_deal" id="edit-is_deal" onchange="toggleDealInput(this, 'edit-deal-price-container')" class="sr-only peer toggle-checkbox">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
+                                </label>
+                            </div>
+
+                             <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-900">Bestseller</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="is_bestseller" id="edit-is_bestseller" class="sr-only peer toggle-checkbox">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
+                                </label>
+                            </div>
+                            
+                            <div id="edit-deal-price-container" class="hidden md:col-span-2 mt-2">
+                                 <label class="block text-sm font-medium text-gray-700">Deal Price</label>
+                                 <input type="number" name="deal_price" id="edit-deal_price" step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Category</label>
+                                <select name="category_id" id="edit-category_id" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                    ${categoriesHtml}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Stock Status</label>
+                                <select name="stock_status" id="edit-stock_status" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                    <option value="in_stock">In Stock</option>
+                                    <option value="out_of_stock">Out of Stock</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end pb-1">
+                                <input type="checkbox" name="is_active" id="edit-is_active" class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                <label for="edit-is_active" class="ml-2 block text-sm font-medium text-gray-700">Is Active</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-md hover:shadow-lg" style="background-color: var(--color-secondary);">
+                            Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+        `;
+    }
+
     function AboutPage() {
         return `
         <div class="flex-1 page-enter">
