@@ -94,14 +94,60 @@
       50% { transform: translateY(0); }
     }
 
-    /* 🌟 Other Animations */
+    /* 🌟 Cart Pulse (for Add to Cart) - Keep as requested */
     @keyframes pulse-cart {
       0% { transform: scale(1) rotate(0deg); }
-      50% { transform: scale(1.15) rotate(5deg); }
+      25% { transform: scale(1.1) rotate(-10deg); }
+      75% { transform: scale(1.1) rotate(10deg); }
       100% { transform: scale(1) rotate(0deg); }
     }
-    .cart-pulse { animation: pulse-cart 0.4s ease-in-out; }
+    .cart-pulse { animation: pulse-cart 0.5s ease-in-out; }
     
+    /* 🌟 Cart Bounce (for Clicking Cart Icon) */
+    @keyframes cart-bounce {
+      0% { transform: scale(1); }
+      50% { transform: scale(0.8); }
+      100% { transform: scale(1); }
+    }
+    .cart-clicked { animation: cart-bounce 0.2s ease-in-out; }
+
+    /* 🌟 Button Hover Animation */
+    .btn-animate {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-animate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .btn-animate:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+
+    /* 🌟 Sidebar Dropdown Animation */
+    .dropdown-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease-out;
+    }
+    .dropdown-open {
+        max-height: 800px; /* Arbitrary large height */
+        transition: max-height 0.6s ease-in;
+    }
+
+    /* 🌟 Search Modal Animation */
+    .search-backdrop {
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+    }
+    .search-slide-down {
+        animation: slideDown 0.3s ease-out forwards;
+    }
+    @keyframes slideDown {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
     .auth-form-enter { animation: auth-fade-in 0.6s ease-out forwards; }
     @keyframes auth-fade-in {
         from { opacity: 0; transform: translateY(20px); }
@@ -150,15 +196,9 @@
       background-color: var(--color-primary);
     }
 
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    .scrollbar-hide::-webkit-scrollbar {
-        display: none;
-    }
-    /* Hide scrollbar for IE, Edge and Firefox */
-    .scrollbar-hide {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
-    }
+    /* Hide scrollbar */
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
     /* 🍞 TOAST NOTIFICATION STYLES */
     #toast-container {
@@ -257,6 +297,8 @@
       loading: false,
       isAdmin: false,
       adminProducts: [],
+      searchResults: [],
+      searchQuery: ''
     };
 
     // --- Toast Functionality ---
@@ -273,12 +315,100 @@
       }, 3000);
     }
 
+    // --- 🔍 Fuzzy Search Logic ---
+    function levenshtein(a, b) {
+      if(a.length === 0) return b.length; 
+      if(b.length === 0) return a.length; 
+      const matrix = [];
+      for(let i = 0; i <= b.length; i++){ matrix[i] = [i]; }
+      for(let j = 0; j <= a.length; j++){ matrix[0][j] = j; }
+      for(let i = 1; i <= b.length; i++){
+        for(let j = 1; j <= a.length; j++){
+          if(b.charAt(i-1) == a.charAt(j-1)){
+            matrix[i][j] = matrix[i-1][j-1];
+          } else {
+            matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, Math.min(matrix[i][j-1] + 1, matrix[i-1][j] + 1));
+          }
+        }
+      }
+      return matrix[b.length][a.length];
+    }
+
+    window.toggleSearch = () => {
+        const modal = document.getElementById('search-modal');
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            document.getElementById('search-input').focus();
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    window.handleSearch = (e) => {
+        e.preventDefault();
+        const query = document.getElementById('search-input').value.toLowerCase().trim();
+        const catFilter = document.getElementById('search-category').value;
+        
+        if (!query) return;
+
+        // Filter by Category first
+        let candidates = state.products;
+        if (catFilter !== 'all') {
+            candidates = candidates.filter(p => p.category_id == catFilter);
+        }
+
+        // Fuzzy Search Logic
+        const results = candidates.filter(p => {
+            const name = p.name.toLowerCase();
+            const desc = p.description.toLowerCase();
+            
+            // 1. Exact or partial match (High priority)
+            if (name.includes(query) || desc.includes(query)) return true;
+
+            // 2. Fuzzy match (Allow typos based on string length)
+            const threshold = query.length > 5 ? 2 : 1; 
+            const dist = levenshtein(query, name.substring(0, Math.min(name.length, query.length + 1)));
+            
+            return dist <= threshold;
+        });
+
+        state.searchResults = results;
+        state.searchQuery = query;
+        
+        window.toggleSearch();
+        navigate('search-results');
+    }
+    
+    // Toggle Sidebar Category Dropdown
+    window.toggleSidebarCat = () => {
+        const content = document.getElementById('sidebar-cat-content');
+        const icon = document.getElementById('sidebar-cat-icon');
+        if (content.classList.contains('dropdown-open')) {
+            content.classList.remove('dropdown-open');
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            content.classList.add('dropdown-open');
+            icon.style.transform = 'rotate(180deg)';
+        }
+    }
+
+    // Animation handler for Cart Click
+    async function handleCartClick() {
+      const btn = document.getElementById('cart-icon-container');
+      if (btn) {
+        btn.classList.add('cart-clicked');
+        await new Promise(resolve => setTimeout(resolve, 200));
+        btn.classList.remove('cart-clicked');
+      }
+      navigate('cart');
+    }
+    window.handleCartClick = handleCartClick;
+
     // --- Router with Transitions ---
     async function navigate(page, slug = null) {
       if (page === 'category' && slug) {
         const theme = CATEGORY_THEMES[slug] || CATEGORY_THEMES['default'];
         
-        // Show Overlay
         const loader = document.getElementById('category-loader');
         const loaderIcon = document.getElementById('loader-icon');
         const loaderText = document.getElementById('loader-text');
@@ -294,7 +424,6 @@
         await new Promise(resolve => setTimeout(resolve, 1600));
 
         updateTheme(slug);
-        
         state.currentPage = page;
         state.currentSlug = slug;
         state.menuOpen = false;
@@ -404,9 +533,7 @@
     }
 
     async function addToCart(product) {
-      // 🌟 LOGIC UPDATE: Use Deal Price if applicable
       const priceToUse = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
-      
       const cartProduct = { ...product, price: priceToUse };
 
       const existing = state.cart.find(item => item.id === cartProduct.id);
@@ -433,10 +560,12 @@
       // 🍞 Trigger Toast Notification
       showToast(`Added ${product.name} to cart`);
 
+      // 🌟 Add "Shake" animation to cart icon
       const cartIcon = document.getElementById('cart-icon-container');
       if (cartIcon) {
+          cartIcon.classList.remove('cart-pulse');
+          void cartIcon.offsetWidth; // Trigger reflow
           cartIcon.classList.add('cart-pulse');
-          setTimeout(() => cartIcon.classList.remove('cart-pulse'), 300);
       }
     }
 
@@ -620,11 +749,11 @@
           <div class="w-full px-6 py-3 flex items-center justify-between">
             <div class="flex items-center gap-4">
               
-              <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700">
+              <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 btn-animate">
                 ${Icon.Menu()}
               </button>
               
-              <a href="#" onclick="navigate('home'); return false;" class="text-2xl font-extrabold flex items-center gap-1" style="color: var(--color-primary);">
+              <a href="#" onclick="navigate('home'); return false;" class="text-2xl font-extrabold flex items-center gap-1 btn-animate" style="color: var(--color-primary);">
                 Shop<span style="color: var(--color-accent);">Hub</span>
               </a>
 
@@ -654,7 +783,11 @@
 
             </div>
             
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-3">
+              <button onclick="toggleSearch()" class="p-2 hover:bg-gray-100 rounded-full text-gray-600 btn-animate">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </button>
+
               ${state.isAdmin ? `
                 <a href="#" onclick="navigate('admin'); return false;" class="text-sm font-semibold text-red-600 hover:text-red-700 transition-colors hidden md:block mr-4">Admin Dashboard</a>
               ` : ''}
@@ -662,16 +795,16 @@
               ${state.user ? `
                 <div class="hidden md:flex items-center gap-4 mr-4">
                   <span class="text-sm text-gray-600 truncate max-w-xs">Hi, ${state.user.email.split('@')[0]}</span>
-                  <button onclick="handleLogout()" class="text-sm font-medium text-red-600 hover:text-red-700 transition-colors">Logout</button>
+                  <button onclick="handleLogout()" class="text-sm font-medium text-red-600 hover:text-red-700 transition-colors btn-animate">Logout</button>
                 </div>
               ` : `
-                <button onclick="navigate('auth'); return false;" class="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg mr-2 transition-colors">
+                <button onclick="navigate('auth'); return false;" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors btn-animate mr-2">
                   ${Icon.User()}
                   <span class="hidden md:inline text-sm font-medium">Sign In</span>
                 </button>
               `}
 
-              <button id="cart-icon-container" onclick="navigate('cart'); return false;" class="relative p-2 hover:bg-gray-100 rounded-lg transition-all duration-300">
+              <button id="cart-icon-container" onclick="handleCartClick(); return false;" class="relative p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 btn-animate">
                 ${Icon.Cart()}
                 ${state.cart.length > 0 ? `
                   <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white">
@@ -682,6 +815,29 @@
             </div>
           </div>
         </header>
+
+        <div id="search-modal" class="hidden fixed inset-0 z-50 flex items-start justify-center pt-20 search-backdrop" onclick="if(event.target === this) toggleSearch()">
+            <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden search-slide-down mx-4">
+                <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                    <h3 class="font-bold text-gray-700">Search Products</h3>
+                    <button onclick="toggleSearch()" class="text-gray-500 hover:text-red-500">${Icon.X()}</button>
+                </div>
+                <form onsubmit="handleSearch(event)" class="p-6">
+                    <div class="flex gap-4 flex-col md:flex-row">
+                        <select id="search-category" class="px-4 py-3 border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Categories</option>
+                            ${state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                        </select>
+                        <div class="flex-1 relative">
+                            <input type="text" id="search-input" placeholder="Try 'Tobacco', 'Candy'..." class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10">
+                            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg">Search</button>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2 ml-1">Tip: Our fuzzy search handles typos automatically!</p>
+                </form>
+            </div>
+        </div>
       `;
     }
 
@@ -696,44 +852,59 @@
                 ${Icon.X()}
               </button>
             </div>
-            <nav class="p-4 space-y-4 overflow-y-auto flex-grow bg-white">
+            <nav class="p-4 space-y-2 overflow-y-auto flex-grow bg-white">
               
-              <div class="staggered-item"> 
+              <div class="mb-6"> 
                 ${state.user ? `
-                  <div style="background-color: #f0f4f8;" class="p-4 rounded-xl mb-4 border border-gray-200 shadow-sm">
-                    <p class="text-sm font-bold text-gray-800 truncate mb-1">Signed in as</p>
-                    <p class="text-sm text-gray-600 truncate mb-2">${state.user.email}</p>
-                    <button onclick="handleLogout()" class="text-xs text-white bg-red-500 px-3 py-1 rounded hover:bg-red-600 w-full transition-colors">Sign Out</button>
+                  <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-xl">
+                            ${state.user.email[0].toUpperCase()}
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Signed In</p>
+                            <p class="text-sm font-bold text-gray-900 truncate">${state.user.email.split('@')[0]}</p>
+                        </div>
+                    </div>
+                    <button onclick="handleLogout()" class="w-full text-xs text-red-600 bg-white border border-red-100 py-2 rounded-lg font-bold hover:bg-red-50 transition-colors btn-animate">Sign Out</button>
                   </div>
                 ` : `
-                  <button onclick="navigate('auth')" class="w-full text-white py-3 rounded-xl font-bold mb-4 shadow-lg hover:shadow-xl transition-all" style="background-color: var(--color-primary);">Sign In / Register</button>
+                  <button onclick="navigate('auth')" class="w-full text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all btn-animate flex items-center justify-center gap-2" style="background-color: var(--color-primary);">
+                    ${Icon.User()} Sign In / Register
+                  </button>
                 `}
               </div>
               
               ${state.isAdmin ? `
-                <a href="#" onclick="navigate('admin'); return false;" class="block py-3 px-3 font-bold text-lg hover:text-red-600 transition-colors staggered-item rounded-xl hover:bg-red-50 text-red-600 border border-red-200">
+                <a href="#" onclick="navigate('admin'); return false;" class="flex items-center gap-3 py-3 px-4 font-bold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors mb-4 border border-red-100">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                   Admin Dashboard
                 </a>
-                <hr class="my-4 border-gray-100 staggered-item">
               ` : ''}
 
-              <div class="mb-4 staggered-item">
-                <div class="font-extrabold text-xl mb-4 border-b pb-2 flex items-center gap-2 text-gray-900 tracking-tight">
-                  Categories
-                </div>
-                <div class="space-y-1">
-                  ${state.categories.map(cat => {
-                    const theme = CATEGORY_THEMES[cat.slug] || CATEGORY_THEMES['default'];
-                    return `
-                    <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="flex items-center gap-4 py-3 px-3 hover:bg-gray-50 rounded-xl text-gray-700 transition-all duration-200 group">
-                      <span class="text-2xl w-8 text-center group-hover:scale-110 transition-transform">${theme.icon || '•'}</span>
-                      <span class="font-bold text-base group-hover:text-indigo-600">${cat.name}</span>
-                    </a>
-                  `}).join('')}
+              <div>
+                <button onclick="toggleSidebarCat()" class="w-full flex items-center justify-between py-3 px-3 rounded-xl hover:bg-gray-100 transition-colors group">
+                    <span class="font-extrabold text-lg text-gray-800 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                        Categories
+                    </span>
+                    <svg id="sidebar-cat-icon" class="w-5 h-5 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                
+                <div id="sidebar-cat-content" class="dropdown-content pl-2">
+                  <div class="space-y-1 mt-1 border-l-2 border-gray-100 ml-4 pl-2">
+                    ${state.categories.map(cat => {
+                      return `
+                      <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="block py-2 px-3 hover:bg-gray-50 rounded-lg text-gray-600 hover:text-indigo-600 transition-colors text-sm font-medium">
+                        ${cat.name}
+                      </a>
+                    `}).join('')}
+                  </div>
                 </div>
               </div>
 
-              <a href="#" onclick="navigate('about'); return false;" class="block py-3 px-3 font-bold text-lg hover:text-indigo-600 transition-colors staggered-item rounded-xl hover:bg-gray-50" style="color: var(--color-primary);">
+              <a href="#" onclick="navigate('about'); return false;" class="flex items-center gap-3 py-3 px-3 font-bold text-lg hover:bg-gray-50 rounded-xl transition-colors text-gray-700">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 About Us
               </a>
             </nav>
@@ -787,7 +958,7 @@
       `;
     }
 
-    // 🌟 Modified ProductCard to support standard usage and deal prices visually
+    // 🌟 Modified ProductCard
     function ProductCard(product) {
       const isDeal = product.is_deal && product.deal_price;
       const displayPrice = isDeal ? product.deal_price : product.price;
@@ -856,7 +1027,7 @@
       const bestsellers = state.products.filter(p => p.is_bestseller);
       const monthlyDeals = state.products.filter(p => p.is_deal);
 
-      // 🌟 UPDATED: Wrapper to hold the Normal Product Card inside slider logic
+      // 🌟 Wrapper to hold the Normal Product Card inside slider logic
       const renderSliderCardWrapper = (product) => {
         return `
         <div class="min-w-[280px] w-[280px] h-full snap-start">
@@ -964,6 +1135,27 @@
           </div>
         </div>
       `;
+    }
+
+    function SearchResultsPage() {
+        return `
+        <div class="flex-1 max-w-7xl mx-auto px-4 py-12 page-enter">
+            <h1 class="text-3xl font-extrabold mb-6 text-gray-800">
+                Search Results for "<span class="text-blue-600">${state.searchQuery}</span>"
+            </h1>
+            
+            ${state.searchResults.length === 0 ? `
+                <div class="text-center py-20 bg-gray-50 rounded-xl">
+                    <p class="text-xl text-gray-500">No products found matching your search.</p>
+                    <button onclick="toggleSearch()" class="mt-4 text-blue-600 font-bold hover:underline">Try another search</button>
+                </div>
+            ` : `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    ${state.searchResults.map(p => ProductCard(p)).join('')}
+                </div>
+            `}
+        </div>
+        `;
     }
 
     function ProductPage() {
@@ -1325,6 +1517,7 @@
         case 'cart': content = CartPage(); break;
         case 'auth': content = AuthPage(); break;
         case 'admin': content = AdminPage(); break;
+        case 'search-results': content = SearchResultsPage(); break;
       }
 
       const appContainer = document.getElementById('app');
