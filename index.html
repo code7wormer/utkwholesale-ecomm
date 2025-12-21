@@ -305,8 +305,6 @@
       loading: false,
       isAdmin: false,
       adminProducts: [],
-      adminSearchQuery: '',
-      adminFilterCategory: 'all'',
       searchResults: [],
       searchQuery: ''
     };
@@ -700,14 +698,166 @@
     }
     
     // --- Admin Functions ---
+
+    // 1. Fetch Logic
     async function fetchAdminProducts() {
-      if (!state.isAdmin) return;
-      const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
-      if (data) {
-        state.adminProducts = data;
+        if (!state.isAdmin) return;
+        const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
+        if (data) {
+            state.adminProducts = data;
+            // Initialize search state if missing
+            if (typeof state.adminSearchQuery === 'undefined') state.adminSearchQuery = '';
+            if (typeof state.adminFilterCategory === 'undefined') state.adminFilterCategory = 'all';
+            render();
+        }
+        if (error) console.error("Admin fetch error:", error);
+    }
+
+    // 2. Search & Filter Handlers
+    function handleAdminSearch(e) {
+        state.adminSearchQuery = e.target.value.toLowerCase();
         render();
-      }
-      if (error) console.error("Admin fetch error:", error);
+    }
+    function handleAdminFilter(e) {
+        state.adminFilterCategory = e.target.value;
+        render();
+    }
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text);
+        showToast("ID copied to clipboard!");
+    }
+
+    // 3. Modal Open/Close Logic
+    window.openAddModal = () => {
+        const modal = document.getElementById('add-modal');
+        if(modal) modal.classList.remove('hidden');
+    }
+    window.closeAddModal = () => {
+        const modal = document.getElementById('add-modal');
+        if(modal) modal.classList.add('hidden');
+    }
+    
+    window.openEditModal = (product) => {
+        const modal = document.getElementById('edit-modal');
+        if(!modal) return;
+
+        // Fill form with existing data
+        const form = document.getElementById('edit-product-form');
+        form.id.value = product.id;
+        form.name.value = product.name;
+        form.description.value = product.description;
+        form.detailed_description.value = product.detailed_description || '';
+        form.price.value = product.price;
+        form.image_url.value = product.image_url;
+        form.category_id.value = product.category_id;
+        form.stock_status.value = product.stock_status;
+        form.is_active.checked = product.is_active;
+        
+        // Handle Special Deal Fields
+        form.is_deal.checked = product.is_deal;
+        form.deal_price.value = product.deal_price || '';
+        
+        // Toggle the deal input visibility immediately
+        const dealContainer = document.getElementById('edit-deal-price-container');
+        if(dealContainer) dealContainer.style.display = product.is_deal ? 'block' : 'none';
+
+        form.is_bestseller.checked = product.is_bestseller;
+        
+        modal.classList.remove('hidden');
+    }
+    window.closeEditModal = () => {
+        const modal = document.getElementById('edit-modal');
+        if(modal) modal.classList.add('hidden');
+    }
+
+    // 4. Deal Price Toggles
+    window.toggleDealPriceAdd = () => {
+        const isDeal = document.getElementById('add-is_deal').checked;
+        const container = document.getElementById('add-deal-price-container');
+        if(container) container.style.display = isDeal ? 'block' : 'none';
+    }
+    window.toggleDealPriceEdit = () => {
+        const isDeal = document.getElementById('edit-is_deal').checked;
+        const container = document.getElementById('edit-deal-price-container');
+        if(container) container.style.display = isDeal ? 'block' : 'none';
+    }
+
+    // 5. DATABASE ACTIONS (Add, Edit, Delete)
+    async function handleAddProduct(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        
+        // Generate a slug
+        const rawName = formData.get('name');
+        const slug = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000);
+
+        const newProduct = {
+            name: rawName,
+            slug: slug,
+            description: formData.get('description'),
+            detailed_description: formData.get('detailed_description'),
+            price: parseFloat(formData.get('price')),
+            image_url: formData.get('image_url'),
+            category_id: formData.get('category_id'),
+            stock_status: formData.get('stock_status'),
+            is_active: formData.get('is_active') === 'on',
+            is_bestseller: formData.get('is_bestseller') === 'on',
+            is_deal: formData.get('is_deal') === 'on',
+            deal_price: formData.get('deal_price') ? parseFloat(formData.get('deal_price')) : null
+        };
+
+        const { error } = await supabase.from('products').insert([newProduct]);
+        if (error) {
+            alert('Error adding product: ' + error.message);
+        } else {
+            showToast('Product added successfully!');
+            closeAddModal();
+            e.target.reset();
+            const dealContainer = document.getElementById('add-deal-price-container');
+            if(dealContainer) dealContainer.style.display = 'none';
+            await fetchAdminProducts();
+        }
+    }
+
+    async function handleUpdateProduct(e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const id = formData.get('id');
+        
+        const updates = {
+            name: formData.get('name'),
+            description: formData.get('description'),
+            detailed_description: formData.get('detailed_description'),
+            price: parseFloat(formData.get('price')),
+            image_url: formData.get('image_url'),
+            category_id: formData.get('category_id'),
+            stock_status: formData.get('stock_status'),
+            is_active: formData.get('is_active') === 'on',
+            is_bestseller: formData.get('is_bestseller') === 'on',
+            is_deal: formData.get('is_deal') === 'on',
+            deal_price: formData.get('deal_price') ? parseFloat(formData.get('deal_price')) : null
+        };
+
+        const { error } = await supabase.from('products').update(updates).eq('id', id);
+        if (error) {
+            alert('Error updating product: ' + error.message);
+        } else {
+            showToast('Product updated successfully!');
+            closeEditModal();
+            await fetchAdminProducts();
+        }
+    }
+
+    async function deleteProduct(id) {
+        if(!confirm("Are you sure you want to delete this product? This cannot be undone.")) return;
+        
+        const { error } = await supabase.from('products').delete().eq('id', id);
+        if (error) {
+            alert('Error deleting product: ' + error.message);
+        } else {
+            showToast('Product deleted.');
+            await fetchAdminProducts();
+        }
     }
 
     // --- Components ---
@@ -1182,175 +1332,21 @@
       `;
     }
 
-    function AdminProductRow(product) {
-      return `
-        <tr class="bg-white border-b hover:bg-gray-50 transition-colors ${!product.is_active ? 'opacity-60' : ''}">
-          <td class="px-6 py-4 font-bold text-gray-900">${product.id}</td>
-          <td class="px-6 py-4 text-gray-700">${product.name}</td>
-          <td class="px-6 py-4 text-gray-700">$${product.price.toFixed(2)}</td>
-          <td class="px-6 py-4">
-            <span class="px-3 py-1 text-xs font-semibold rounded-full ${product.stock_status === 'in_stock' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-              ${product.stock_status.replace('_', ' ')}
-            </span>
-          </td>
-          <td class="px-6 py-4">
-            <span class="px-3 py-1 text-xs font-semibold rounded-full ${product.is_active ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
-              ${product.is_active ? 'Active' : 'Inactive'}
-            </span>
-          </td>
-          <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
-            <button onclick='openEditModal(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50 transition-colors">
-              ${Icon.Edit()}
-            </button>
-            <button onclick="handleDeleteProduct('${product.id}')" class="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-50 transition-colors">
-              ${Icon.Trash()}
-            </button>
-          </td>
-        </tr>
-      `;
-    }
-    // ==========================================
-    // 🌟 ADMIN HELPER FUNCTIONS
-    // ==========================================
-
-    // 1. Search & Filter Handlers
-    function handleAdminSearch(e) {
-        state.adminSearchQuery = e.target.value.toLowerCase();
-        render();
-    }
-    function handleAdminFilter(e) {
-        state.adminFilterCategory = e.target.value;
-        render();
-    }
-    function copyToClipboard(text) {
-        navigator.clipboard.writeText(text);
-        showToast("ID copied to clipboard!");
-    }
-
-    // 2. Modal Open/Close Logic
-    window.openAddModal = () => document.getElementById('add-modal').classList.remove('hidden');
-    window.closeAddModal = () => document.getElementById('add-modal').classList.add('hidden');
     
-    window.openEditModal = (product) => {
-        // Fill form with existing data
-        const form = document.getElementById('edit-product-form');
-        form.id.value = product.id;
-        form.name.value = product.name;
-        form.description.value = product.description;
-        form.detailed_description.value = product.detailed_description || '';
-        form.price.value = product.price;
-        form.image_url.value = product.image_url;
-        form.category_id.value = product.category_id;
-        form.stock_status.value = product.stock_status;
-        form.is_active.checked = product.is_active;
-        
-        // Handle Special Deal Fields
-        form.is_deal.checked = product.is_deal;
-        form.deal_price.value = product.deal_price || '';
-        toggleDealPriceEdit(); // Show/Hide input based on checkbox
-
-        form.is_bestseller.checked = product.is_bestseller;
-        
-        document.getElementById('edit-modal').classList.remove('hidden');
-    }
-    window.closeEditModal = () => document.getElementById('edit-modal').classList.add('hidden');
-
-    // 3. Deal Price Toggles
-    window.toggleDealPriceAdd = () => {
-        const isDeal = document.getElementById('add-is_deal').checked;
-        document.getElementById('add-deal-price-container').style.display = isDeal ? 'block' : 'none';
-    }
-    window.toggleDealPriceEdit = () => {
-        const isDeal = document.getElementById('edit-is_deal').checked;
-        document.getElementById('edit-deal-price-container').style.display = isDeal ? 'block' : 'none';
-    }
-
-    // 4. DATABASE ACTIONS (Add, Edit, Delete)
-    
-    // Add Product
-    async function handleAddProduct(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const newProduct = {
-            name: formData.get('name'),
-            description: formData.get('description'),
-            detailed_description: formData.get('detailed_description'),
-            price: parseFloat(formData.get('price')),
-            image_url: formData.get('image_url'),
-            category_id: formData.get('category_id'),
-            stock_status: formData.get('stock_status'),
-            is_active: formData.get('is_active') === 'on',
-            is_bestseller: formData.get('is_bestseller') === 'on',
-            is_deal: formData.get('is_deal') === 'on',
-            deal_price: formData.get('deal_price') ? parseFloat(formData.get('deal_price')) : null
-        };
-
-        const { error } = await supabase.from('products').insert([newProduct]);
-        if (error) {
-            alert('Error adding product: ' + error.message);
-        } else {
-            showToast('Product added successfully!');
-            closeAddModal();
-            e.target.reset();
-            await fetchAdminProducts(); // Refresh list
-        }
-    }
-
-    // Update Product
-    async function handleUpdateProduct(e) {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const id = formData.get('id');
-        
-        const updates = {
-            name: formData.get('name'),
-            description: formData.get('description'),
-            detailed_description: formData.get('detailed_description'),
-            price: parseFloat(formData.get('price')),
-            image_url: formData.get('image_url'),
-            category_id: formData.get('category_id'),
-            stock_status: formData.get('stock_status'),
-            is_active: formData.get('is_active') === 'on',
-            is_bestseller: formData.get('is_bestseller') === 'on',
-            is_deal: formData.get('is_deal') === 'on',
-            deal_price: formData.get('deal_price') ? parseFloat(formData.get('deal_price')) : null
-        };
-
-        const { error } = await supabase.from('products').update(updates).eq('id', id);
-        if (error) {
-            alert('Error updating product: ' + error.message);
-        } else {
-            showToast('Product updated successfully!');
-            closeEditModal();
-            await fetchAdminProducts(); // Refresh list
-        }
-    }
-
-    // Delete Product
-    async function deleteProduct(id) {
-        if(!confirm("Are you sure you want to delete this product? This cannot be undone.")) return;
-        
-        const { error } = await supabase.from('products').delete().eq('id', id);
-        if (error) {
-            alert('Error deleting product: ' + error.message);
-        } else {
-            showToast('Product deleted.');
-            await fetchAdminProducts(); // Refresh list
-        }
-    }
     function AdminPage() {
       if (!state.isAdmin) return '<div class="p-8 text-center text-red-600 font-bold">⛔ Access Denied</div>';
       
+      const searchQuery = state.adminSearchQuery || '';
+      const filterCat = state.adminFilterCategory || 'all';
+
       // 🌟 COMBINED FILTER LOGIC
       const filteredProducts = state.adminProducts.filter(p => {
-          // 1. Check Text Search (Name or ID)
-          const matchesSearch = state.adminSearchQuery === '' || 
-              p.name.toLowerCase().includes(state.adminSearchQuery) || 
-              p.id.toString().includes(state.adminSearchQuery);
+          const matchesSearch = searchQuery === '' || 
+              p.name.toLowerCase().includes(searchQuery) || 
+              p.id.toString().includes(searchQuery);
           
-          // 2. Check Category Filter
-          const matchesCategory = state.adminFilterCategory === 'all' || 
-              p.category_id === state.adminFilterCategory;
+          const matchesCategory = filterCat === 'all' || 
+              p.category_id === filterCat;
 
           return matchesSearch && matchesCategory;
       });
@@ -1382,7 +1378,7 @@
                     </div>
                     <input type="text" 
                            placeholder="Search by exact Name or ID..." 
-                           value="${state.adminSearchQuery}"
+                           value="${searchQuery}"
                            oninput="handleAdminSearch(event)"
                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow"
                     >
@@ -1390,9 +1386,9 @@
 
                 <div class="w-full sm:w-64">
                     <select onchange="handleAdminFilter(event)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white cursor-pointer">
-                        <option value="all" ${state.adminFilterCategory === 'all' ? 'selected' : ''}>All Categories</option>
+                        <option value="all" ${filterCat === 'all' ? 'selected' : ''}>All Categories</option>
                         ${state.categories.map(c => `
-                            <option value="${c.id}" ${state.adminFilterCategory === c.id ? 'selected' : ''}>${c.name}</option>
+                            <option value="${c.id}" ${filterCat === c.id ? 'selected' : ''}>${c.name}</option>
                         `).join('')}
                     </select>
                 </div>
@@ -1465,7 +1461,6 @@
                 <h2 class="text-2xl font-bold text-gray-800">Add New Product</h2>
                 <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 transition-colors">${Icon.X()}</button>
               </div>
-              
               <form onsubmit="handleAddProduct(event)" class="p-8 space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div>
@@ -1479,12 +1474,10 @@
                       </select>
                    </div>
                 </div>
-
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Image URL</label>
                     <input type="url" name="image_url" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="https://example.com/image.jpg">
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                    <div>
                       <label class="block text-sm font-bold text-gray-700 mb-2">Price ($)</label>
@@ -1505,17 +1498,14 @@
                       </label>
                    </div>
                 </div>
-
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Short Description</label>
                     <textarea name="description" rows="2" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
                 </div>
-
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Detailed Description</label>
                     <textarea name="detailed_description" rows="4" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
                 </div>
-
                 <div class="bg-gray-50 p-6 rounded-xl border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label class="flex items-center gap-2 mb-2 cursor-pointer">
@@ -1533,7 +1523,6 @@
                       </div>
                     </div>
                 </div>
-
                 <div class="pt-4">
                   <button type="submit" class="w-full py-4 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all" style="background-color: var(--color-primary);">
                       Create Product
@@ -1549,36 +1538,32 @@
                 <h2 class="text-2xl font-bold text-gray-800">Edit Product</h2>
                 <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors">${Icon.X()}</button>
               </div>
-              
               <form id="edit-product-form" onsubmit="handleUpdateProduct(event)" class="p-8 space-y-6">
-                <input type="hidden" name="id">
-                
+                <input type="hidden" name="id" id="edit-id">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div>
                       <label class="block text-sm font-bold text-gray-700 mb-2">Product Name</label>
-                      <input type="text" name="name" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                      <input type="text" name="name" id="edit-name" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                    </div>
                    <div>
                       <label class="block text-sm font-bold text-gray-700 mb-2">Category</label>
-                      <select name="category_id" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                      <select name="category_id" id="edit-category_id" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
                           ${state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
                       </select>
                    </div>
                 </div>
-
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Image URL</label>
-                    <input type="url" name="image_url" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="url" name="image_url" id="edit-image_url" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                    <div>
                       <label class="block text-sm font-bold text-gray-700 mb-2">Price ($)</label>
-                      <input type="number" step="0.01" name="price" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                      <input type="number" step="0.01" name="price" id="edit-price" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                    </div>
                    <div>
                       <label class="block text-sm font-bold text-gray-700 mb-2">Stock Status</label>
-                      <select name="stock_status" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                      <select name="stock_status" id="edit-stock_status" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
                           <option value="in_stock">In Stock</option>
                           <option value="low_stock">Low Stock</option>
                           <option value="out_of_stock">Out of Stock</option>
@@ -1586,26 +1571,23 @@
                    </div>
                    <div class="flex items-center pt-8">
                       <label class="flex items-center gap-2 cursor-pointer">
-                          <input type="checkbox" name="is_active" class="w-5 h-5 text-indigo-600 rounded">
+                          <input type="checkbox" name="is_active" id="edit-is_active" class="w-5 h-5 text-indigo-600 rounded">
                           <span class="font-medium text-gray-700">Active Listing</span>
                       </label>
                    </div>
                 </div>
-
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Short Description</label>
-                    <textarea name="description" rows="2" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                    <textarea name="description" id="edit-description" rows="2" required class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
                 </div>
-
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Detailed Description</label>
-                    <textarea name="detailed_description" rows="4" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                    <textarea name="detailed_description" id="edit-detailed_description" rows="4" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
                 </div>
-
                 <div class="bg-gray-50 p-6 rounded-xl border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label class="flex items-center gap-2 mb-2 cursor-pointer">
-                          <input type="checkbox" name="is_bestseller" class="w-5 h-5 text-yellow-500 rounded">
+                          <input type="checkbox" name="is_bestseller" id="edit-is_bestseller" class="w-5 h-5 text-yellow-500 rounded">
                           <span class="font-bold text-gray-700">Mark as Bestseller</span>
                       </label>
                     </div>
@@ -1615,11 +1597,10 @@
                           <span class="font-bold text-gray-700">Mark as Special Deal</span>
                       </label>
                       <div id="edit-deal-price-container" class="hidden mt-2">
-                          <input type="number" step="0.01" name="deal_price" placeholder="Deal Price ($)" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
+                          <input type="number" step="0.01" name="deal_price" id="edit-deal_price" placeholder="Deal Price ($)" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none">
                       </div>
                     </div>
                 </div>
-
                 <div class="pt-4">
                   <button type="submit" class="w-full py-4 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all" style="background-color: var(--color-primary);">
                       Save Changes
@@ -1632,7 +1613,7 @@
         </div>
       `;
     }
-
+    
     function AboutPage() {
         return `
         <div class="flex-1 page-enter">
@@ -1667,7 +1648,7 @@
       const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
       return `
-        <div class="flex-1 max-w-4xl mx-auto px-4 py-12 page-enter relative">
+        <div class="flex-1 max-w-4xl mx-auto px-4 py-12 page-enter">
           <h1 class="text-3xl font-extrabold mb-8 border-b pb-3" style="color: var(--color-primary);">Shopping Cart</h1>
           ${state.cart.length === 0 ? `
             <div class="text-center py-16 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
@@ -1705,65 +1686,33 @@
                 <span class="text-gray-600 font-semibold">Order Total</span>
                 <span id="cart-grand-total" class="text-3xl font-extrabold" style="color: var(--color-primary);">$${total.toFixed(2)}</span>
               </div>
+              ${!state.user ? `
+                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4 text-sm text-yellow-800">
+                  <span class="font-bold">Note:</span> Please <button onclick="navigate('auth')" class="underline font-semibold" style="color: var(--color-secondary);">sign in</button> to checkout.
+                </div>
+              ` : ''}
               
-              <button onclick="openCheckoutModal()" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-xl hover:shadow-2xl" style="background-color: var(--color-secondary);">
+              <button id="checkout-btn" onclick="handleCheckout()" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-xl hover:shadow-2xl" style="background-color: var(--color-secondary);">
                 Proceed to Checkout
               </button>
             </div>
           `}
-
-          <div id="checkout-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm transition-opacity">
-            <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full transform scale-100 transition-transform">
-              <h2 class="text-2xl font-bold mb-4" style="color: var(--color-primary);">Final Step</h2>
-              <p class="text-gray-600 mb-6">Please provide a phone number so we can contact you regarding delivery.</p>
-              
-              <label class="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
-              <input type="tel" id="customer-phone" placeholder="+1 (559) 000-0000" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 mb-6 outline-none">
-              
-              <div class="flex gap-3">
-                <button onclick="closeCheckoutModal()" class="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition-colors">
-                  Cancel
-                </button>
-                <button id="confirm-order-btn" onclick="submitFinalOrder()" class="flex-1 py-3 text-white font-bold rounded-lg hover:shadow-lg transition-all" style="background-color: var(--color-secondary);">
-                  Confirm Order
-                </button>
-              </div>
-            </div>
-          </div>
-
         </div>
       `;
     }
     // 🌟 CHECKOUT HANDLER
-    // 1. Open the Popup
-    function openCheckoutModal() {
-        if (state.cart.length === 0) return showToast("Your cart is empty!");
+    async function handleCheckout() {
+        if (state.cart.length === 0) {
+            showToast("Your cart is empty!");
+            return;
+        }
         if (!state.user) {
-            showToast("Please login first.");
+            showToast("Please login to checkout.");
             navigate('auth');
             return;
         }
-        const modal = document.getElementById('checkout-modal');
-        if(modal) modal.classList.remove('hidden');
-    }
 
-    // 2. Close the Popup
-    function closeCheckoutModal() {
-        const modal = document.getElementById('checkout-modal');
-        if(modal) modal.classList.add('hidden');
-    }
-
-    // 3. Submit Order (Replaces old handleCheckout)
-    async function submitFinalOrder() {
-        const phoneInput = document.getElementById('customer-phone');
-        const phone = phoneInput.value.trim();
-        
-        if (!phone) {
-            alert("Please enter a phone number to continue.");
-            return;
-        }
-
-        const btn = document.getElementById('confirm-order-btn');
+        const btn = document.getElementById('checkout-btn');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<div class="loader" style="width: 20px; height: 20px; border-top-color: white; display: inline-block;"></div> Processing...';
         btn.disabled = true;
@@ -1771,46 +1720,45 @@
         try {
             const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             
+            // Format order details
             const orderDetails = state.cart.map(item => 
                 `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
             ).join('\n');
 
-            // 🌟 Prepare Email Params with Phone Number
             const templateParams = {
+                // Customer Details (For the email body)
                 customer_name: state.user.email.split('@')[0],
                 customer_email: state.user.email,
+                
+                // 🌟 CRITICAL: This makes the "Reply" button in your inbox email the Customer
                 reply_to: state.user.email,
-                
-                // We add the phone number to the MAIN message body so it appears 
-                // even if you don't update your EmailJS template.
-                message: `CUSTOMER PHONE: ${phone}\n\nORDER ITEMS:\n${orderDetails}`,
-                
+
+                // The Order Data
+                message: orderDetails,
                 total_amount: `$${total.toFixed(2)}`
             };
 
+            // Send Email (Ensure you used your REAL Public Key in emailjs.init previously)
             await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
 
+            // Clear Cart
             if (state.user) {
                 await supabase.from('cart_items').delete().eq('user_id', state.user.id);
             }
             
             state.cart = [];
-            closeCheckoutModal(); // Hide modal
-            showToast("Order Confirmed! We will contact you soon.");
+            showToast("Order placed successfully!, We will reach out to you soon!");
             navigate('home');
 
         } catch (error) {
             console.error('Checkout Error:', error);
-            showToast("Order failed. Please try again.");
+            showToast("Checkout failed. Please try again.");
+            alert("Error sending email: " + JSON.stringify(error));
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
     }
-    
-    // Expose functions to window
-    window.openCheckoutModal = openCheckoutModal;
-    window.closeCheckoutModal = closeCheckoutModal;
-    window.submitFinalOrder = submitFinalOrder;
+    window.handleCheckout = handleCheckout;
     function render() {
       let content = '';
       switch(state.currentPage) {
