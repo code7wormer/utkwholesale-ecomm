@@ -842,39 +842,58 @@ async function ensureValidSession() {
     
     async function handleAddProduct(e) {
   e.preventDefault();
+  async function handleAddProduct(e) {
+  e.preventDefault();
   console.log("=== handleAddProduct START ===");
   
   try {
     console.log("Step 1: Checking admin status...");
     
     if (!state.user || !state.isAdmin) {
-      console.log("Not logged in as admin");
       alert("You are not logged in as Admin.");
       navigate('auth');
       return;
     }
     
-    console.log("Step 2: Refreshing session...");
+    console.log("Step 2: Validating session...");
     
-    // Refresh the session with timeout
+    // Check if session is actually valid
+    let sessionValid = false;
     try {
-      const refreshPromise = supabase.auth.refreshSession();
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Session refresh timeout')), 5000)
-      );
+      const { data: { session }, error } = await Promise.race([
+        supabase.auth.getSession(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+      ]);
       
-      const refreshResult = await Promise.race([refreshPromise, timeoutPromise]);
-      console.log("Session refreshed successfully");
-    } catch (refreshErr) {
-      console.warn("Session refresh failed or timed out:", refreshErr.message);
-      // Continue anyway - the existing session might still work
+      if (session && !error) {
+        // Check token expiry
+        const expiresAt = session.expires_at * 1000;
+        const now = Date.now();
+        
+        if (expiresAt > now) {
+          sessionValid = true;
+          console.log("Session is valid");
+        } else {
+          console.log("Session expired");
+        }
+      }
+    } catch (err) {
+      console.warn("Session check failed:", err.message);
     }
     
-    console.log("Step 3: Admin verified, getting form data...");
+    // If session is invalid or check timed out, reload page
+    if (!sessionValid) {
+      alert("Your session has expired. Please refresh the page and try again.");
+      const shouldReload = confirm("Click OK to refresh now, or Cancel to refresh manually.");
+      if (shouldReload) {
+        window.location.reload();
+      }
+      return;
+    }
+    
+    console.log("Step 3: Getting form data...");
     
     const form = e.target;
-    
-    // Get the submit button and disable it
     const submitButton = form.querySelector('button[type="submit"]');
     
     if (submitButton) {
@@ -901,28 +920,34 @@ async function ensureValidSession() {
       is_bestseller: form.is_bestseller.checked
     };
 
-    console.log("Step 5: Product object created:", newProduct);
-    console.log("Step 6: Inserting into Supabase with timeout...");
+    console.log("Step 5: Product object created");
+    console.log("Step 6: Inserting into Supabase...");
 
-    // Add timeout to prevent hanging
+    // Insert with timeout
     const insertPromise = supabase
       .from('products')
       .insert([newProduct])
       .select();
     
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Database operation timed out')), 15000)
+      setTimeout(() => reject(new Error('INSERT_TIMEOUT')), 10000)
     );
     
     const result = await Promise.race([insertPromise, timeoutPromise]);
     const { data, error } = result;
     
-    console.log("Step 7: Supabase response received");
-    console.log("Data:", data);
-    console.log("Error:", error);
+    console.log("Step 7: Response received");
     
     if (error) {
       console.error("Supabase Error:", error);
+      
+      // Check if it's an auth error
+      if (error.message.includes('JWT') || error.message.includes('expired') || error.message.includes('session')) {
+        alert("Your session has expired. The page will reload.");
+        setTimeout(() => window.location.reload(), 1500);
+        return;
+      }
+      
       alert("Error adding product: " + error.message);
       if (submitButton) {
         submitButton.disabled = false;
@@ -931,7 +956,7 @@ async function ensureValidSession() {
       return;
     }
     
-    console.log("Step 8: Success! Refreshing lists...");
+    console.log("Step 8: Success!");
     showToast("Product added successfully!");
     form.reset();
     document.getElementById('add-deal-price-container')?.classList.add('hidden');
@@ -939,29 +964,27 @@ async function ensureValidSession() {
     await fetchAdminProducts();
     await fetchInitialProducts();
     
-    console.log("Step 9: Complete!");
-    
     if (submitButton) {
       submitButton.disabled = false;
       submitButton.innerHTML = 'Add Product';
     }
     
   } catch (err) {
-    console.error("=== EXCEPTION ===");
-    console.error(err);
-    
-    // Check if it's a timeout error
-    if (err.message.includes('timed out') || err.message.includes('timeout')) {
-      alert("Operation timed out. Your session may have expired.\n\nPlease refresh the page and try logging in again.");
-    } else {
-      alert("Error: " + err.message);
-    }
+    console.error("=== EXCEPTION ===", err);
     
     const form = document.getElementById('add-product-form');
     const submitButton = form?.querySelector('button[type="submit"]');
-    if (submitButton) {
-      submitButton.disabled = false;
-      submitButton.innerHTML = 'Add Product';
+    
+    // If timeout, session is dead - reload required
+    if (err.message === 'INSERT_TIMEOUT' || err.message === 'timeout') {
+      alert("Connection timeout. Your session may have expired.\n\nThe page will refresh automatically.");
+      setTimeout(() => window.location.reload(), 2000);
+    } else {
+      alert("Error: " + err.message);
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Add Product';
+      }
     }
   }
   
