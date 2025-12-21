@@ -566,21 +566,41 @@
     }
 
     async function fetchCart() {
-      if (!state.user) return;
-      const { data } = await supabase.from('cart_items').select(`*, products:product_id (*)`);
-      if (data) {
-        state.cart = data.map(item => {
-           const product = item.products;
-           const finalPrice = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
-           return { 
-               ...product, 
-               id: item.product_id, 
-               quantity: item.quantity, 
-               price: finalPrice 
-           };
-        });
+      // If not logged in, keep the local guest cart. Do not overwrite it.
+      if (!state.user) return; 
+
+      const { data, error } = await supabase
+        .from('cart_items')
+        .select(`
+            quantity,
+            product_id,
+            products (*)
+        `);
+
+      if (error) {
+        console.error("Error fetching cart:", error);
+        return;
       }
-      render();
+
+      // Flatten structure AND apply Deal Price logic
+      state.cart = (data || []).map(item => {
+          if (!item.products) return null; // Skip if product data is missing
+          
+          const product = item.products;
+          
+          // 🌟 DEAL CHECK: Applied correctly from server data
+          const finalPrice = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
+
+          return {
+              ...product,           // Spread original product data
+              id: item.product_id,  // ⚠️ CRITICAL: Ensure ID matches the product ID
+              quantity: item.quantity,
+              price: finalPrice     // Use the calculated deal price
+          };
+      }).filter(Boolean); // Remove nulls
+
+      render(); 
+      updateCartCount(); 
     }
 
     async function mergeCart() {
@@ -595,49 +615,94 @@
     }
 
     async function addToCart(product) {
+      // 🌟 1. Calculate Price immediately (Deal Check)
       const priceToUse = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
-      const cartProduct = { ...product, price: priceToUse };
 
-      const existing = state.cart.find(item => item.id === cartProduct.id);
-      let newQuantity = existing ? existing.quantity + 1 : 1;
+      // 🌟 2. Find existing item (Using loose equality '==' to catch string/number mismatches)
+      const existingItem = state.cart.find(item => item.id == product.id);
+      
+      let newQuantity = 1;
 
-      if (state.user) {
-        const { error } = await supabase.from('cart_items').upsert({ 
-            user_id: state.user.id, 
-            product_id: cartProduct.id, 
-            quantity: newQuantity 
-        }, { onConflict: 'user_id, product_id' });
-        
-        if (!error) await fetchCart();
+      // 🌟 3. Optimistic Update (Update screen instantly for EVERYONE)
+      if (existingItem) {
+          existingItem.quantity += 1;
+          newQuantity = existingItem.quantity;
+          // Ensure price is up to date 
+          existingItem.price = priceToUse;
       } else {
-        if (existing) {
-            existing.quantity++;
-            existing.price = priceToUse; 
-        } else {
-            state.cart.push({ ...cartProduct, quantity: 1 });
-        }
-        render();
+          // Add new item to local state
+          state.cart.push({
+              ...product,
+              id: product.id,
+              price: priceToUse,
+              quantity: 1
+          });
       }
 
+      // 4. Render & Feedback
+      render();
       showToast(`Added ${product.name} to cart`);
+      updateCartCount();
 
+      // Trigger Animation
       const cartIcon = document.getElementById('cart-icon-container');
       if (cartIcon) {
           cartIcon.classList.remove('cart-pulse');
           void cartIcon.offsetWidth; 
           cartIcon.classList.add('cart-pulse');
       }
-    }
-
-    async function removeFromCart(id) {
       if (state.user) {
-        await supabase.from('cart_items').delete().match({ user_id: state.user.id, product_id: id });
-        await fetchCart();
-      } else {
-        state.cart = state.cart.filter(item => item.id !== id);
-        render();
+          const { error } = await supabase.from('cart_items').upsert({ 
+              user_id: state.user.id, 
+              product_id: product.id, 
+              quantity: newQuantity 
+          }, { onConflict: 'user_id, product_id' });
+
+          if (error) {
+              console.error("Supabase Save Error:", error);
+          }
       }
     }
+
+    // 🌟 ROBUST REMOVE FUNCTION (Instant Feedback)
+    window.removeFromCart = async (id) => {
+        // 1. Optimistic UI Update: Remove it locally first!
+        // We use '!=' (loose inequality) to ensure "5" matches 5
+        const itemExists = state.cart.some(item => item.id == id);
+        
+        if (!itemExists) {
+            console.error("Item not found in local cart:", id);
+            return; 
+        }
+
+        // Filter out the item locally
+        state.cart = state.cart.filter(item => item.id != id);
+        
+        // Update the screen immediately
+        render();
+        updateCartCount();
+        showToast("Item removed");
+
+        // 2. Sync with Server (Background)
+        // Only if logged in. If guest, we are done!
+        if (state.user) {
+            try {
+                const { error } = await supabase
+                    .from('cart_items')
+                    .delete()
+                    .match({ user_id: state.user.id, product_id: id });
+
+                if (error) {
+                    console.error("Supabase Delete Error:", error);
+                    showToast("Error syncing with server");
+                    // Optionally refresh cart if sync fails
+                    await fetchCart(); 
+                }
+            } catch (err) {
+                console.error("Network Error:", err);
+            }
+        }
+    };
     // 🌟 HELPER: Calculates the new quantity dynamically
     function adjustQuantity(id, change) {
         const item = state.cart.find(i => i.id === id);
@@ -1601,7 +1666,7 @@
                     $${(item.price * item.quantity).toFixed(2)}
                   </div>
                   <button onclick="removeFromCart('${item.id}')" class="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 self-start sm:self-center">
-                    ${Icon.X()}
+                    ${Icon.Trash()}
                   </button>
                 </div>
               `).join('')}
