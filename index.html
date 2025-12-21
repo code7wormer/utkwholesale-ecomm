@@ -782,6 +782,7 @@
     }
     
     async function handleAddProduct(e) {
+      console.log("FUNCTION STARTED");
       e.preventDefault();
       if (!state.isAdmin) {
           alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
@@ -1449,7 +1450,7 @@
                 <h2 class="text-2xl font-bold mb-6 flex items-center gap-2" style="color: var(--color-secondary);">
                     <span style="color: var(--color-primary);">${Icon.Plus()}</span> Add New Product
                 </h2>
-                <form onsubmit="handleAddProduct(event)" class="space-y-4">
+                <form id="add-product-form" onsubmit="handleAddProduct(event)" class="space-y-4">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Name</label>
