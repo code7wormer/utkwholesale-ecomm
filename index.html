@@ -1069,16 +1069,7 @@
               </div>
           </div>
         `;
-    }
-    window.toggleSidebar = () => {
-        const body = document.body;
-        // This matches the CSS you already have (.sidebar-open)
-        if (body.classList.contains('sidebar-open')) {
-            body.classList.remove('sidebar-open');
-        } else {
-            body.classList.add('sidebar-open');
         }
-    };
     function Sidebar() {
       return `
           <div class="backdrop" onclick="toggleMenu()"></div> 
