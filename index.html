@@ -630,7 +630,7 @@ window.handleVerifyOtp = async function() {
         const templateParams = {
             to_name: "Admin",
             from_name: state.user.email,  // ✅ ADD THIS
-            message: orderDetails, ,
+            message: orderDetails, 
             customer_email: state.user.email,  // ✅ ADD THIS
             message: orderDetails,
             total_amount: `$${total.toFixed(2)}`,
