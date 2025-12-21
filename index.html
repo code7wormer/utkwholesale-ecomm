@@ -524,6 +524,8 @@
 
     // 3. Triggered by "Verify" button in popup
     window.handleVerifyOtp = async function() {
+        console.log("--- STARTING VERIFICATION ---");
+        
         const phoneInput = document.getElementById('user-phone');
         const otpInput = document.getElementById('user-otp');
         const btn = document.getElementById('btn-verify-otp');
@@ -531,35 +533,61 @@
         const phoneNumber = phoneInput.value.trim();
         const token = otpInput.value.trim();
 
+        // 1. Basic Validation
         if (token.length !== 6) {
-            alert("Enter the 6-digit code.");
+            alert("Please enter the full 6-digit code.");
             return;
         }
 
+        // 2. Lock Button
         btn.innerText = "Verifying...";
         btn.disabled = true;
 
-        const { data, error } = await supabase.auth.verifyOtp({
-            phone: phoneNumber,
-            token: token,
-            type: 'sms'
-        });
+        try {
+            // Debugging: Log what we are sending
+            console.log(`Verifying: ${phoneNumber} with Code: ${token}`);
 
-        if (error) {
-            alert("Invalid Code. Try again.");
+            // 3. Call Supabase
+            const { data, error } = await supabase.auth.verifyOtp({
+                phone: phoneNumber,
+                token: token,
+                type: 'sms'
+            });
+
+            // 4. Check for API Errors
+            if (error) {
+                console.error("Supabase API Error:", error);
+                throw error; // Jump to catch block
+            }
+
+            console.log("Verification Success:", data);
+
+            // 5. Success Actions
+            closePhonePopup(); // Close the popup first
+            
+            if (state.isCheckoutFlow) {
+                console.log("Calling finalizeOrder...");
+                // Check if finalizeOrder exists before calling
+                if (typeof finalizeOrder === 'function') {
+                    await finalizeOrder(phoneNumber);
+                } else {
+                    throw new Error("finalizeOrder function is missing!");
+                }
+            } else {
+                alert("Phone Verified! Refreshing...");
+                window.location.reload();
+            }
+
+        } catch (err) {
+            // 6. ERROR HANDLING (Resets the button!)
+            console.error("FULL VERIFY ERROR:", err);
+            
+            // Show a clear message to the user
+            alert("Verification Failed: " + (err.message || "Unknown error"));
+            
+            // Reset Button so you can try again
             btn.innerText = "Verify & Complete Order";
             btn.disabled = false;
-            return;
-        }
-
-        // ✅ VERIFIED! Proceed to Finalize Order
-        closePhonePopup();
-        
-        if (state.isCheckoutFlow) {
-            await finalizeOrder(phoneNumber);
-        } else {
-            alert("Phone verified successfully!");
-            window.location.reload();
         }
     };
 
