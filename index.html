@@ -1318,7 +1318,21 @@
         const previousUser = state.user;
         state.user = session?.user || null;
         
-        state.isAdmin = state.user && state.user.email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase();
+       if (state.user && state.user.email) {
+         const userEmail = state.user.email.trim().toLowerCase();
+          const adminEmail = ADMIN_EMAIL.trim().toLowerCase();
+          
+          state.isAdmin = userEmail === adminEmail;
+          
+          // DEBUGGING: This will force a log in your console so you can see the truth
+          console.log("👮 Admin Check Debug:");
+          console.log(`   Logged in as: '${userEmail}'`);
+          console.log(`   Admin is:     '${adminEmail}'`);
+          console.log(`   Is Admin?      ${state.isAdmin}`);
+      } else {
+          state.isAdmin = false;
+          console.log("👮 Admin Check: No user logged in.");
+      }
         
         if (!previousUser && state.user) await mergeCart();
         if (state.user) await fetchCart();
