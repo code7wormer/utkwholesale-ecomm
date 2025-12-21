@@ -498,21 +498,26 @@
    window.handleSendOtp = async function() {
     const phoneInput = document.getElementById('user-phone');
     const btn = document.getElementById('btn-send-otp');
-    const phoneNumber = phoneInput.value.trim(); // 👈 Sends exactly what is typed
+    const phoneNumber = phoneInput.value.trim();
 
-    // Only check if it's too short to be a phone number
     if (phoneNumber.length < 5) {
         alert("Please enter a valid phone number.");
+        return;
+    }
+    
+    // Safety: Ensure user is actually logged in
+    if (!state.user) {
+        alert("You must be logged in to verify a phone number.");
         return;
     }
 
     btn.innerText = "Sending...";
     btn.disabled = true;
 
-    console.log("Sending OTP to:", phoneNumber); 
+    console.log("Linking phone to current account:", phoneNumber);
 
-    // Send the raw number
-    const { error } = await supabase.auth.signInWithOtp({
+    // ⚡ CHANGE: Use updateUser instead of signInWithOtp
+    const { error } = await supabase.auth.updateUser({
         phone: phoneNumber
     });
 
@@ -524,11 +529,8 @@
     } else {
         alert("Code sent to " + phoneNumber);
         
-        // Show Step 2
         document.getElementById('step-phone-input').classList.add('hidden');
         document.getElementById('step-otp-input').classList.remove('hidden');
-        
-        // Ensure input stays same for verification step
         phoneInput.value = phoneNumber; 
     }
 };
