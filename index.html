@@ -856,16 +856,18 @@ async function ensureValidSession() {
     
     console.log("Step 2: Refreshing session...");
     
-    // Refresh the session to ensure it's active
+    // Refresh the session with timeout
     try {
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) {
-        console.warn("Session refresh warning:", refreshError);
-      } else {
-        console.log("Session refreshed successfully");
-      }
+      const refreshPromise = supabase.auth.refreshSession();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Session refresh timeout')), 5000)
+      );
+      
+      const refreshResult = await Promise.race([refreshPromise, timeoutPromise]);
+      console.log("Session refreshed successfully");
     } catch (refreshErr) {
-      console.warn("Could not refresh session, continuing anyway:", refreshErr);
+      console.warn("Session refresh failed or timed out:", refreshErr.message);
+      // Continue anyway - the existing session might still work
     }
     
     console.log("Step 3: Admin verified, getting form data...");
@@ -909,7 +911,7 @@ async function ensureValidSession() {
       .select();
     
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Database operation timed out. Please try again.')), 15000)
+      setTimeout(() => reject(new Error('Database operation timed out')), 15000)
     );
     
     const result = await Promise.race([insertPromise, timeoutPromise]);
@@ -949,8 +951,8 @@ async function ensureValidSession() {
     console.error(err);
     
     // Check if it's a timeout error
-    if (err.message.includes('timed out')) {
-      alert("The operation timed out. Your session may have expired.\n\nPlease refresh the page and try again.");
+    if (err.message.includes('timed out') || err.message.includes('timeout')) {
+      alert("Operation timed out. Your session may have expired.\n\nPlease refresh the page and try logging in again.");
     } else {
       alert("Error: " + err.message);
     }
