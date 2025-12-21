@@ -638,7 +638,20 @@
         render();
       }
     }
-
+    // 🌟 HELPER: Calculates the new quantity dynamically
+    function adjustQuantity(id, change) {
+        const item = state.cart.find(i => i.id === id);
+        if (!item) return;
+        
+        const newQuantity = item.quantity + change;
+        
+        // Prevent going below 1
+        if (newQuantity < 1) return;
+        
+        updateQuantity(id, newQuantity);
+    }
+    // Make it accessible to HTML
+    window.adjustQuantity = adjustQuantity;
     async function updateQuantity(id, newQuantity) {
         if (newQuantity < 1) return;
 
@@ -1577,11 +1590,13 @@
                     <h3 class="font-semibold text-lg truncate">${item.name}</h3>
                     <p class="font-bold" style="color: var(--color-secondary);">$${item.price.toFixed(2)}</p>
                   </div>
+                  
                   <div class="flex items-center gap-2 flex-shrink-0 mt-2 sm:mt-0">
-                    <button onclick="updateQuantity('${item.id}', ${item.quantity - 1})" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">-</button>
+                    <button onclick="adjustQuantity('${item.id}', -1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">-</button>
                     <span id="qty-${item.id}" class="w-6 text-center font-medium">${item.quantity}</span>
-                    <button onclick="updateQuantity('${item.id}', ${item.quantity + 1})" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">+</button>
+                    <button onclick="adjustQuantity('${item.id}', 1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">+</button>
                   </div>
+                  
                   <div id="item-total-${item.id}" class="text-xl font-extrabold text-gray-800 flex-shrink-0 sm:ml-4" style="color: var(--color-primary);">
                     $${(item.price * item.quantity).toFixed(2)}
                   </div>
