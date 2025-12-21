@@ -268,61 +268,6 @@
     (function(){
       emailjs.init("4abn3obf_dhQF5ykh"); // REPLACE WITH YOUR PUBLIC KEY
     })();
-
-    async function handleCheckout() {
-        if (state.cart.length === 0) {
-            showToast("Your cart is empty!");
-            return;
-        }
-        if (!state.user) {
-            showToast("Please login to checkout.");
-            navigate('auth');
-            return;
-        }
-
-        const btn = document.getElementById('checkout-btn');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<div class="loader border-white" style="width: 20px; height: 20px;"></div> Processing...';
-        btn.disabled = true;
-
-        try {
-            const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            
-            // Format order details for the email
-            const orderDetails = state.cart.map(item => 
-                `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
-            ).join('\n');
-
-            const templateParams = {
-                to_email: state.user.email,         // User's email
-                to_name: state.user.email.split('@')[0],
-                from_name: "UTKWholesale",
-                order_details: orderDetails,
-                total_amount: `$${total.toFixed(2)}`,
-                reply_to: "utkwholesale.sup@gmail.com"
-            };
-
-            // Send Email
-            await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
-
-            // Clear Cart from Supabase
-            if (state.user) {
-                await supabase.from('cart_items').delete().eq('user_id', state.user.id);
-            }
-            
-            state.cart = [];
-            showToast("Order placed successfully! Check your email.");
-            navigate('home');
-
-        } catch (error) {
-            console.error('Checkout Error:', error);
-            showToast("Checkout failed. Please try again.");
-            alert("Error sending email: " + JSON.stringify(error));
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
-    }
-    window.handleCheckout = handleCheckout;
     // --- 🎨 Theme Configuration ---
     const CATEGORY_THEMES = {
       'candies-chocolates': { primary: '#ec4899', secondary: '#be185d', icon: '🍬' },
