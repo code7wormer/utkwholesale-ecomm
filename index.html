@@ -1590,48 +1590,51 @@
         }
 
         const btn = document.getElementById('checkout-btn');
-        const originalContent = btn.innerHTML;
-        // Show loading state
-        btn.innerHTML = `<div class="loader border-white" style="width: 20px; height: 20px; border-top-color: white;"></div> Processing...`;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<div class="loader" style="width: 20px; height: 20px; border-top-color: white; display: inline-block;"></div> Processing...';
         btn.disabled = true;
 
         try {
             const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             
-            // Format order details nicely for the email
+            // Format order details
             const orderDetails = state.cart.map(item => 
                 `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
             ).join('\n');
 
             const templateParams = {
-                to_email: state.user.email,
-                to_name: state.user.email.split('@')[0],
-                from_name: "ShopHub",
-                order_details: orderDetails,
-                total_amount: `$${total.toFixed(2)}`,
-                reply_to: "support@shophub.com"
+                // Customer Details (For the email body)
+                customer_name: state.user.email.split('@')[0],
+                customer_email: state.user.email,
+                
+                // 🌟 CRITICAL: This makes the "Reply" button in your inbox email the Customer
+                reply_to: state.user.email,
+
+                // The Order Data
+                message: orderDetails,
+                total_amount: `$${total.toFixed(2)}`
             };
 
-            // ⚠️ REPLACE WITH YOUR SERVICE ID AND TEMPLATE ID
+            // Send Email (Ensure you used your REAL Public Key in emailjs.init previously)
             await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
 
-            // Clear Cart from Supabase
-            await supabase.from('cart_items').delete().eq('user_id', state.user.id);
+            // Clear Cart
+            if (state.user) {
+                await supabase.from('cart_items').delete().eq('user_id', state.user.id);
+            }
             
-            // Clear Local State
             state.cart = [];
-            showToast("Order placed successfully! We will reach out to you soon!.");
+            showToast("Order placed successfully!");
             navigate('home');
 
         } catch (error) {
             console.error('Checkout Error:', error);
             showToast("Checkout failed. Please try again.");
             alert("Error sending email: " + JSON.stringify(error));
-            btn.innerHTML = originalContent;
+            btn.innerHTML = originalText;
             btn.disabled = false;
         }
     }
-    // Expose to window so the HTML button can call it
     window.handleCheckout = handleCheckout;
     function render() {
       let content = '';
