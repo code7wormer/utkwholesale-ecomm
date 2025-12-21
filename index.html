@@ -566,41 +566,21 @@
     }
 
     async function fetchCart() {
-      // If not logged in, keep the local guest cart. Do not overwrite it.
-      if (!state.user) return; 
-
-      const { data, error } = await supabase
-        .from('cart_items')
-        .select(`
-            quantity,
-            product_id,
-            products (*)
-        `);
-
-      if (error) {
-        console.error("Error fetching cart:", error);
-        return;
+      if (!state.user) return;
+      const { data } = await supabase.from('cart_items').select(`*, products:product_id (*)`);
+      if (data) {
+        state.cart = data.map(item => {
+           const product = item.products;
+           const finalPrice = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
+           return { 
+               ...product, 
+               id: item.product_id, 
+               quantity: item.quantity, 
+               price: finalPrice 
+           };
+        });
       }
-
-      // Flatten structure AND apply Deal Price logic
-      state.cart = (data || []).map(item => {
-          if (!item.products) return null; // Skip if product data is missing
-          
-          const product = item.products;
-          
-          // 🌟 DEAL CHECK: Applied correctly from server data
-          const finalPrice = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
-
-          return {
-              ...product,           // Spread original product data
-              id: item.product_id,  // ⚠️ CRITICAL: Ensure ID matches the product ID
-              quantity: item.quantity,
-              price: finalPrice     // Use the calculated deal price
-          };
-      }).filter(Boolean); // Remove nulls
-
-      render(); 
-      updateCartCount(); 
+      render();
     }
 
     async function mergeCart() {
@@ -615,104 +595,49 @@
     }
 
     async function addToCart(product) {
-      // 🌟 1. Calculate Price immediately (Deal Check)
       const priceToUse = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
+      const cartProduct = { ...product, price: priceToUse };
 
-      // 🌟 2. Find existing item (Using loose equality '==' to catch string/number mismatches)
-      const existingItem = state.cart.find(item => item.id == product.id);
-      
-      let newQuantity = 1;
+      const existing = state.cart.find(item => item.id === cartProduct.id);
+      let newQuantity = existing ? existing.quantity + 1 : 1;
 
-      // 🌟 3. Optimistic Update (Update screen instantly for EVERYONE)
-      if (existingItem) {
-          existingItem.quantity += 1;
-          newQuantity = existingItem.quantity;
-          // Ensure price is up to date 
-          existingItem.price = priceToUse;
+      if (state.user) {
+        const { error } = await supabase.from('cart_items').upsert({ 
+            user_id: state.user.id, 
+            product_id: cartProduct.id, 
+            quantity: newQuantity 
+        }, { onConflict: 'user_id, product_id' });
+        
+        if (!error) await fetchCart();
       } else {
-          // Add new item to local state
-          state.cart.push({
-              ...product,
-              id: product.id,
-              price: priceToUse,
-              quantity: 1
-          });
+        if (existing) {
+            existing.quantity++;
+            existing.price = priceToUse; 
+        } else {
+            state.cart.push({ ...cartProduct, quantity: 1 });
+        }
+        render();
       }
 
-      // 4. Render & Feedback
-      render();
       showToast(`Added ${product.name} to cart`);
-      updateCartCount();
 
-      // Trigger Animation
       const cartIcon = document.getElementById('cart-icon-container');
       if (cartIcon) {
           cartIcon.classList.remove('cart-pulse');
           void cartIcon.offsetWidth; 
           cartIcon.classList.add('cart-pulse');
       }
+    }
 
-      // 🌟 5. Sync to Server (ONLY if logged in)
-      // If guest, we just stop here. The data is safe in state.cart until they login/refresh.
+    async function removeFromCart(id) {
       if (state.user) {
-          const { error } = await supabase.from('cart_items').upsert({ 
-              user_id: state.user.id, 
-              product_id: product.id, 
-              quantity: newQuantity 
-          }, { onConflict: 'user_id, product_id' });
-
-          if (error) {
-              console.error("Supabase Save Error:", error);
-          }
+        await supabase.from('cart_items').delete().match({ user_id: state.user.id, product_id: id });
+        await fetchCart();
+      } else {
+        state.cart = state.cart.filter(item => item.id !== id);
+        render();
       }
     }
-    function updateCartCount() {
-        const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
-        const badge = document.getElementById('cart-count');
-        if (badge) {
-            badge.innerText = totalItems;
-            badge.classList.toggle('hidden', totalItems === 0);
-        }
-    }
-    // 🌟 ROBUST REMOVE FUNCTION (Instant Feedback)
-    window.removeFromCart = async (id) => {
-        // 1. Optimistic UI Update: Remove it locally first!
-        // We use '!=' (loose inequality) to ensure "5" matches 5
-        const itemExists = state.cart.some(item => item.id == id);
-        
-        if (!itemExists) {
-            console.error("Item not found in local cart:", id);
-            return; 
-        }
-
-        // Filter out the item locally
-        state.cart = state.cart.filter(item => item.id != id);
-        
-        // Update the screen immediately
-        render();
-        updateCartCount();
-        showToast("Item removed");
-
-        // 2. Sync with Server (Background)
-        // Only if logged in. If guest, we are done!
-        if (state.user) {
-            try {
-                const { error } = await supabase
-                    .from('cart_items')
-                    .delete()
-                    .match({ user_id: state.user.id, product_id: id });
-
-                if (error) {
-                    console.error("Supabase Delete Error:", error);
-                    showToast("Error syncing with server");
-                    // Optionally refresh cart if sync fails
-                    await fetchCart(); 
-                }
-            } catch (err) {
-                console.error("Network Error:", err);
-            }
-        }
-    };
     // 🌟 HELPER: Calculates the new quantity dynamically
     function adjustQuantity(id, change) {
         const item = state.cart.find(i => i.id === id);
@@ -736,46 +661,24 @@
 
         // 2. Optimistic Update: Update Local State immediately
         item.quantity = newQuantity;
-  
+
         // 3. Direct DOM Manipulation (Update numbers without re-rendering)
         const qtyEl = document.getElementById(`qty-${id}`);
         const itemTotalEl = document.getElementById(`item-total-${id}`);
         const grandTotalEl = document.getElementById(`cart-grand-total`);
-        
-        if (qtyEl) qtyEl.innerText = newQuantity;
-        if (itemTotalEl) itemTotalEl.innerText = `$${(item.price * newQuantity).toFixed(2)}`;
-        if (grandTotalEl) {
-             const total = state.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-             grandTotalEl.innerText = `$${total.toFixed(2)}`;
-        }
 
-
-
-
-      const cartCountEl = document.getElementById('cart-count');
-        if (cartCountEl) {
-            const totalItems = state.cart.reduce((sum, i) => sum + i.quantity, 0);
-            cartCountEl.innerText = totalItems;
+        if (qtyEl && itemTotalEl && grandTotalEl) {
+            // Update the quantity number
+            qtyEl.innerText = newQuantity;
             
-            // Show/Hide bubble based on count
-            if (totalItems > 0) {
-                cartCountEl.classList.remove('hidden');
-                // Optional: Trigger the pulse animation
-                const container = document.getElementById('cart-icon-container');
-                if(container) {
-                    container.classList.remove('cart-pulse');
-                    void container.offsetWidth; 
-                    container.classList.add('cart-pulse');
-                }
-            } else {
-                cartCountEl.classList.add('hidden');
-            }
+            // Update the item's total price
+            const itemTotal = item.price * newQuantity;
+            itemTotalEl.innerText = `$${itemTotal.toFixed(2)}`;
+
+            // Recalculate and update the Grand Total
+            const newGrandTotal = state.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            grandTotalEl.innerText = `$${newGrandTotal.toFixed(2)}`;
         }
-
-
-
-
-      
 
         // 4. Send update to Supabase in the background
         // Note: We do NOT call fetchCart() or render() here anymore
@@ -783,7 +686,7 @@
             const { error } = await supabase
                 .from('cart_items')
                 .update({ quantity: newQuantity })
-                .eq('product_id', id);
+                .eq('id', id);
 
             if (error) throw error;
         } catch (error) {
@@ -807,17 +710,13 @@
     
     async function handleAddProduct(e) {
       e.preventDefault();
-      // 🛡️ Fix: Ensure we get the form element even if triggered by a button
-      const form = e.target.tagName === 'FORM' ? e.target : e.target.closest('form');
-      if (!form) return console.error("Form not found");
       if (!state.isAdmin) {
           alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
           return;
       }
+      const form = e.target;
       const isDeal = form.is_deal.checked;
-      const rawName = form.name.value || 'product';
-      const slugBase = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '');
-      const uniqueSlug = `${slugBase}-${Math.floor(Math.random() * 10000)}`; 
+      
       const newProduct = {
         name: form.name.value,
         description: form.description.value,
@@ -895,15 +794,13 @@
 
     async function handleUpdateProduct(e) {
         e.preventDefault();
-
-        // 🛡️ Fix: Ensure we get the form element
-        const form = e.target.tagName === 'FORM' ? e.target : e.target.closest('form');
-        if (!form) return console.error("Edit Form not found");
-      
+        
         if (!state.isAdmin) {
             alert("⛔ ACCESS DENIED: The system does not recognize you as the admin.");
             return;
         }
+
+        const form = e.target;
         const id = form.id.value;
         const isDeal = form.is_deal.checked;
 
@@ -1014,11 +911,12 @@
               `}
 
               <button id="cart-icon-container" onclick="handleCartClick(); return false;" class="relative p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 btn-animate">
-                 ${Icon.Cart()}
-                 
-                 <span id="cart-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${isHidden}">
-                    ${totalItems}
-                 </span>
+                ${Icon.Cart()}
+                ${state.cart.length > 0 ? `
+                  <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white">
+                    ${state.cart.reduce((acc, item) => acc + item.quantity, 0)}
+                  </span>
+                ` : ''}
               </button>
             </div>
           </div>
@@ -1675,7 +1573,7 @@
       const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
       return `
-        <div class="flex-1 max-w-4xl mx-auto px-4 py-12 page-enter relative">
+        <div class="flex-1 max-w-4xl mx-auto px-4 py-12 page-enter">
           <h1 class="text-3xl font-extrabold mb-8 border-b pb-3" style="color: var(--color-primary);">Shopping Cart</h1>
           ${state.cart.length === 0 ? `
             <div class="text-center py-16 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
@@ -1713,64 +1611,33 @@
                 <span class="text-gray-600 font-semibold">Order Total</span>
                 <span id="cart-grand-total" class="text-3xl font-extrabold" style="color: var(--color-primary);">$${total.toFixed(2)}</span>
               </div>
+              ${!state.user ? `
+                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4 text-sm text-yellow-800">
+                  <span class="font-bold">Note:</span> Please <button onclick="navigate('auth')" class="underline font-semibold" style="color: var(--color-secondary);">sign in</button> to checkout.
+                </div>
+              ` : ''}
               
-              <button onclick="openCheckoutModal()" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-xl hover:shadow-2xl" style="background-color: var(--color-secondary);">
+              <button id="checkout-btn" onclick="handleCheckout()" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-xl hover:shadow-2xl" style="background-color: var(--color-secondary);">
                 Proceed to Checkout
               </button>
             </div>
           `}
-
-          <div id="checkout-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4 backdrop-blur-sm transition-opacity">
-            <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full transform scale-100 transition-transform">
-              <h2 class="text-2xl font-bold mb-4" style="color: var(--color-primary);">Final Step</h2>
-              <p class="text-gray-600 mb-6">Please provide a phone number so we can contact you regarding delivery.</p>
-              
-              <label class="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
-              <input type="tel" id="customer-phone" placeholder="+1 (555) 000-0000" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 mb-6 outline-none">
-              
-              <div class="flex gap-3">
-                <button onclick="closeCheckoutModal()" class="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 transition-colors">
-                  Cancel
-                </button>
-                <button id="confirm-order-btn" onclick="submitFinalOrder()" class="flex-1 py-3 text-white font-bold rounded-lg hover:shadow-lg transition-all" style="background-color: var(--color-secondary);">
-                  Confirm Order
-                </button>
-              </div>
-            </div>
-          </div>
-
         </div>
       `;
-    }    // 🌟 CHECKOUT HANDLER
-    // 1. Open the Popup
-    function openCheckoutModal() {
-        if (state.cart.length === 0) return showToast("Your cart is empty!");
+    }
+    // 🌟 CHECKOUT HANDLER
+    async function handleCheckout() {
+        if (state.cart.length === 0) {
+            showToast("Your cart is empty!");
+            return;
+        }
         if (!state.user) {
-            showToast("Please login first.");
+            showToast("Please login to checkout.");
             navigate('auth');
             return;
         }
-        const modal = document.getElementById('checkout-modal');
-        if(modal) modal.classList.remove('hidden');
-    }
 
-    // 2. Close the Popup
-    function closeCheckoutModal() {
-        const modal = document.getElementById('checkout-modal');
-        if(modal) modal.classList.add('hidden');
-    }
-
-    // 3. Submit Order (Replaces old handleCheckout)
-    async function submitFinalOrder() {
-        const phoneInput = document.getElementById('customer-phone');
-        const phone = phoneInput.value.trim();
-        
-        if (!phone) {
-            alert("Please enter a phone number to continue.");
-            return;
-        }
-
-        const btn = document.getElementById('confirm-order-btn');
+        const btn = document.getElementById('checkout-btn');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<div class="loader" style="width: 20px; height: 20px; border-top-color: white; display: inline-block;"></div> Processing...';
         btn.disabled = true;
@@ -1778,46 +1645,45 @@
         try {
             const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             
+            // Format order details
             const orderDetails = state.cart.map(item => 
                 `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
             ).join('\n');
 
-            // 🌟 Prepare Email Params with Phone Number
             const templateParams = {
+                // Customer Details (For the email body)
                 customer_name: state.user.email.split('@')[0],
                 customer_email: state.user.email,
+                
+                // 🌟 CRITICAL: This makes the "Reply" button in your inbox email the Customer
                 reply_to: state.user.email,
-                
-                // We add the phone number to the MAIN message body so it appears 
-                // even if you don't update your EmailJS template.
-                message: `CUSTOMER PHONE: ${phone}\n\nORDER ITEMS:\n${orderDetails}`,
-                
+
+                // The Order Data
+                message: orderDetails,
                 total_amount: `$${total.toFixed(2)}`
             };
 
+            // Send Email (Ensure you used your REAL Public Key in emailjs.init previously)
             await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
 
+            // Clear Cart
             if (state.user) {
                 await supabase.from('cart_items').delete().eq('user_id', state.user.id);
             }
             
             state.cart = [];
-            closeCheckoutModal(); // Hide modal
-            showToast("Order Confirmed! We will contact you soon.");
+            showToast("Order placed successfully!, We will reach out to you soon!");
             navigate('home');
 
         } catch (error) {
             console.error('Checkout Error:', error);
-            showToast("Order failed. Please try again.");
+            showToast("Checkout failed. Please try again.");
+            alert("Error sending email: " + JSON.stringify(error));
             btn.innerHTML = originalText;
             btn.disabled = false;
         }
     }
-    
-    // Expose functions to window
-    window.openCheckoutModal = openCheckoutModal;
-    window.closeCheckoutModal = closeCheckoutModal;
-    window.submitFinalOrder = submitFinalOrder;
+    window.handleCheckout = handleCheckout;
     function render() {
       let content = '';
       switch(state.currentPage) {
