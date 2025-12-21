@@ -262,7 +262,13 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoem1yeWhueXpoZmV3c3lhbWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NTgwMTAsImV4cCI6MjA4MDMzNDAxMH0.qvCid4pmsdcRogce4RZH5adl90Eq5d3ibwVoJI5qr-I';
     const ADMIN_EMAIL = 'utkwholesale.sup@gmail.com'; 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+    // EMAILJS configi
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+     (function(){
+        emailjs.init("4abn3obf_dhQF5ykh"); 
+     })();
+  </script>
     // --- 🎨 Theme Configuration ---
     const CATEGORY_THEMES = {
       'candies-chocolates': { primary: '#ec4899', secondary: '#be185d', icon: '🍬' },
@@ -650,6 +656,77 @@
         render();
       }
     }
+
+        
+    // --- Checkout Logic (EmailJS) ---
+    async function checkout() {
+      if (state.cart.length === 0) return showToast("Your cart is empty!");
+      if (!state.user) {
+        showToast("Please sign in to checkout.");
+        navigate('auth');
+        return;
+      }
+
+      // Show Loading State
+      const btn = document.querySelector('button[onclick="checkout()"]');
+      const originalText = btn.innerText;
+      btn.innerText = "Processing...";
+      btn.disabled = true;
+
+      try {
+          // 1. Calculate Total
+          const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+          
+          // 2. Build HTML Table Rows
+          const orderItemsHtml = state.cart.map(item => `
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                <div style="font-weight: bold; color: #333;">${item.name}</div>
+                <div style="font-size: 12px; color: #888;">$${item.price.toFixed(2)} ea</div>
+              </td>
+              <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">
+                ${item.quantity}
+              </td>
+              <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">
+                $${(item.price * item.quantity).toFixed(2)}
+              </td>
+            </tr>
+          `).join('');
+
+          // 3. Prepare Email Params
+          const emailParams = {
+              order_id: 'ORD-' + Date.now().toString().slice(-6),
+              customer_email: state.user.email,
+              total_price: total.toFixed(2),
+              order_items: orderItemsHtml, // Sending HTML string
+              admin_email: ADMIN_EMAIL
+          };
+
+          // 4. Send Email
+          await emailjs.send('service_utkwholesale', 'template_dl2jtz7', emailParams);
+
+          // 5. Success
+          state.cart = [];
+          
+          btn.innerText = "Success!";
+          await new Promise(r => setTimeout(r, 1000));
+          
+          alert(`Order #${emailParams.order_id} placed successfully! Check your email.`);
+          navigate('home');
+
+      } catch (error) {
+          console.error("Checkout Error:", error);
+          alert("Something went wrong: " + error.message);
+          btn.innerText = originalText;
+          btn.disabled = false;
+      }
+    }
+    
+    window.checkout = checkout;
+    
+    // Expose function to global scope so HTML onclick works
+    window.checkout = checkout;
+        
     
     // --- Admin Functions ---
     async function fetchAdminProducts() {
@@ -1518,55 +1595,85 @@
     }
 
     function CartPage() {
+      // 1. Handle Empty Cart
+      if (state.cart.length === 0) {
+        return `
+          <div class="container mx-auto px-4 py-8 text-center animate-fade-in">
+            <div class="text-6xl mb-4">🛒</div>
+            <h1 class="text-3xl font-bold mb-4">Your Cart is Empty</h1>
+            <p class="text-gray-600 mb-8">Looks like you haven't added anything yet.</p>
+            <button onclick="navigate('home')" class="text-white px-8 py-3 rounded-lg hover:opacity-90 transition-colors shadow-lg btn-animate" style="background-color: var(--color-primary);">
+              Start Shopping
+            </button>
+          </div>
+        `;
+      }
+
+      // 2. Calculate Total
       const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      
+
+      // 3. Determine Button State (Logged In vs Logged Out)
+      const isLoggedOut = !state.user;
+      const btnText = isLoggedOut ? "Sign In to Checkout" : "Proceed to Checkout";
+      const btnAction = isLoggedOut ? "navigate('auth')" : "checkout()";
+      const btnColor = isLoggedOut ? "background-color: #4b5563;" : "background-color: var(--color-secondary);"; // Grey if logged out, Green if logged in
+
       return `
-        <div class="flex-1 max-w-4xl mx-auto px-4 py-12 page-enter">
-          <h1 class="text-3xl font-extrabold mb-8 border-b pb-3" style="color: var(--color-primary);">Shopping Cart</h1>
-          ${state.cart.length === 0 ? `
-            <div class="text-center py-16 bg-white rounded-xl shadow-md border border-dashed border-gray-300">
-              <div class="w-12 h-12 mx-auto text-gray-400 mb-4">${Icon.Cart()}</div>
-              <p class="text-xl text-gray-600 mb-4">Your cart is empty</p>
-              <a href="#" onclick="navigate('home'); return false;" class="font-semibold underline transition-colors" style="color: var(--color-secondary);">Continue Shopping</a>
-            </div>
-          ` : `
-            <div class="space-y-4 mb-8">
+        <div class="container mx-auto px-4 py-8 animate-fade-in">
+          <h1 class="text-3xl font-bold mb-8 text-center">Your Shopping Cart</h1>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-4">
               ${state.cart.map(item => `
-                <div class="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-md border border-gray-100 items-start sm:items-center transition-all duration-300 hover:shadow-lg">
-                  <img src="${item.image_url}" alt="${item.name}" class="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-gray-200">
-                  <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-lg truncate">${item.name}</h3>
-                    <p class="font-bold" style="color: var(--color-secondary);">$${item.price.toFixed(2)}</p>
+                <div class="bg-white p-4 rounded-lg shadow-md flex gap-4 items-center transition-all hover:shadow-lg">
+                  <img src="${item.image_url}" alt="${item.name}" class="w-24 h-24 object-cover rounded-md">
+                  <div class="flex-1">
+                    <h3 class="font-bold text-lg">${item.name}</h3>
+                    <p class="text-gray-600">$${item.price.toFixed(2)}</p>
+                    <div class="flex items-center gap-2 mt-2">
+                         <span class="text-sm text-gray-500">Qty:</span>
+                         <input type="number" min="1" value="${item.quantity}" 
+                                onchange="updateQuantity('${item.id}', this.value)"
+                                class="w-16 p-1 border rounded text-center focus:ring-2 focus:ring-indigo-500">
+                    </div>
                   </div>
-                  <div class="flex items-center gap-2 flex-shrink-0 mt-2 sm:mt-0">
-                    <button onclick="updateQuantity('${item.id}', ${item.quantity - 1})" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">-</button>
-                    <span class="w-6 text-center font-medium">${item.quantity}</span>
-                    <button onclick="updateQuantity('${item.id}', ${item.quantity + 1})" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">+</button>
-                  </div>
-                  <div class="text-xl font-extrabold text-gray-800 flex-shrink-0 sm:ml-4" style="color: var(--color-primary);">
-                    $${(item.price * item.quantity).toFixed(2)}
-                  </div>
-                  <button onclick="removeFromCart('${item.id}')" class="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 self-start sm:self-center">
-                    ${Icon.X()}
+                  <button onclick="removeFromCart('${item.id}')" class="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
                 </div>
               `).join('')}
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
-              <div class="flex justify-between text-xl mb-6">
-                <span class="text-gray-600 font-semibold">Order Total</span>
-                <span class="text-3xl font-extrabold" style="color: var(--color-primary);">$${total.toFixed(2)}</span>
-              </div>
-              ${!state.user ? `
-                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4 text-sm text-yellow-800">
-                  <span class="font-bold">Note:</span> Please <button onclick="navigate('auth')" class="underline font-semibold" style="color: var(--color-secondary);">sign in</button> to checkout.
+
+            <div class="lg:col-span-1">
+              <div class="bg-white p-6 rounded-lg shadow-lg sticky top-4">
+                <h2 class="text-xl font-bold mb-4 border-b pb-2">Order Summary</h2>
+                <div class="flex justify-between mb-2">
+                  <span class="text-gray-600">Subtotal</span>
+                  <span>$${total.toFixed(2)}</span>
                 </div>
-              ` : ''}
-              <button class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-xl hover:shadow-2xl" style="background-color: var(--color-secondary);">
-                Proceed to Checkout
-              </button>
+                <div class="flex justify-between mb-2">
+                  <span class="text-gray-600">Shipping</span>
+                  <span class="text-green-600">Free</span>
+                </div>
+                <div class="border-t pt-4 mt-4 mb-6">
+                  <div class="flex justify-between items-center font-bold text-xl">
+                    <span>Total</span>
+                    <span class="text-indigo-600" style="color: var(--color-primary);">$${total.toFixed(2)}</span>
+                  </div>
+                </div>
+                
+                <button onclick="${btnAction}" 
+                        class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-xl hover:shadow-2xl btn-animate" 
+                        style="${btnColor}">
+                  ${btnText}
+                </button>
+                
+                ${isLoggedOut ? `<p class="text-xs text-red-500 text-center mt-2">You must be logged in to purchase.</p>` : ''}
+              </div>
             </div>
-          `}
+          </div>
         </div>
       `;
     }
