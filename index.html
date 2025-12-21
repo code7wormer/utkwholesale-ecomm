@@ -1826,12 +1826,12 @@ window.handleConfirmOrder = async function() {
         
         // Close popup and show success
         closePhonePopup();
-        showtoast(`Order Placed Successfully!\nWe will contact you at: ${fullPhone}`);
+        showToast(`Order Placed Successfully!\nWe will contact you at: ${fullPhone}`);
         navigate('home');
 
     } catch (error) {
         console.error('Order Error:', error);
-        showtoast("Failed to place order. Please try again.");
+        showToast("Failed to place order. Please try again.");
         btn.innerText = "Confirm Order";
         btn.disabled = false;
     }
