@@ -306,8 +306,8 @@
             await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
 
             // Clear Cart from Supabase
-                await supabase.from('cart_items').delete().eq('user_id', state.user.id);
             if (state.user) {
+                await supabase.from('cart_items').delete().eq('user_id', state.user.id);
             }
             
             state.cart = [];
