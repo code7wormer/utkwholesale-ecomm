@@ -495,33 +495,43 @@
     };
 
     // 2. Triggered by the "Send Code" button in popup
-    window.handleSendOtp = async function() {
-        const phoneInput = document.getElementById('user-phone');
-        const btn = document.getElementById('btn-send-otp');
-        const phoneNumber = phoneInput.value.trim();
+   window.handleSendOtp = async function() {
+    const phoneInput = document.getElementById('user-phone');
+    const btn = document.getElementById('btn-send-otp');
+    const phoneNumber = phoneInput.value.trim(); // 👈 Sends exactly what is typed
 
-        if (phoneNumber.length < 8) {
-            alert("Please enter a valid phone number ");
-            return;
-        }
+    // Only check if it's too short to be a phone number
+    if (phoneNumber.length < 5) {
+        alert("Please enter a valid phone number.");
+        return;
+    }
 
-        btn.innerText = "Sending...";
-        btn.disabled = true;
+    btn.innerText = "Sending...";
+    btn.disabled = true;
 
-        const { error } = await supabase.auth.signInWithOtp({ phone: phoneNumber });
+    console.log("Sending OTP to:", phoneNumber); 
 
-        if (error) {
-            console.error(error);
-            alert("Error: " + error.message);
-            btn.innerText = "Send Verification Code";
-            btn.disabled = false;
-        } else {
-            // Switch to Step 2
-            document.getElementById('step-phone-input').classList.add('hidden');
-            document.getElementById('step-otp-input').classList.remove('hidden');
-        }
-    };
+    // Send the raw number
+    const { error } = await supabase.auth.signInWithOtp({
+        phone: phoneNumber
+    });
 
+    if (error) {
+        console.error("Send Error:", error);
+        alert("Error: " + error.message);
+        btn.innerText = "Send Verification Code";
+        btn.disabled = false;
+    } else {
+        alert("Code sent to " + phoneNumber);
+        
+        // Show Step 2
+        document.getElementById('step-phone-input').classList.add('hidden');
+        document.getElementById('step-otp-input').classList.remove('hidden');
+        
+        // Ensure input stays same for verification step
+        phoneInput.value = phoneNumber; 
+    }
+};
     // 3. Triggered by "Verify" button in popup
    window.handleVerifyOtp = async function() {
     const phoneInput = document.getElementById('user-phone');
