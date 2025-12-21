@@ -848,7 +848,7 @@ async function ensureValidSession() {
         return;
       }
   console.log("=== handleAddProduct START ===");
-  // e.preventDefault();
+  e.preventDefault();
   
   const { data: sessionData } = await supabase.auth.getSession();
   console.log("🔑 Session exists:", !!sessionData.session);
