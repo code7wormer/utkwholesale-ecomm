@@ -1440,33 +1440,32 @@
       `;
     }
 
-    function AdminProductRow(product) {
-      return `
-        <tr class="bg-white border-b hover:bg-gray-50 transition-colors ${!product.is_active ? 'opacity-60' : ''}">
-          <td class="px-6 py-4 font-bold text-gray-900">${product.id}</td>
-          <td class="px-6 py-4 text-gray-700">${product.name}</td>
-          <td class="px-6 py-4 text-gray-700">$${product.price.toFixed(2)}</td>
-          <td class="px-6 py-4">
-            <span class="px-3 py-1 text-xs font-semibold rounded-full ${product.stock_status === 'in_stock' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-              ${product.stock_status.replace('_', ' ')}
-            </span>
-          </td>
-          <td class="px-6 py-4">
-            <span class="px-3 py-1 text-xs font-semibold rounded-full ${product.is_active ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
-              ${product.is_active ? 'Active' : 'Inactive'}
-            </span>
-          </td>
-          <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
-            <button onclick='openEditModal(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50 transition-colors">
-              ${Icon.Edit()}
-            </button>
-            <button onclick="handleDeleteProduct('${product.id}')" class="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-50 transition-colors">
-              ${Icon.Trash()}
-            </button>
-          </td>
-        </tr>
-      `;
-    }
+   // 🌟 COMPONENT: Product Row (Paste this to replace your old AdminProductRow)
+function AdminProductRow(p) {
+    return `
+      <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
+        <td class="px-6 py-4 font-mono text-xs text-gray-400">#${p.id}</td>
+        <td class="px-6 py-4 font-medium text-gray-900 flex items-center gap-3">
+             <img src="${p.image_url}" class="w-8 h-8 rounded object-cover border" onerror="this.src='https://via.placeholder.com/40'">
+             ${p.name}
+        </td>
+        <td class="px-6 py-4 text-green-600 font-bold">$${p.price}</td>
+        <td class="px-6 py-4">
+            <span class="px-2 py-1 rounded text-xs font-bold ${
+                p.stock_status === 'in_stock' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }">${p.stock_status ? p.stock_status.replace('_', ' ').toUpperCase() : 'N/A'}</span>
+        </td>
+        <td class="px-6 py-4">
+             ${p.is_active ? '<span class="text-green-500 font-bold text-xs">Active</span>' : '<span class="text-gray-400 text-xs">Inactive</span>'}
+        </td>
+        <td class="px-6 py-4 text-right">
+          <button onclick="handleEditClick(${p.id})" class="font-medium text-blue-600 hover:underline mr-3">Edit</button>
+          
+          <button onclick="handleDeleteProduct(${p.id})" class="font-medium text-red-600 hover:underline">Delete</button>
+        </td>
+      </tr>
+    `;
+}
 
     function AdminPage() {
         if (!state.isAdmin) {
