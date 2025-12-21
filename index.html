@@ -246,6 +246,13 @@
   </div>
 
   <div id="toast-container"></div>
+  <div id="logout-overlay" class="fixed inset-0 z-[200] hidden items-center justify-center text-white transition-opacity duration-500 opacity-0 pointer-events-none" style="background-color: rgba(0, 31, 63, 0.95);">
+     <div class="text-center transform scale-110 transition-transform duration-500">
+         <div class="text-6xl mb-4 bounce-icon">👋</div>
+         <h2 class="text-4xl font-extrabold tracking-widest uppercase drop-shadow-lg">Logged Out</h2>
+         <p class="mt-4 text-gray-300 text-lg font-medium">See you next time!</p>
+     </div>
+  </div>
 
   <div id="app" class="min-h-screen flex flex-col font-sans"></div>
 
@@ -509,9 +516,41 @@
     }
 
     async function handleLogout() {
+      const overlay = document.getElementById('logout-overlay');
+      
+      // 1. Show Overlay Animation
+      if (overlay) {
+          overlay.classList.remove('hidden');
+          // Small delay to ensure the browser processes the 'hidden' removal before fading in
+          setTimeout(() => {
+              overlay.classList.remove('opacity-0', 'pointer-events-none');
+              overlay.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+          }, 10);
+      }
+
+      // 2. Wait for 1.5 seconds so user sees the message
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // 3. Perform Sign Out Logic
       await supabase.auth.signOut();
       state.cart = [];
+      state.user = null;
+      state.isAdmin = false;
+      
+      // 4. Reset View
       navigate('home');
+
+      // 5. Hide Overlay
+      if (overlay) {
+          overlay.classList.remove('opacity-100', 'pointer-events-auto');
+          overlay.classList.add('opacity-0', 'pointer-events-none');
+          
+          // Wait for CSS fade-out transition (500ms) before hiding element
+          setTimeout(() => {
+              overlay.classList.add('hidden');
+              overlay.classList.remove('flex');
+          }, 500); 
+      }
     }
 
     async function fetchCart() {
