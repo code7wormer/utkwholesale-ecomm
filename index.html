@@ -845,45 +845,29 @@ async function ensureValidSession() {
   console.log("=== handleAddProduct START ===");
   
   try {
-    console.log("Step 1: Checking session...");
+    // Skip session check - use state directly
+    console.log("Step 1: Checking admin status...");
     
-    // Direct session check without ensureValidSession
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    console.log("Step 2: Session retrieved:", !!session);
-    console.log("Session error:", sessionError);
-    
-    if (!session) {
-      console.log("No session found");
-      alert("Session expired. Please log in again.");
+    if (!state.user || !state.isAdmin) {
+      console.log("Not logged in as admin");
+      alert("You are not logged in as Admin.");
       navigate('auth');
       return;
     }
     
-    console.log("Step 3: Session valid, checking admin...");
-    console.log("Current user email:", state.user?.email);
-    console.log("Is admin:", state.isAdmin);
-    
-    if (!state.isAdmin) {
-      console.log("Admin check failed");
-      alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
-      return;
-    }
-    
-    console.log("Step 4: Admin verified, getting form data...");
+    console.log("Step 2: Admin verified, getting form data...");
     
     const form = e.target;
     
     // Get the submit button and disable it
     const submitButton = form.querySelector('button[type="submit"]');
-    console.log("Submit button found:", !!submitButton);
     
     if (submitButton) {
       submitButton.disabled = true;
       submitButton.innerHTML = '<div class="loader mx-auto"></div>';
     }
     
-    console.log("Step 5: Building product object...");
+    console.log("Step 3: Building product object...");
     
     const isDeal = form.is_deal.checked;
     
@@ -902,50 +886,48 @@ async function ensureValidSession() {
       is_bestseller: form.is_bestseller.checked
     };
 
-    console.log("Step 6: Product object:", newProduct);
-    console.log("Step 7: Inserting into Supabase...");
+    console.log("Step 4: Product object created:", newProduct);
+    console.log("Step 5: Inserting into Supabase...");
 
-    // Direct Supabase insert
     const { data, error } = await supabase
       .from('products')
       .insert([newProduct])
       .select();
     
-    console.log("Step 8: Supabase response received");
+    console.log("Step 6: Supabase response received");
     console.log("Data:", data);
     console.log("Error:", error);
     
     if (error) {
-      console.error("Supabase Error Details:", error);
+      console.error("Supabase Error:", error);
       alert("Error adding product: " + error.message);
-    } else {
-      console.log("Step 9: Product added successfully!");
-      showToast("Product added successfully!");
-      form.reset();
-      document.getElementById('add-deal-price-container')?.classList.add('hidden');
-      
-      console.log("Step 10: Refreshing product lists...");
-      await fetchAdminProducts();
-      await fetchInitialProducts();
-      console.log("Step 11: Lists refreshed!");
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Add Product';
+      }
+      return;
     }
     
-    // Re-enable the button
+    console.log("Step 7: Success! Refreshing lists...");
+    showToast("Product added successfully!");
+    form.reset();
+    document.getElementById('add-deal-price-container')?.classList.add('hidden');
+    
+    await fetchAdminProducts();
+    await fetchInitialProducts();
+    
+    console.log("Step 8: Complete!");
+    
     if (submitButton) {
       submitButton.disabled = false;
       submitButton.innerHTML = 'Add Product';
     }
     
   } catch (err) {
-    console.error("=== EXCEPTION CAUGHT ===");
-    console.error("Error type:", err.constructor.name);
-    console.error("Error message:", err.message);
-    console.error("Full error:", err);
-    console.error("Stack trace:", err.stack);
-    
+    console.error("=== EXCEPTION ===");
+    console.error(err);
     alert("Error: " + err.message);
     
-    // Re-enable button on error
     const form = document.getElementById('add-product-form');
     const submitButton = form?.querySelector('button[type="submit"]');
     if (submitButton) {
@@ -955,7 +937,7 @@ async function ensureValidSession() {
   }
   
   console.log("=== handleAddProduct END ===");
-}
+    }
     window.handleAddProduct = handleAddProduct;
 
     window.toggleDealInput = (checkbox, containerId) => {
