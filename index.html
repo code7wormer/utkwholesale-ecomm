@@ -972,8 +972,6 @@
         // 🌟 1. FIX: Define variables so the code doesn't crash
         const totalItems = state.cart.reduce((acc, item) => acc + item.quantity, 0);
         const isHidden = totalItems === 0 ? 'hidden' : '';
-        
-        function Header() {
         return `
           <header class="bg-white shadow-md sticky top-0 z-40 border-b border-gray-100">
             <div class="w-full px-6 py-3 flex items-center justify-between">
