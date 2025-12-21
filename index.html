@@ -821,7 +821,10 @@
     async function handleAddProduct(e) {
   console.log("=== handleAddProduct START ===");
   e.preventDefault();
-  
+  const { data: sessionData } = await supabase.auth.getSession();
+  console.log("🔑 Session exists:", !!sessionData.session);
+  console.log("🔑 User email:", sessionData.session?.user?.email);
+  console.log("🔑 Access token:", sessionData.session?.access_token?.substring(0, 50) + "...");
   if (!state.isAdmin) {
       console.log("Admin check failed. isAdmin:", state.isAdmin);
       alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
