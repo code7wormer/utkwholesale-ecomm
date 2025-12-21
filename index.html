@@ -639,16 +639,49 @@
       }
     }
 
-    async function updateQuantity(id, quantity) {
-      if (quantity < 1) { removeFromCart(id); return; }
-      if (state.user) {
-        await supabase.from('cart_items').update({ quantity }).match({ user_id: state.user.id, product_id: id });
-        await fetchCart();
-      } else {
-        const item = state.cart.find(item => item.id === id);
-        if (item) item.quantity = quantity;
-        render();
-      }
+    async function updateQuantity(id, newQuantity) {
+        if (newQuantity < 1) return;
+
+        // 1. Find the item in local state
+        const item = state.cart.find(i => i.id === id);
+        if (!item) return;
+
+        // 2. Optimistic Update: Update Local State immediately
+        item.quantity = newQuantity;
+
+        // 3. Direct DOM Manipulation (Update numbers without re-rendering)
+        const qtyEl = document.getElementById(`qty-${id}`);
+        const itemTotalEl = document.getElementById(`item-total-${id}`);
+        const grandTotalEl = document.getElementById(`cart-grand-total`);
+
+        if (qtyEl && itemTotalEl && grandTotalEl) {
+            // Update the quantity number
+            qtyEl.innerText = newQuantity;
+            
+            // Update the item's total price
+            const itemTotal = item.price * newQuantity;
+            itemTotalEl.innerText = `$${itemTotal.toFixed(2)}`;
+
+            // Recalculate and update the Grand Total
+            const newGrandTotal = state.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            grandTotalEl.innerText = `$${newGrandTotal.toFixed(2)}`;
+        }
+
+        // 4. Send update to Supabase in the background
+        // Note: We do NOT call fetchCart() or render() here anymore
+        try {
+            const { error } = await supabase
+                .from('cart_items')
+                .update({ quantity: newQuantity })
+                .eq('id', id);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error updating quantity:', error);
+            showToast('Failed to update quantity');
+            // If failed, revert UI (Optional, usually not needed for simple apps)
+            fetchCart().then(render); 
+        }
     }
     
     // --- Admin Functions ---
@@ -1538,7 +1571,7 @@
           ` : `
             <div class="space-y-4 mb-8">
               ${state.cart.map(item => `
-                <div class="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-md border border-gray-100 items-start sm:items-center transition-all duration-300 hover:shadow-lg">
+                <div id="cart-item-${item.id}" class="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl shadow-md border border-gray-100 items-start sm:items-center transition-all duration-300 hover:shadow-lg">
                   <img src="${item.image_url}" alt="${item.name}" class="w-20 h-20 object-cover rounded-lg flex-shrink-0 border border-gray-200">
                   <div class="flex-1 min-w-0">
                     <h3 class="font-semibold text-lg truncate">${item.name}</h3>
@@ -1546,10 +1579,10 @@
                   </div>
                   <div class="flex items-center gap-2 flex-shrink-0 mt-2 sm:mt-0">
                     <button onclick="updateQuantity('${item.id}', ${item.quantity - 1})" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">-</button>
-                    <span class="w-6 text-center font-medium">${item.quantity}</span>
+                    <span id="qty-${item.id}" class="w-6 text-center font-medium">${item.quantity}</span>
                     <button onclick="updateQuantity('${item.id}', ${item.quantity + 1})" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">+</button>
                   </div>
-                  <div class="text-xl font-extrabold text-gray-800 flex-shrink-0 sm:ml-4" style="color: var(--color-primary);">
+                  <div id="item-total-${item.id}" class="text-xl font-extrabold text-gray-800 flex-shrink-0 sm:ml-4" style="color: var(--color-primary);">
                     $${(item.price * item.quantity).toFixed(2)}
                   </div>
                   <button onclick="removeFromCart('${item.id}')" class="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 self-start sm:self-center">
@@ -1561,7 +1594,7 @@
             <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
               <div class="flex justify-between text-xl mb-6">
                 <span class="text-gray-600 font-semibold">Order Total</span>
-                <span class="text-3xl font-extrabold" style="color: var(--color-primary);">$${total.toFixed(2)}</span>
+                <span id="cart-grand-total" class="text-3xl font-extrabold" style="color: var(--color-primary);">$${total.toFixed(2)}</span>
               </div>
               ${!state.user ? `
                 <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4 text-sm text-yellow-800">
