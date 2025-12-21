@@ -6,14 +6,6 @@
   <title>ShopHub - Premium Online Store</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <script>
-     (function(){
-        emailjs.init("4abn3obf_dhQF5ykh"); 
-     })();
-  </script>
-
   <style>
     /* 🎨 Premium Color Palette & Base Styling */
     :root {
@@ -245,6 +237,7 @@
     }
 
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
   
@@ -270,7 +263,66 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoem1yeWhueXpoZmV3c3lhbWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NTgwMTAsImV4cCI6MjA4MDMzNDAxMH0.qvCid4pmsdcRogce4RZH5adl90Eq5d3ibwVoJI5qr-I';
     const ADMIN_EMAIL = 'utkwholesale.sup@gmail.com'; 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    //EMAIL SHIT
 
+    (function(){
+      emailjs.init("4abn3obf_dhQF5ykh"); // REPLACE WITH YOUR PUBLIC KEY
+    })();
+
+    async function handleCheckout() {
+        if (state.cart.length === 0) {
+            showToast("Your cart is empty!");
+            return;
+        }
+        if (!state.user) {
+            showToast("Please login to checkout.");
+            navigate('auth');
+            return;
+        }
+
+        const btn = document.getElementById('checkout-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<div class="loader border-white" style="width: 20px; height: 20px;"></div> Processing...';
+        btn.disabled = true;
+
+        try {
+            const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            // Format order details for the email
+            const orderDetails = state.cart.map(item => 
+                `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
+            ).join('\n');
+
+            const templateParams = {
+                to_email: state.user.email,         // User's email
+                to_name: state.user.email.split('@')[0],
+                from_name: "UTKWholesale",
+                order_details: orderDetails,
+                total_amount: `$${total.toFixed(2)}`,
+                reply_to: "utkwholesale.sup@gmail.com"
+            };
+
+            // Send Email
+            await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
+
+            // Clear Cart from Supabase
+                await supabase.from('cart_items').delete().eq('user_id', state.user.id);
+            if (state.user) {
+            }
+            
+            state.cart = [];
+            showToast("Order placed successfully! Check your email.");
+            navigate('home');
+
+        } catch (error) {
+            co  nsole.error('Checkout Error:', error);
+            showToast("Checkout failed. Please try again.");
+            alert("Error sending email: " + JSON.stringify(error));
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+    window.handleCheckout = handleCheckout;
     // --- 🎨 Theme Configuration ---
     const CATEGORY_THEMES = {
       'candies-chocolates': { primary: '#ec4899', secondary: '#be185d', icon: '🍬' },
@@ -626,15 +678,14 @@
         }
         render();
       }
-      
+
       showToast(`Added ${product.name} to cart`);
 
-      // Trigger cart bounce animation
       const cartIcon = document.getElementById('cart-icon-container');
       if (cartIcon) {
-        cartIcon.classList.remove('cart-pulse');
-        void cartIcon.offsetWidth; // trigger reflow
-        cartIcon.classList.add('cart-pulse');
+          cartIcon.classList.remove('cart-pulse');
+          void cartIcon.offsetWidth; 
+          cartIcon.classList.add('cart-pulse');
       }
     }
 
@@ -649,10 +700,7 @@
     }
 
     async function updateQuantity(id, quantity) {
-      if (quantity < 1) {
-        removeFromCart(id);
-        return;
-      }
+      if (quantity < 1) { removeFromCart(id); return; }
       if (state.user) {
         await supabase.from('cart_items').update({ quantity }).match({ user_id: state.user.id, product_id: id });
         await fetchCart();
@@ -662,148 +710,68 @@
         render();
       }
     }
-
-    // --- Checkout Logic (EmailJS with HTML Table) ---
-    async function checkout() {
-      if (state.cart.length === 0) return showToast("Your cart is empty!");
-      if (!state.user) {
-        showToast("Please sign in to checkout.");
-        navigate('auth');
-        return;
-      }
-
-      const btn = document.querySelector('button[onclick="checkout()"]');
-      const originalText = btn.innerText;
-      btn.innerText = "Processing...";
-      btn.disabled = true;
-
-      try {
-          // 1. Calculate Total
-          const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-          
-          // 2. Build HTML Table Rows for Email
-          const orderItemsHtml = state.cart.map(item => `
-            <tr>
-              <td style="padding: 15px 10px; border-bottom: 1px solid #eee;">
-                <div style="font-weight: bold; color: #333;">${item.name}</div>
-                <div style="font-size: 12px; color: #888;">$${item.price.toFixed(2)} each</div>
-              </td>
-              <td style="padding: 15px 10px; border-bottom: 1px solid #eee; text-align: right;">
-                ${item.quantity}
-              </td>
-              <td style="padding: 15px 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">
-                $${(item.price * item.quantity).toFixed(2)}
-              </td>
-            </tr>
-          `).join('');
-
-          // 3. Prepare Email Params
-          const emailParams = {
-              order_id: 'ORD-' + Date.now().toString().slice(-6), 
-              customer_email: state.user.email,
-              total_price: total.toFixed(2),
-              order_items: orderItemsHtml, 
-              admin_email: ADMIN_EMAIL
-          };
-
-          // 4. Send Email
-          await emailjs.send('service_utkwholesale', 'template_dl2jtz7', emailParams);
-
-          // 5. Success State
-          state.cart = [];
-          
-          btn.innerText = "Success!";
-          await new Promise(r => setTimeout(r, 1000));
-          
-          alert(`Order #${emailParams.order_id} placed successfully! Check your email.`);
-          navigate('home');
-
-      } catch (error) {
-          console.error("Checkout Error:", error);
-          alert("Something went wrong: " + error.message);
-          btn.innerText = originalText;
-          btn.disabled = false;
-      }
-    }
     
-    // Make sure checkout is globally accessible
-    window.checkout = checkout;
-
-
-    // --- Admin Logic ---
+    // --- Admin Functions ---
     async function fetchAdminProducts() {
-        if (!state.isAdmin) return;
-        
-        const { data, error } = await supabase
-            .from('products')
-            .select('*')
-            .order('id', { ascending: true });
-            
-        if (data) {
-            state.adminProducts = data;
-            render();
-        }
-        if (error) console.error("Admin fetch error:", error);
+      if (!state.isAdmin) return;
+      const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
+      if (data) {
+        state.adminProducts = data;
+        render();
+      }
+      if (error) console.error("Admin fetch error:", error);
     }
     
     async function handleAddProduct(e) {
-        e.preventDefault();
-        if (!state.isAdmin) {
-            alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
-            return;
-        }
+      e.preventDefault();
+      if (!state.isAdmin) {
+          alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
+          return;
+      }
+      const form = e.target;
+      const isDeal = form.is_deal.checked;
+      
+      const newProduct = {
+        name: form.name.value,
+        description: form.description.value,
+        detailed_description: form.detailed_description.value || null,
+        price: parseFloat(form.price.value),
+        image_url: form.image_url.value,
+        category_id: form.category_id.value,
+        slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000), 
+        stock_status: form.stock_status.value,
+        is_active: form.is_active.checked,
+        is_deal: isDeal,
+        deal_price: isDeal && form.deal_price.value ? parseFloat(form.deal_price.value) : null,
+        is_bestseller: form.is_bestseller.checked
+      };
 
-        const form = e.target;
-        const isDeal = form.is_deal.checked;
-        
-        const newProduct = {
-            name: form.name.value,
-            description: form.description.value,
-            detailed_description: form.detailed_description.value || null,
-            price: parseFloat(form.price.value),
-            image_url: form.image_url.value,
-            category_id: form.category_id.value,
-            slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000),
-            stock_status: form.stock_status.value,
-            is_active: form.is_active.checked,
-            is_deal: isDeal,
-            deal_price: isDeal && form.deal_price.value ? parseFloat(form.deal_price.value) : null,
-            is_bestseller: form.is_bestseller.checked
-        };
+      const { error } = await supabase.from('products').insert([newProduct]);
+      if (error) {
+        console.error("Supabase Error:", error);
+        alert("Error adding product: " + error.message + "\nDetails: " + (error.details || 'Check console'));
+      } else {
+        alert("Product added successfully!");
+        form.reset();
+        document.getElementById('add-deal-price-container').classList.add('hidden');
+        await fetchAdminProducts();
+        await fetchInitialProducts();
+      }
+    }
 
-        const { error } = await supabase.from('products').insert([newProduct]);
-        
-        if (error) {
-            alert("Error adding product: " + error.message);
+    window.handleAddProduct = handleAddProduct;
+
+    window.toggleDealInput = (checkbox, containerId) => {
+        const container = document.getElementById(containerId);
+        if (checkbox.checked) {
+            container.classList.remove('hidden');
         } else {
-            alert("Product added successfully!");
-            form.reset();
-            // Refresh admin list
-            await fetchAdminProducts();
-            // Refresh main product list
-            await fetchInitialProducts(); 
+            container.classList.add('hidden');
         }
     }
 
-    async function handleDeleteProduct(id) {
-        if (!confirm("Are you sure you want to delete this product?")) return;
-        
-        const { error } = await supabase.from('products').delete().eq('id', id);
-        
-        if (error) {
-            alert("Error deleting: " + error.message);
-        } else {
-            alert("Product deleted.");
-            await fetchAdminProducts();
-            await fetchInitialProducts();
-        }
-    }
-    
-    // --- Edit Logic ---
     function openEditModal(product) {
         const modal = document.getElementById('edit-modal');
-        
-        // Populate fields
         document.getElementById('edit-id').value = product.id;
         document.getElementById('edit-name').value = product.name;
         document.getElementById('edit-description').value = product.description;
@@ -813,34 +781,43 @@
         document.getElementById('edit-category_id').value = product.category_id;
         document.getElementById('edit-stock_status').value = product.stock_status;
         document.getElementById('edit-is_active').checked = product.is_active;
+
+        const isDealCheckbox = document.getElementById('edit-is_deal');
+        isDealCheckbox.checked = product.is_deal || false;
         
-        const isDeal = product.is_deal || false;
-        document.getElementById('edit-is_deal').checked = isDeal;
+        const dealPriceContainer = document.getElementById('edit-deal-price-container');
+        const dealPriceInput = document.getElementById('edit-deal_price');
+        dealPriceInput.value = product.deal_price || '';
         
-        const dealContainer = document.getElementById('edit-deal-price-container');
-        if (isDeal) {
-            dealContainer.classList.remove('hidden');
-            document.getElementById('edit-deal_price').value = product.deal_price || '';
+        if (product.is_deal) {
+            dealPriceContainer.classList.remove('hidden');
         } else {
-            dealContainer.classList.add('hidden');
-            document.getElementById('edit-deal_price').value = '';
+            dealPriceContainer.classList.add('hidden');
         }
-        
+
         document.getElementById('edit-is_bestseller').checked = product.is_bestseller || false;
-        
+
         modal.classList.remove('hidden');
     }
-    
+
     function closeEditModal() {
         document.getElementById('edit-modal').classList.add('hidden');
     }
-    
+    window.openEditModal = openEditModal;
+    window.closeEditModal = closeEditModal;
+
     async function handleUpdateProduct(e) {
         e.preventDefault();
+        
+        if (!state.isAdmin) {
+            alert("⛔ ACCESS DENIED: The system does not recognize you as the admin.");
+            return;
+        }
+
         const form = e.target;
         const id = form.id.value;
         const isDeal = form.is_deal.checked;
-        
+
         const updates = {
             name: form.name.value,
             description: form.description.value,
@@ -854,572 +831,874 @@
             deal_price: isDeal && form.deal_price.value ? parseFloat(form.deal_price.value) : null,
             is_bestseller: form.is_bestseller.checked
         };
-        
+
         const { error } = await supabase.from('products').update(updates).eq('id', id);
-        
         if (error) {
-            alert("Error updating: " + error.message);
+            alert("Error updating product: " + error.message);
         } else {
             alert("Product updated successfully!");
             closeEditModal();
             await fetchAdminProducts();
-            await fetchInitialProducts();
+            await fetchInitialProducts(); 
         }
     }
-    
-    // Toggle Deal Price Input visibility
-    window.toggleDealInput = (checkbox, containerId) => {
-        const container = document.getElementById(containerId);
-        if (checkbox.checked) {
-            container.classList.remove('hidden');
-        } else {
-            container.classList.add('hidden');
+    window.handleUpdateProduct = handleUpdateProduct;
+
+    async function handleDeleteProduct(id) {
+        if (!state.isAdmin) return;
+
+        if (confirm("Are you sure you want to delete this product?")) {
+            const { error } = await supabase.from('products').delete().eq('id', id);
+            if (error) {
+                alert("Error deleting product: " + error.message);
+            } else {
+                alert("Product deleted successfully!");
+                await fetchAdminProducts();
+                await fetchInitialProducts(); 
+            }
         }
     }
+    window.handleDeleteProduct = handleDeleteProduct;
+
 
     // --- Components ---
+
     function Header() {
       return `
         <header class="bg-white shadow-md sticky top-0 z-40 border-b border-gray-100">
-          <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div class="w-full px-6 py-3 flex items-center justify-between">
             <div class="flex items-center gap-4">
-              <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg text-gray-700 md:hidden">
+              
+              <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 btn-animate">
                 ${Icon.Menu()}
               </button>
-              <a href="#" onclick="navigate('home'); return false;" class="text-2xl font-black tracking-tight flex items-center gap-1" style="color: var(--color-primary);">
+              
+              <a href="#" onclick="navigate('home'); return false;" class="text-2xl font-extrabold flex items-center gap-1 btn-animate" style="color: var(--color-primary);">
                 Shop<span style="color: var(--color-accent);">Hub</span>
               </a>
+
+              <div class="relative group ml-6 hidden md:block z-50 h-full">
+                <button class="flex items-center gap-1 font-semibold text-gray-600 group-hover:text-indigo-600 transition-colors py-2">
+                   Shop by Category ${Icon.ChevronDown()}
+                </button>
+                
+                <div class="absolute top-full left-0 mt-0 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden dropdown-menu pt-2">
+                    <div class="py-2 max-h-[70vh] overflow-y-auto">
+                        ${state.categories.length === 0 ? '<div class="p-4 text-center text-gray-500">Loading categories...</div>' : ''}
+                        ${state.categories.map(cat => {
+                            const theme = CATEGORY_THEMES[cat.slug] || CATEGORY_THEMES['default'];
+                            return `
+                                <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group/item border-b border-gray-50 last:border-0">
+                                    <span class="text-2xl group-hover/item:scale-125 transition-transform duration-300 w-8 text-center">${theme.icon || '📦'}</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-base font-bold text-gray-800">${cat.name}</span>
+                                        <span class="text-xs text-gray-400">View products</span>
+                                    </div>
+                                </a>
+                            `
+                        }).join('')}
+                    </div>
+                </div>
+              </div>
+
             </div>
             
-            <div class="flex items-center gap-6">
-              <button onclick="toggleSearch()" class="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors">
-                ${Icon.Menu().replace('d="M4 6h16M4 12h16M4 18h16"', 'd="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"')} </button>
-            
-              ${state.user 
-                ? `<div class="flex items-center gap-2 cursor-pointer hover:text-indigo-600" onclick="handleLogout()">
-                     ${Icon.User()}
-                     <span class="hidden md:block text-sm font-medium">Logout</span>
-                   </div>`
-                : `<button onclick="navigate('auth')" class="hidden md:block font-medium hover:text-indigo-600">Sign In</button>`
-              }
-              <button onclick="handleCartClick()" id="cart-icon-container" class="relative p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <div class="flex items-center gap-3">
+              <button onclick="toggleSearch()" class="p-2 hover:bg-gray-100 rounded-full text-gray-600 btn-animate">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </button>
+
+              ${state.isAdmin ? `
+                <a href="#" onclick="navigate('admin'); return false;" class="text-sm font-semibold text-red-600 hover:text-red-700 transition-colors hidden md:block mr-4">Admin Dashboard</a>
+              ` : ''}
+              
+              ${state.user ? `
+                <div class="hidden md:flex items-center gap-4 mr-4">
+                  <span class="text-sm text-gray-600 truncate max-w-xs">Hi, ${state.user.email.split('@')[0]}</span>
+                  <button onclick="handleLogout()" class="text-sm font-medium text-red-600 hover:text-red-700 transition-colors btn-animate">Logout</button>
+                </div>
+              ` : `
+                <button onclick="navigate('auth'); return false;" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors btn-animate mr-2">
+                  ${Icon.User()}
+                  <span class="hidden md:inline text-sm font-medium">Sign In</span>
+                </button>
+              `}
+
+              <button id="cart-icon-container" onclick="handleCartClick(); return false;" class="relative p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 btn-animate">
                 ${Icon.Cart()}
-                ${state.cart.length > 0 
-                  ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm">
-                      ${state.cart.reduce((a,b)=>a+b.quantity,0)}
-                     </span>` 
-                  : ''}
+                ${state.cart.length > 0 ? `
+                  <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white">
+                    ${state.cart.reduce((acc, item) => acc + item.quantity, 0)}
+                  </span>
+                ` : ''}
               </button>
             </div>
           </div>
         </header>
-      `;
-    }
-    
-    // Simple gradient banner (Original Style)
-    function Hero() {
-        return `
-          <div class="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white py-12 mb-8 shadow-lg">
-            <div class="container mx-auto px-4 text-center">
-              <h1 class="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight">Welcome to ShopHub</h1>
-              <p class="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">Premium products delivered to your doorstep. Explore our curated collection today.</p>
-              
-              <div class="flex justify-center gap-4">
-                  <button onclick="document.getElementById('product-grid').scrollIntoView({behavior: 'smooth'})" 
-                          class="bg-white text-gray-900 px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition-colors shadow-md">
-                    Start Shopping
-                  </button>
-                  ${state.isAdmin ? 
-                    `<button onclick="navigate('admin')" class="border border-white text-white px-8 py-3 rounded-full font-bold hover:bg-white hover:text-gray-900 transition-colors">
-                        Admin Panel
-                    </button>` : ''
-                  }
-              </div>
-            </div>
-          </div>
-        `;
-    }
 
-    function ProductCard(item) {
-        const priceDisplay = item.is_deal 
-            ? `<span class="text-sm text-gray-500 line-through mr-2">$${item.price.toFixed(2)}</span>
-               <span class="text-lg font-bold text-red-600">$${item.deal_price.toFixed(2)}</span>`
-            : `<span class="text-lg font-bold text-gray-900">$${item.price.toFixed(2)}</span>`;
-            
-        return `
-            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300 flex flex-col h-full group">
-                <div class="relative h-48 overflow-hidden bg-gray-50">
-                    <img src="${item.image_url}" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" alt="${item.name}">
-                    ${item.is_deal ? `<span class="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow-md">DEAL</span>` : ''}
-                    ${item.is_bestseller ? `<span class="absolute top-2 right-2 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded shadow-md">BESTSELLER</span>` : ''}
+        <div id="search-modal" class="hidden fixed inset-0 z-50 flex items-start justify-center pt-20 search-backdrop" onclick="if(event.target === this) toggleSearch()">
+            <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden search-slide-down mx-4">
+                <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                    <h3 class="font-bold text-gray-700">Search Products</h3>
+                    <button onclick="toggleSearch()" class="text-gray-500 hover:text-red-500">${Icon.X()}</button>
                 </div>
-                <div class="p-4 flex-1 flex flex-col">
-                    <div class="text-xs font-semibold text-gray-500 mb-1 uppercase">${state.categories.find(c => c.id == item.category_id)?.name || 'Product'}</div>
-                    <h3 class="font-bold text-gray-900 mb-2 leading-tight flex-1">${item.name}</h3>
-                    
-                    <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-50">
-                        <div>${priceDisplay}</div>
-                        <button onclick="addToCart(state.products.find(p => p.id === ${item.id}))" 
-                                class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-indigo-600 hover:text-white transition-colors"
-                                title="Add to Cart">
-                             ${Icon.Plus()}
-                        </button>
+                <form onsubmit="handleSearch(event)" class="p-6">
+                    <div class="flex gap-4 flex-col md:flex-row">
+                        <select id="search-category" class="px-4 py-3 border rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">All Categories</option>
+                            ${state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                        </select>
+                        <div class="flex-1 relative">
+                            <input type="text" id="search-input" placeholder="Try 'Tobacco', 'Candy'..." class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10">
+                            <svg class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg">Search</button>
                     </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function HomePage() {
-      // Split products by type
-      const deals = state.products.filter(p => p.is_deal);
-      const bestsellers = state.products.filter(p => p.is_bestseller);
-      const others = state.products.filter(p => !p.is_deal && !p.is_bestseller);
-
-      return `
-        ${Header()}
-        ${Hero()}
-        
-        <div id="product-grid" class="container mx-auto px-4 pb-12">
-            ${deals.length > 0 ? `
-            <div class="mb-12">
-                <div class="flex items-center gap-2 mb-6 border-b pb-2">
-                    <span class="text-2xl">🔥</span>
-                    <h2 class="text-2xl font-bold text-gray-900">Monthly Deals</h2>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    ${deals.map(p => ProductCard(p)).join('')}
-                </div>
-            </div>
-            ` : ''}
-
-            ${bestsellers.length > 0 ? `
-            <div class="mb-12">
-                 <div class="flex items-center gap-2 mb-6 border-b pb-2">
-                    <span class="text-2xl">🏆</span>
-                    <h2 class="text-2xl font-bold text-gray-900">Bestsellers</h2>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    ${bestsellers.map(p => ProductCard(p)).join('')}
-                </div>
-            </div>
-            ` : ''}
-            
-            <div class="mb-8">
-                 <div class="flex items-center gap-2 mb-6 border-b pb-2">
-                    <span class="text-2xl">📦</span>
-                    <h2 class="text-2xl font-bold text-gray-900">Explore Collection</h2>
-                </div>
-                
-                ${state.loading 
-                    ? `<div class="flex justify-center py-20"><div class="loader w-12 h-12"></div></div>` 
-                    : `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        ${others.map(p => ProductCard(p)).join('')}
-                       </div>`
-                }
+                    <p class="text-xs text-gray-400 mt-2 ml-1">Tip: Our fuzzy search handles typos automatically!</p>
+                </form>
             </div>
         </div>
       `;
     }
 
-    function CartPage() {
-      if (state.cart.length === 0) {
-        return `
-          ${Header()}
-          <div class="container mx-auto px-4 py-20 text-center animate-fade-in">
-            <div class="text-6xl mb-6 text-gray-300">🛒</div>
-            <h1 class="text-3xl font-bold mb-4">Your Cart is Empty</h1>
-            <p class="text-gray-500 mb-8">Looks like you haven't added anything yet.</p>
-            <button onclick="navigate('home')" class="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors shadow-md btn-animate" style="background-color: var(--color-primary);">
-              Start Shopping
-            </button>
-          </div>
-        `;
-      }
-
-      const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const isLoggedOut = !state.user;
-      
+    function Sidebar() {
       return `
-        ${Header()}
-        <div class="container mx-auto px-4 py-8 animate-fade-in">
-          <h1 class="text-3xl font-bold mb-8 text-center">Your Shopping Cart</h1>
+          <div class="backdrop" onclick="toggleMenu()"></div> 
           
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-4">
-              ${state.cart.map(item => `
-                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex gap-4 items-center transition-all hover:shadow-md">
-                  <img src="${item.image_url}" alt="${item.name}" class="w-24 h-24 object-cover rounded-md border border-gray-100">
-                  <div class="flex-1">
-                    <h3 class="font-bold text-lg text-gray-900">${item.name}</h3>
-                    <p class="text-gray-600 font-medium">$${item.price.toFixed(2)}</p>
-                    <div class="flex items-center gap-3 mt-3">
-                         <button onclick="updateQuantity('${item.id}', ${item.quantity - 1})" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">-</button>
-                         <span class="font-bold w-6 text-center">${item.quantity}</span>
-                         <button onclick="updateQuantity('${item.id}', ${item.quantity + 1})" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">+</button>
-                    </div>
-                  </div>
-                  <button onclick="removeFromCart('${item.id}')" class="text-red-400 hover:text-red-600 p-3 hover:bg-red-50 rounded-full transition-colors">
-                    ${Icon.Trash()}
-                  </button>
-                </div>
-              `).join('')}
+          <div class="sidebar-wrapper">
+            <div class="p-4 border-b flex justify-between items-center flex-shrink-0 bg-gray-50">
+              <h2 class="text-xl font-extrabold text-gray-800">Menu</h2>
+              <button onclick="toggleMenu()" class="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                ${Icon.X()}
+              </button>
             </div>
-
-            <div class="lg:col-span-1">
-              <div class="bg-white p-6 rounded-lg shadow-md border border-gray-100 sticky top-24">
-                <h2 class="text-xl font-bold mb-4 border-b pb-4">Order Summary</h2>
-                <div class="flex justify-between mb-3 text-gray-600">
-                  <span>Subtotal</span>
-                  <span>$${total.toFixed(2)}</span>
-                </div>
-                <div class="flex justify-between mb-3 text-gray-600">
-                  <span>Shipping</span>
-                  <span class="text-green-600 font-medium">Free</span>
-                </div>
-                <div class="border-t pt-4 mt-4 mb-6">
-                  <div class="flex justify-between items-center font-bold text-xl text-gray-900">
-                    <span>Total</span>
-                    <span style="color: var(--color-primary);">$${total.toFixed(2)}</span>
+            <nav class="p-4 space-y-2 overflow-y-auto flex-grow bg-white">
+              
+              <div class="mb-6 staggered-item"> 
+                ${state.user ? `
+                  <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-xl">
+                            ${state.user.email[0].toUpperCase()}
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Signed In</p>
+                            <p class="text-sm font-bold text-gray-900 truncate">${state.user.email.split('@')[0]}</p>
+                        </div>
+                    </div>
+                    <button onclick="handleLogout()" class="w-full text-xs text-red-600 bg-white border border-red-100 py-2 rounded-lg font-bold hover:bg-red-50 transition-colors btn-animate">Sign Out</button>
                   </div>
+                ` : `
+                  <button onclick="navigate('auth')" class="w-full text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all btn-animate flex items-center justify-center gap-2" style="background-color: var(--color-primary);">
+                    ${Icon.User()} Sign In / Register
+                  </button>
+                `}
+              </div>
+              
+              ${state.isAdmin ? `
+                <div class="staggered-item">
+                <a href="#" onclick="navigate('admin'); return false;" class="flex items-center gap-3 py-3 px-4 font-bold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors mb-4 border border-red-100">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  Admin Dashboard
+                </a>
                 </div>
-                
-                <button onclick="${isLoggedOut ? "navigate('auth')" : "checkout()"}" 
-                        class="w-full text-white py-3 rounded-lg font-bold transition-all shadow-md hover:shadow-lg btn-animate" 
-                        style="${isLoggedOut ? 'background-color: #4b5563;' : 'background-color: var(--color-secondary);'}">
-                  ${isLoggedOut ? "Sign In to Checkout" : "Proceed to Checkout"}
+              ` : ''}
+
+              <div class="staggered-item">
+                <button onclick="toggleSidebarCat()" class="w-full flex items-center justify-between py-3 px-3 rounded-xl hover:bg-gray-100 transition-colors group">
+                    <span class="font-extrabold text-lg text-gray-800 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                        Categories
+                    </span>
+                    <svg id="sidebar-cat-icon" class="w-5 h-5 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 
-                ${isLoggedOut ? `<p class="text-xs text-red-500 text-center mt-3">Please sign in to complete purchase</p>` : ''}
+                <div id="sidebar-cat-content" class="dropdown-content pl-2">
+                  <div class="space-y-1 mt-1 border-l-2 border-gray-100 ml-4 pl-2">
+                    ${state.categories.map(cat => {
+                      return `
+                      <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="block py-2 px-3 hover:bg-gray-50 rounded-lg text-gray-600 hover:text-indigo-600 transition-colors text-sm font-medium">
+                        ${cat.name}
+                      </a>
+                    `}).join('')}
+                  </div>
+                </div>
               </div>
-            </div>
+
+              <div class="staggered-item">
+              <a href="#" onclick="navigate('about'); return false;" class="flex items-center gap-3 py-3 px-3 font-bold text-lg hover:bg-gray-50 rounded-xl transition-colors text-gray-700">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                About Us
+              </a>
+              </div>
+            </nav>
           </div>
-        </div>
       `;
     }
 
     function AuthPage() {
+      const isSignIn = state.authMode === 'signin';
       return `
-        <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-          <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md auth-form-enter">
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">ShopHub</h1>
-                <p class="text-gray-500">Welcome back! Please enter your details.</p>
-            </div>
-            
-            <div class="flex gap-2 mb-6 bg-gray-50 p-1 rounded-lg">
-              <button onclick="state.authMode='signin'; render()" class="flex-1 py-2 rounded-md font-medium transition-all ${state.authMode==='signin' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}">Sign In</button>
-              <button onclick="state.authMode='signup'; render()" class="flex-1 py-2 rounded-md font-medium transition-all ${state.authMode==='signup' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'}">Register</button>
-            </div>
+        <div class="flex-1 flex items-center justify-center px-4 py-12 bg-gray-50">
+          <div class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full border border-gray-100 auth-form-enter">
+            <h2 class="text-4xl font-extrabold text-center mb-2" style="color: var(--color-primary);">${isSignIn ? 'Welcome Back' : 'Create Account'}</h2>
+            <p class="text-center text-gray-600 mb-8">
+              ${isSignIn ? 'Sign in to access your exclusive benefits' : 'Register to start your premium shopping journey'}
+            </p>
 
             <form onsubmit="handleAuth(event)" class="space-y-4">
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input type="email" name="email" required class="w-full p-3 border border-gray-300 rounded-lg input-focus-primary transition-all" placeholder="you@example.com">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                <input type="email" name="email" required class="w-full px-4 py-3 border rounded-lg input-focus-primary transition-all duration-300">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input type="password" name="password" required class="w-full p-3 border border-gray-300 rounded-lg input-focus-primary transition-all" placeholder="••••••••">
+                <input type="password" name="password" required minlength="6" class="w-full px-4 py-3 border rounded-lg input-focus-primary transition-all duration-300">
               </div>
-              <button type="submit" class="w-full text-white py-3 rounded-lg font-bold shadow-md hover:shadow-lg btn-animate" style="background-color: var(--color-primary);">
-                ${state.loading ? '<div class="loader mx-auto"></div>' : (state.authMode === 'signin' ? 'Sign In' : 'Create Account')}
+              
+              <button type="submit" class="w-full text-white py-3 rounded-lg font-bold transition-all duration-300 flex justify-center items-center h-12 shadow-md hover:shadow-lg" style="background-color: var(--color-primary);">
+                ${state.loading ? '<div class="loader"></div>' : (isSignIn ? 'Sign In' : 'Sign Up')}
               </button>
             </form>
-            
+
             <div class="relative my-6">
-                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
-                <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500">Or continue with</span></div>
+              <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
+              <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500">Or continue with</span></div>
             </div>
 
-            <button onclick="handleGoogleLogin()" class="w-full border border-gray-300 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-               ${Icon.Google()} Google
+            <button onclick="handleGoogleLogin()" class="w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 shadow-sm">
+              ${Icon.Google()}
+              Google
             </button>
-            
-            <p class="mt-6 text-center text-sm text-gray-500">
-                <a href="#" onclick="navigate('home'); return false;" class="hover:underline hover:text-indigo-600">Back to Store</a>
-            </p>
+
+            <div class="mt-6 text-center text-sm">
+              ${isSignIn ? 'Don\'t have an account?' : 'Already have an account?'}
+              <button onclick="setAuthMode('${isSignIn ? 'signup' : 'signin'}')" class="font-semibold hover:underline transition-colors" style="color: var(--color-secondary);">
+                ${isSignIn ? 'Sign up' : 'Sign in'}
+              </button>
+            </div>
           </div>
         </div>
       `;
     }
 
-    function AdminPage() {
-      if (!state.user || !state.isAdmin) return `<div class="p-10 text-center"><h1>Access Denied</h1><button onclick="navigate('home')">Go Home</button></div>`;
+    // 🌟 Modified ProductCard
+    function ProductCard(product) {
+      const isDeal = product.is_deal && product.deal_price;
+      const displayPrice = isDeal ? product.deal_price : product.price;
       
       return `
-        <div class="min-h-screen bg-gray-100 flex">
-            <div class="w-64 bg-gray-900 text-white p-6 hidden md:block">
-                <h2 class="text-2xl font-bold mb-8 flex items-center gap-2">⚡ Admin</h2>
-                <nav class="space-y-4">
-                    <a href="#" class="block py-2 px-4 bg-gray-800 rounded-lg text-white font-medium">Products</a>
-                    <a href="#" class="block py-2 px-4 text-gray-400 hover:text-white">Orders (Coming Soon)</a>
-                    <button onclick="navigate('home')" class="mt-8 w-full py-2 border border-gray-700 rounded text-gray-400 hover:text-white hover:border-white transition-colors">Exit to Store</button>
-                </nav>
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] group flex flex-col h-full">
+          <div class="relative">
+            <img src="${product.image_url}" alt="${product.name}" class="w-full h-64 object-cover transition-opacity duration-300 group-hover:opacity-90">
+            ${isDeal ? '<div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">DEAL</div>' : ''}
+            <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <button onclick="navigate('product', '${product.slug}'); return false;" class="bg-white text-gray-900 px-4 py-2 rounded-full font-medium text-sm hover:bg-gray-100 shadow-md">View</button>
+              <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="text-white px-4 py-2 rounded-full font-bold text-sm shadow-md" style="background-color: var(--color-accent); color: var(--color-primary);">+ Add</button>
             </div>
+          </div>
+          <div class="p-4 flex flex-col flex-grow">
+            <h3 class="font-extrabold text-xl mb-1 truncate" style="color: var(--color-primary);">${product.name}</h3>
+            <p class="text-gray-500 text-sm mb-3 line-clamp-2 h-10">${product.description}</p>
+            <div class="mt-auto flex items-center justify-between">
+              <div>
+                 ${isDeal ? `
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-400 line-through">$${product.price.toFixed(2)}</span>
+                        <span class="text-2xl font-extrabold text-red-600">$${displayPrice.toFixed(2)}</span>
+                    </div>
+                 ` : `
+                    <span class="text-2xl font-extrabold" style="color: var(--color-secondary);">$${displayPrice.toFixed(2)}</span>
+                 `}
+              </div>
+              ${product.stock_status === 'in_stock' ? '<span class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-bold">In Stock</span>' : '<span class="px-3 py-1 bg-red-100 text-red-700 text-xs rounded-full font-bold">Out</span>'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
-            <div class="flex-1 p-8 overflow-y-auto">
-                <div class="flex justify-between items-center mb-8">
-                    <h1 class="text-2xl font-bold text-gray-900">Product Management</h1>
-                    <button onclick="document.getElementById('add-product-form').classList.toggle('hidden')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-md flex items-center gap-2 text-sm font-bold">
-                        ${Icon.Plus()} Add New Product
-                    </button>
+    function Footer() {
+      return `
+        <footer class="mt-auto transition-colors duration-500" style="background-color: var(--color-primary);">
+          <div class="max-w-7xl mx-auto px-4 py-8 text-white">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+              <div class="text-center md:text-left mb-4 md:mb-0">
+                <h3 class="text-xl font-extrabold" style="color: var(--color-accent);">ShopHub</h3>
+                <p class="text-gray-300 text-sm mt-1">Your trusted premium shopping destination</p>
+              </div>
+              <div class="text-sm text-gray-400">© 2024 ShopHub. All rights reserved.</div>
+            </div>
+          </div>
+        </footer>
+      `;
+    }
+
+    // 🌟 Helper for Scrolling
+    window.scrollSection = (id, direction) => {
+        const container = document.getElementById(id);
+        if (container) {
+            const scrollAmount = 320; 
+            container.scrollBy({ 
+                left: direction === 'left' ? -scrollAmount : scrollAmount, 
+                behavior: 'smooth' 
+            });
+        }
+    };
+
+    function HomePage() {
+      // Filter Data
+      const bestsellers = state.products.filter(p => p.is_bestseller);
+      const monthlyDeals = state.products.filter(p => p.is_deal);
+
+      // 🌟 Wrapper to hold the Normal Product Card inside slider logic
+      const renderSliderCardWrapper = (product) => {
+        return `
+        <div class="min-w-[280px] w-[280px] h-full snap-start">
+             ${ProductCard(product)}
+        </div>
+        `;
+      };
+
+      return `
+        <div class="flex-1 pb-12">
+          <div class="py-16 text-white transition-all duration-500 mb-8" style="background-image: linear-gradient(to right, var(--color-primary), var(--color-secondary));">
+            <div class="max-w-7xl mx-auto px-6 text-center md:text-left">
+              <h1 class="text-4xl md:text-6xl font-extrabold mb-4">The Premium Collection</h1>
+              <p class="text-lg opacity-90 mb-8 max-w-xl">Discover exclusive items curated for your lifestyle.</p>
+            </div>
+          </div>
+
+          <div class="max-w-7xl mx-auto px-4 mb-12">
+            <div class="flex items-center justify-between mb-4 px-2">
+                 <h2 class="text-2xl font-extrabold text-gray-800 flex items-center gap-2">🔥 Bestsellers</h2>
+                 <div class="hidden md:flex gap-2">
+                    <button onclick="scrollSection('bestsellers-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
+                    <button onclick="scrollSection('bestsellers-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
+                 </div>
+            </div>
+            
+            <div class="relative group">
+                <button onclick="scrollSection('bestsellers-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
+                
+                <div id="bestsellers-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide scroll-smooth snap-x items-stretch">
+                    ${bestsellers.length > 0 ? bestsellers.map(p => renderSliderCardWrapper(p)).join('') : '<p class="text-gray-500 pl-2">No bestsellers marked yet.</p>'}
                 </div>
 
-                <div id="add-product-form" class="hidden bg-white p-6 rounded-lg shadow-md mb-8 border border-gray-200 animate-fade-in">
-                    <h3 class="text-lg font-bold mb-4">Add New Item</h3>
-                    <form onsubmit="handleAddProduct(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" name="name" placeholder="Product Name" required class="p-2 border rounded">
-                        <input type="number" name="price" placeholder="Price" step="0.01" required class="p-2 border rounded">
-                        <select name="category_id" class="p-2 border rounded" required>
-                            <option value="" disabled selected>Select Category</option>
-                            ${state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-                        </select>
-                        <input type="text" name="image_url" placeholder="Image URL" required class="p-2 border rounded">
-                        <select name="stock_status" class="p-2 border rounded">
-                            <option value="in_stock">In Stock</option>
-                            <option value="low_stock">Low Stock</option>
-                            <option value="out_of_stock">Out of Stock</option>
-                        </select>
-                        <textarea name="description" placeholder="Short Description" class="p-2 border rounded md:col-span-2"></textarea>
-                        <textarea name="detailed_description" placeholder="Long Detailed Description" class="p-2 border rounded md:col-span-2"></textarea>
+                <button onclick="scrollSection('bestsellers-scroll', 'right')" class="md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronRight()}</button>
+            </div>
+          </div>
+
+          <hr class="border-gray-100 max-w-7xl mx-auto mb-12" />
+
+          <div class="max-w-7xl mx-auto px-4 mb-12">
+            <div class="flex items-center justify-between mb-4 px-2">
+                 <h2 class="text-2xl font-extrabold text-gray-800 flex items-center gap-2">⚡ Monthly Deals</h2>
+                 <div class="hidden md:flex gap-2">
+                    <button onclick="scrollSection('deals-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
+                    <button onclick="scrollSection('deals-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
+                 </div>
+            </div>
+            
+            <div class="relative group">
+                <button onclick="scrollSection('deals-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
+
+                <div id="deals-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide scroll-smooth snap-x items-stretch">
+                    ${monthlyDeals.length > 0 ? monthlyDeals.map(p => renderSliderCardWrapper(p)).join('') : '<p class="text-gray-500 pl-2">No active deals right now.</p>'}
+                </div>
+                
+                <button onclick="scrollSection('deals-scroll', 'right')" class="md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronRight()}</button>
+            </div>
+          </div>
+
+          <hr class="border-gray-100 max-w-7xl mx-auto mb-12" />
+
+          <div class="max-w-7xl mx-auto px-4">
+             <h2 class="text-2xl font-extrabold text-gray-800 mb-6 px-2">Browse by Category</h2>
+             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                ${state.categories.map(cat => {
+                    const theme = CATEGORY_THEMES[cat.slug] || CATEGORY_THEMES['default'];
+                    return `
+                    <div onclick="navigate('category', '${cat.slug}')" 
+                         class="cursor-pointer bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center justify-center gap-3 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                         style="border-bottom: 4px solid ${theme.primary}">
+                        <div class="text-4xl group-hover:scale-110 transition-transform duration-300">${theme.icon || '📦'}</div>
+                        <span class="font-bold text-center text-gray-800 group-hover:text-indigo-600">${cat.name}</span>
+                    </div>
+                    `;
+                }).join('')}
+             </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function CategoryPage() {
+      const category = state.categories.find(c => c.slug === state.currentSlug);
+      if (!category) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Category not found</div></div>';
+      const products = state.products.filter(p => p.category_id === category.id);
+      
+      return `
+        <div class="flex-1 page-enter">
+          <div class="text-white py-12 transition-colors duration-500" style="background-color: var(--color-secondary);">
+            <div class="max-w-7xl mx-auto px-4">
+              <h1 class="text-5xl font-extrabold flex items-center gap-4">
+                ${CATEGORY_THEMES[category.slug]?.icon || ''} ${category.name}
+              </h1>
+              ${category.description ? `<p class="mt-4 text-xl opacity-90 max-w-2xl">${category.description}</p>` : ''}
+            </div>
+          </div>
+          <div class="max-w-7xl mx-auto px-4 py-12">
+            ${products.length === 0 ? 
+              '<p class="text-center text-gray-600 py-12 text-lg">No products in this category yet.</p>' :
+              `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                ${products.map(product => ProductCard(product)).join('')}
+              </div>`
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function SearchResultsPage() {
+        return `
+        <div class="flex-1 max-w-7xl mx-auto px-4 py-12 page-enter">
+            <h1 class="text-3xl font-extrabold mb-6 text-gray-800">
+                Search Results for "<span class="text-blue-600">${state.searchQuery}</span>"
+            </h1>
+            
+            ${state.searchResults.length === 0 ? `
+                <div class="text-center py-20 bg-gray-50 rounded-xl">
+                    <p class="text-xl text-gray-500">No products found matching your search.</p>
+                    <button onclick="toggleSearch()" class="mt-4 text-blue-600 font-bold hover:underline">Try another search</button>
+                </div>
+            ` : `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    ${state.searchResults.map(p => ProductCard(p)).join('')}
+                </div>
+            `}
+        </div>
+        `;
+    }
+
+    function ProductPage() {
+      const product = state.products.find(p => p.slug === state.currentSlug);
+      if (!product) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Product not found</div></div>';
+      
+      const isDeal = product.is_deal && product.deal_price;
+      const displayPrice = isDeal ? product.deal_price : product.price;
+
+      return `
+        <div class="flex-1 max-w-7xl mx-auto px-4 py-12 page-enter">
+          <button 
+              onclick="navigate('home'); return false;" 
+              class="mb-6 text-gray-500 hover:text-gray-800 font-medium z-50 relative" 
+              style="pointer-events: auto;"
+          >
+              ← Back
+          </button>
+          <div class="grid md:grid-cols-2 gap-10">
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
+              <img src="${product.image_url}" alt="${product.name}" class="w-full rounded-lg object-contain max-h-[40rem] shadow-lg">
+            </div>
+            <div>
+              <div class="mb-4">
+                <span class="font-semibold tracking-wide text-sm uppercase" style="color: var(--color-secondary);">Detailed View</span>
+                <h1 class="text-4xl font-extrabold text-gray-900 mt-2">${product.name}</h1>
+              </div>
+              
+              ${isDeal ? `
+                  <div class="flex items-center gap-3 mb-6">
+                      <span class="text-xl text-gray-400 line-through">$${product.price.toFixed(2)}</span>
+                      <p class="text-3xl font-bold text-red-600">$${displayPrice.toFixed(2)}</p>
+                  </div>
+              ` : `
+                  <p class="text-3xl font-bold mb-6" style="color: var(--color-primary);">$${displayPrice.toFixed(2)}</p>
+              `}
+              
+              <div class="text-gray-600 mb-8 space-y-4">
+                <p class="text-lg leading-relaxed">${product.description}</p>
+                ${product.detailed_description ? `<div class="p-4 bg-gray-50 border-l-4" style="border-color: var(--color-accent);"><p>${product.detailed_description}</p></div>` : ''}
+              </div>
+
+              <div class="flex items-center gap-4 border-t pt-6">
+                <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="flex-1 text-white px-8 py-4 rounded-lg font-bold transition-all text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1" style="background-color: var(--color-primary);">
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function AdminProductRow(product) {
+      return `
+        <tr class="bg-white border-b hover:bg-gray-50 transition-colors ${!product.is_active ? 'opacity-60' : ''}">
+          <td class="px-6 py-4 font-bold text-gray-900">${product.id}</td>
+          <td class="px-6 py-4 text-gray-700">${product.name}</td>
+          <td class="px-6 py-4 text-gray-700">$${product.price.toFixed(2)}</td>
+          <td class="px-6 py-4">
+            <span class="px-3 py-1 text-xs font-semibold rounded-full ${product.stock_status === 'in_stock' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${product.stock_status.replace('_', ' ')}
+            </span>
+          </td>
+          <td class="px-6 py-4">
+            <span class="px-3 py-1 text-xs font-semibold rounded-full ${product.is_active ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+              ${product.is_active ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+            <button onclick='openEditModal(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50 transition-colors">
+              ${Icon.Edit()}
+            </button>
+            <button onclick="handleDeleteProduct('${product.id}')" class="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-50 transition-colors">
+              ${Icon.Trash()}
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+
+    function AdminPage() {
+        if (!state.isAdmin) {
+            return '<div class="flex-1 flex items-center justify-center py-16"><div class="text-2xl text-red-600">Access Denied. Admins only.</div></div>';
+        }
+
+        const categoriesHtml = state.categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+        
+        return `
+          <div class="flex-1 max-w-7xl mx-auto px-4 py-12 page-enter">
+            <h1 class="text-4xl font-extrabold mb-8" style="color: var(--color-primary);">Admin Dashboard</h1>
+
+            <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-100 mb-10">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2" style="color: var(--color-secondary);">
+                    <span style="color: var(--color-primary);">${Icon.Plus()}</span> Add New Product
+                </h2>
+                <form onsubmit="handleAddProduct(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Name</label>
+                            <input type="text" name="name" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Price</label>
+                            <input type="number" name="price" required step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Image URL</label>
+                        <input type="url" name="image_url" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Short Description</label>
+                        <input type="text" name="description" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Detailed Description (Optional)</label>
+                        <textarea name="detailed_description" rows="3" class="w-full px-4 py-2 border rounded-lg input-focus-primary"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-900">Monthly Deal</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="is_deal" onchange="toggleDealInput(this, 'add-deal-price-container')" class="sr-only peer toggle-checkbox">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
+                            </label>
+                        </div>
+
+                         <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-900">Bestseller</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="is_bestseller" class="sr-only peer toggle-checkbox">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
+                            </label>
+                        </div>
                         
-                        <div class="md:col-span-2 flex items-center gap-6 p-4 bg-gray-50 rounded">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" name="is_active" checked class="w-4 h-4"> Active
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" name="is_bestseller" class="w-4 h-4"> Bestseller
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" name="is_deal" class="w-4 h-4" onchange="toggleDealInput(this, 'add-deal-price-container')"> On Deal
-                            </label>
-                            <div id="add-deal-price-container" class="hidden flex items-center gap-2">
-                                <input type="number" name="deal_price" placeholder="Deal Price" step="0.01" class="p-1 border rounded w-24">
+                        <div id="add-deal-price-container" class="hidden md:col-span-2 mt-2">
+                             <label class="block text-sm font-medium text-gray-700">Deal Price</label>
+                             <input type="number" name="deal_price" step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Category</label>
+                            <select name="category_id" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                ${categoriesHtml}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Stock Status</label>
+                            <select name="stock_status" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                <option value="in_stock">In Stock</option>
+                                <option value="out_of_stock">Out of Stock</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end pb-1">
+                            <input type="checkbox" name="is_active" checked id="is_active" class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700">Is Active</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-md hover:shadow-lg" style="background-color: var(--color-primary);">
+                        Add Product
+                    </button>
+                </form>
+            </div>
+
+            <h2 class="text-2xl font-bold mb-4" style="color: var(--color-primary);">All Products (${state.adminProducts.length})</h2>
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">ID</th>
+                            <th scope="col" class="px-6 py-3">Name</th>
+                            <th scope="col" class="px-6 py-3">Price</th>
+                            <th scope="col" class="px-6 py-3">Stock</th>
+                            <th scope="col" class="px-6 py-3">Status</th>
+                            <th scope="col" class="px-6 py-3">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${state.adminProducts.map(product => AdminProductRow(product)).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${EditProductModal(categoriesHtml)}
+          </div>
+        `;
+    }
+
+    function EditProductModal(categoriesHtml) {
+        return `
+            <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl shadow-2xl max-w-xl w-full p-6 relative">
+                    <h3 class="text-2xl font-bold mb-4" style="color: var(--color-primary);">Edit Product</h3>
+                    <button onclick="closeEditModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">${Icon.X()}</button>
+                    
+                    <form onsubmit="handleUpdateProduct(event)" class="space-y-4">
+                        <input type="hidden" name="id" id="edit-id">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Name</label>
+                                <input type="text" name="name" id="edit-name" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Price</label>
+                                <input type="number" name="price" id="edit-price" required step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Image URL</label>
+                            <input type="url" name="image_url" id="edit-image_url" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Short Description</label>
+                            <input type="text" name="description" id="edit-description" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Detailed Description (Optional)</label>
+                            <textarea name="detailed_description" id="edit-detailed_description" rows="3" class="w-full px-4 py-2 border rounded-lg input-focus-primary"></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-900">Monthly Deal</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="is_deal" id="edit-is_deal" onchange="toggleDealInput(this, 'edit-deal-price-container')" class="sr-only peer toggle-checkbox">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
+                                </label>
+                            </div>
+
+                             <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-900">Bestseller</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="is_bestseller" id="edit-is_bestseller" class="sr-only peer toggle-checkbox">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
+                                </label>
+                            </div>
+                            
+                            <div id="edit-deal-price-container" class="hidden md:col-span-2 mt-2">
+                                 <label class="block text-sm font-medium text-gray-700">Deal Price</label>
+                                 <input type="number" name="deal_price" id="edit-deal_price" step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
                             </div>
                         </div>
 
-                        <button type="submit" class="md:col-span-2 bg-green-600 text-white py-2 rounded font-bold hover:bg-green-700 shadow-sm">Save Product</button>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Category</label>
+                                <select name="category_id" id="edit-category_id" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                    ${categoriesHtml}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Stock Status</label>
+                                <select name="stock_status" id="edit-stock_status" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                    <option value="in_stock">In Stock</option>
+                                    <option value="out_of_stock">Out of Stock</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end pb-1">
+                                <input type="checkbox" name="is_active" id="edit-is_active" class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                <label for="edit-is_active" class="ml-2 block text-sm font-medium text-gray-700">Is Active</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-md hover:shadow-lg" style="background-color: var(--color-secondary);">
+                            Save Changes
+                        </button>
                     </form>
                 </div>
-
-                <div class="bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-                            <tr>
-                                <th class="p-4">Product</th>
-                                <th class="p-4">Price</th>
-                                <th class="p-4">Status</th>
-                                <th class="p-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            ${state.adminProducts.map(p => `
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="p-4 flex items-center gap-3">
-                                        <img src="${p.image_url}" class="w-10 h-10 rounded object-cover border">
-                                        <div>
-                                            <div class="font-bold text-gray-900">${p.name}</div>
-                                            <div class="text-xs text-gray-500">ID: ${p.id}</div>
-                                        </div>
-                                    </td>
-                                    <td class="p-4 font-medium">$${p.price}</td>
-                                    <td class="p-4"><span class="px-2 py-1 rounded-full text-xs font-bold ${p.stock_status === 'in_stock' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${p.stock_status}</span></td>
-                                    <td class="p-4 text-right">
-                                        <button onclick='openEditModal(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="text-blue-600 hover:text-blue-800 mr-3">${Icon.Edit()}</button>
-                                        <button onclick="handleDeleteProduct(${p.id})" class="text-red-500 hover:text-red-700">${Icon.Trash()}</button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
             </div>
-        </div>
-        
-        <div id="edit-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-[60] backdrop-blur-sm">
-           <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-               <h2 class="text-xl font-bold mb-4">Edit Product</h2>
-               <form onsubmit="handleUpdateProduct(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <input type="hidden" name="id" id="edit-id">
-                   <input type="text" name="name" id="edit-name" placeholder="Product Name" required class="p-2 border rounded">
-                   <input type="number" name="price" id="edit-price" placeholder="Price" step="0.01" required class="p-2 border rounded">
-                   <select name="category_id" id="edit-category_id" class="p-2 border rounded" required>
-                        ${state.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-                   </select>
-                   <input type="text" name="image_url" id="edit-image_url" placeholder="Image URL" required class="p-2 border rounded">
-                   <select name="stock_status" id="edit-stock_status" class="p-2 border rounded">
-                        <option value="in_stock">In Stock</option>
-                        <option value="low_stock">Low Stock</option>
-                        <option value="out_of_stock">Out of Stock</option>
-                   </select>
-                   <textarea name="description" id="edit-description" placeholder="Short Description" class="p-2 border rounded md:col-span-2"></textarea>
-                   <textarea name="detailed_description" id="edit-detailed_description" placeholder="Long Detailed Description" class="p-2 border rounded md:col-span-2"></textarea>
+        `;
+    }
 
-                    <div class="md:col-span-2 flex flex-wrap items-center gap-4 p-4 bg-gray-50 rounded">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="is_active" id="edit-is_active" class="w-4 h-4"> Active
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="is_bestseller" id="edit-is_bestseller" class="w-4 h-4"> Bestseller
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="is_deal" id="edit-is_deal" class="w-4 h-4" onchange="toggleDealInput(this, 'edit-deal-price-container')"> On Deal
-                        </label>
-                        <div id="edit-deal-price-container" class="hidden flex items-center gap-2">
-                            <input type="number" name="deal_price" id="edit-deal_price" placeholder="Deal Price" step="0.01" class="p-1 border rounded w-24">
-                        </div>
-                    </div>
-
-                   <div class="md:col-span-2 flex gap-3 mt-4">
-                       <button type="button" onclick="closeEditModal()" class="flex-1 py-2 border border-gray-300 rounded hover:bg-gray-50 font-medium">Cancel</button>
-                       <button type="submit" class="flex-1 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-bold shadow-sm">Update</button>
-                   </div>
-               </form>
-           </div>
+    function AboutPage() {
+        return `
+        <div class="flex-1 page-enter">
+          <div class="py-12" style="background-color: #f0f4f8;">
+            <div class="max-w-7xl mx-auto px-4">
+              <h1 class="text-4xl font-extrabold" style="color: var(--color-primary);">About Us</h1>
+            </div>
+          </div>
+          <div class="max-w-4xl mx-auto px-4 py-12 space-y-8">
+            <section>
+              <h2 class="text-3xl font-extrabold mb-4" style="color: var(--color-secondary);">Our Mission</h2>
+              <p class="text-gray-700 leading-relaxed text-lg">
+                We are a passionate team dedicated to curating the best online shopping experience, focusing on **quality, luxurious selection,** and **unparalleled customer service.**
+              </p>
+            </section>
+              <section class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+              <h2 class="text-2xl font-bold mb-4" style="color: var(--color-primary);">Contact</h2>
+              <p class="text-gray-700 font-medium">Email: support@shophub.com</p>
+            </section>
+          </div>
         </div>
       `;
     }
 
-    // --- Main Render Loop ---
-    function render() {
-      const app = document.getElementById('app');
-      
-      // Sidebar Logic
-      const sidebarHTML = `
-        <div class="sidebar-wrapper p-6 flex flex-col justify-between">
-            <div>
-               <div class="flex items-center justify-between mb-8">
-                  <h2 class="text-2xl font-bold text-gray-800">Shop Categories</h2>
-                  <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">${Icon.X()}</button>
-               </div>
-               
-               <div class="mb-4">
-                   <button onclick="toggleSidebarCat()" class="flex items-center justify-between w-full text-left font-bold text-lg text-gray-700 hover:text-indigo-600 transition-colors">
-                       <span>Browse All</span>
-                       <span id="sidebar-cat-icon" class="transition-transform duration-300 transform rotate-180">${Icon.ChevronDown()}</span>
-                   </button>
-                   <div id="sidebar-cat-content" class="dropdown-content dropdown-open mt-2 space-y-1">
-                     ${state.categories.map(c => `
-                       <div class="staggered-item">
-                         <button onclick="navigate('category', '${c.slug}')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors group">
-                           <span class="text-xl group-hover:scale-110 transition-transform">${CATEGORY_THEMES[c.slug]?.icon || '📦'}</span>
-                           <span class="font-medium text-gray-700 group-hover:text-indigo-600">${c.name}</span>
-                         </button>
-                       </div>
-                     `).join('')}
-                   </div>
-               </div>
-            </div>
+    // 🌟 EMAILJS CONFIGURATION
+    (function(){
+      // ⚠️ REPLACE WITH YOUR PUBLIC KEY
+      emailjs.init("YOUR_PUBLIC_KEY"); 
+    })();
+
+    // 🌟 CHECKOUT HANDLER
+    async function handleCheckout() {
+        if (state.cart.length === 0) {
+            showToast("Your cart is empty!");
+            return;
+        }
+        if (!state.user) {
+            showToast("Please login to checkout.");
+            navigate('auth');
+            return;
+        }
+
+        const btn = document.getElementById('checkout-btn');
+        const originalContent = btn.innerHTML;
+        // Show loading state
+        btn.innerHTML = `<div class="loader border-white" style="width: 20px; height: 20px; border-top-color: white;"></div> Processing...`;
+        btn.disabled = true;
+
+        try {
+            const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             
-            <div class="border-t pt-6">
-                ${state.user ? `
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
-                            ${state.user.email.charAt(0).toUpperCase()}
-                        </div>
-                        <div class="text-sm">
-                            <p class="font-bold text-gray-900 truncate w-40">${state.user.email}</p>
-                            <p class="text-green-600 text-xs">Logged In</p>
-                        </div>
-                    </div>
-                    <button onclick="handleLogout()" class="w-full py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 text-sm font-bold">Sign Out</button>
-                ` : `
-                    <button onclick="navigate('auth')" class="w-full py-3 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 font-bold mb-3">Sign In / Register</button>
-                `}
-            </div>
-        </div>
-        <div class="backdrop" onclick="toggleMenu()"></div>
-      `;
-      
-      // Handle Views
-      let pageContent = '';
-      
-      if (state.authMode === 'signin' && state.currentPage === 'auth') {
-          pageContent = AuthPage();
-      } else if (state.authMode === 'signup' && state.currentPage === 'auth') {
-          pageContent = AuthPage();
-      } else if (state.currentPage === 'home') {
-          pageContent = HomePage();
-      } else if (state.currentPage === 'cart') {
-          pageContent = CartPage();
-      } else if (state.currentPage === 'admin') {
-          pageContent = AdminPage();
-      } else if (state.currentPage === 'search-results') {
-          // Search Results View
-          pageContent = `
-             ${Header()}
-             <div class="container mx-auto px-4 py-8">
-                 <div class="mb-8">
-                     <button onclick="navigate('home')" class="text-gray-500 hover:text-indigo-600 flex items-center gap-2 mb-4">${Icon.ChevronLeft()} Back to Home</button>
-                     <h1 class="text-3xl font-bold">Search Results</h1>
-                     <p class="text-gray-500">Found ${state.searchResults.length} results for "${state.searchQuery}"</p>
-                 </div>
-                 
-                 ${state.searchResults.length === 0 
-                    ? `<div class="text-center py-20 text-gray-400">
-                         <div class="text-6xl mb-4">🔍</div>
-                         <p class="text-xl">No products found.</p>
-                         <p>Try checking your spelling or using fewer keywords.</p>
-                       </div>`
-                    : `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        ${state.searchResults.map(p => ProductCard(p)).join('')}
-                       </div>`
-                 }
-             </div>
-          `;
-      } else if (state.currentPage === 'category') {
-          pageContent = `
-            ${Header()}
-            <div class="container mx-auto px-4 py-8">
-               <div class="flex items-center gap-4 mb-8">
-                 <button onclick="navigate('home')" class="p-2 hover:bg-gray-100 rounded-full">${Icon.ChevronLeft()}</button>
-                 <h1 class="text-4xl font-bold text-gray-900 capitalize">${state.currentSlug.replace('-', ' ')}</h1>
-               </div>
-               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                 ${state.products.filter(p => p.category_id == state.categories.find(c => c.slug === state.currentSlug)?.id).map(p => ProductCard(p)).join('')}
-               </div>
-            </div>
-          `;
+            // Format order details nicely for the email
+            const orderDetails = state.cart.map(item => 
+                `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
+            ).join('\n');
+
+            const templateParams = {
+                to_email: state.user.email,
+                to_name: state.user.email.split('@')[0],
+                from_name: "ShopHub",
+                order_details: orderDetails,
+                total_amount: `$${total.toFixed(2)}`,
+                reply_to: "support@shophub.com"
+            };
+
+            // ⚠️ REPLACE WITH YOUR SERVICE ID AND TEMPLATE ID
+            await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", templateParams);
+
+            // Clear Cart from Supabase
+            await supabase.from('cart_items').delete().eq('user_id', state.user.id);
+            
+            // Clear Local State
+            state.cart = [];
+            showToast("Order placed successfully! Check your email.");
+            navigate('home');
+
+        } catch (error) {
+            console.error('Checkout Error:', error);
+            showToast("Checkout failed. Please try again.");
+            alert("Error sending email: " + JSON.stringify(error));
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    }
+    // Expose to window so the HTML button can call it
+    window.handleCheckout = handleCheckout;
+    function render() {
+      let content = '';
+      switch(state.currentPage) {
+        case 'home': content = HomePage(); break;
+        case 'category': content = CategoryPage(); break;
+        case 'product': content = ProductPage(); break;
+        case 'about': content = AboutPage(); break;
+        case 'cart': content = CartPage(); break;
+        case 'auth': content = AuthPage(); break;
+        case 'admin': content = AdminPage(); break;
+        case 'search-results': content = SearchResultsPage(); break;
       }
 
-      app.innerHTML = `
-        <div class="${state.menuOpen ? 'sidebar-open' : ''}">
-            ${sidebarHTML}
-            <div class="page-enter">
-                ${pageContent}
-            </div>
-        </div>
+      const appContainer = document.getElementById('app');
+      appContainer.className = state.menuOpen 
+        ? 'min-h-screen flex flex-col font-sans sidebar-open' 
+        : 'min-h-screen flex flex-col font-sans';
+      
+      appContainer.innerHTML = `
+        ${Header()}
+        ${Sidebar()}
+        <main class="flex-grow">
+          ${content}
+        </main>
+        ${Footer()}
       `;
     }
 
-    // Assign to window
-    window.toggleMenu = () => {
-        state.menuOpen = !state.menuOpen;
-        render();
-    };
+    window.toggleMenu = () => { state.menuOpen = !state.menuOpen; render(); };
+    window.navigate = navigate;
+    window.addToCart = addToCart;
+    window.removeFromCart = removeFromCart;
+    window.updateQuantity = updateQuantity;
+    window.handleAuth = handleAuth;
+    window.handleGoogleLogin = handleGoogleLogin;
+    window.handleLogout = handleLogout;
+    window.handleAddProduct = handleAddProduct;
+    window.setAuthMode = (mode) => { state.authMode = mode; render(); };
 
-    // --- Initialization ---
     async function fetchInitialProducts() {
-      // Fetch Products
-      const { data: products } = await supabase.from('products').select('*').eq('is_active', true);
-      state.products = products || [];
+        const { data, error } = await supabase.from('products').select('*').eq('is_active', true);
+        if (data) state.products = data;
+        if (error) console.error("Initial products fetch error:", error);
     }
 
     async function init() {
       try {
-        const categoriesRes = await supabase.from('categories').select('*');
+        const categoriesRes = await supabase.from('categories').select('*').order('display_order');
         state.categories = categoriesRes.data || [];
         await fetchInitialProducts();
       } catch (e) { console.error("Init Error:", e); } 
       finally { render(); }
 
-      // Auth Listener
+      // 🌟 SETUP AUTH LISTENER
       supabase.auth.onAuthStateChange(async (event, session) => {
         try {
             const previousUser = state.user;
             state.user = session?.user || null;
             
-            // Admin Check
+            // Handle Admin Check
             if (state.user && state.user.email) {
                 const userEmail = state.user.email.trim().toLowerCase();
                 const adminEmail = ADMIN_EMAIL.trim().toLowerCase();
@@ -1428,7 +1707,8 @@
                 state.isAdmin = false;
             }
             
-            // Data Sync
+            // Handle Data Sync (Cart, Admin Products)
+            // We await these, but if they fail, we catch the error so the UI still updates
             if (state.user) {
                 if (!previousUser) await mergeCart();
                 await fetchCart();
@@ -1439,7 +1719,9 @@
             }
         } catch (err) {
             console.error("Auth State Logic Error:", err);
+            // Optional: showToast("Error syncing data, but you are logged in.");
         } finally {
+            // 🌟 ALWAYS RENDER to ensure UI updates
             render();
         }
       });
