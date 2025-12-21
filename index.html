@@ -841,6 +841,7 @@ async function ensureValidSession() {
     }
     
     async function handleAddProduct(e) {
+      e.preventDefault();
       const session = await ensureValidSession();
       if (!session) {
         alert("Session expired. Please log in again.");
@@ -848,7 +849,7 @@ async function ensureValidSession() {
         return;
       }
   console.log("=== handleAddProduct START ===");
-  e.preventDefault();
+  
   
   const { data: sessionData } = await supabase.auth.getSession();
   console.log("🔑 Session exists:", !!sessionData.session);
