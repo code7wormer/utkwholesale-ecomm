@@ -552,52 +552,37 @@
     btn.disabled = true;
 
     try {
-        console.log(`Sending Verify Request...`);
-        console.log(`Phone: "${phoneNumber}"`);
-        console.log(`Token: "${token}"`);
+        console.log(`Verifying phone link...`);
 
-        // Call Supabase
+        // ⚡ CHANGE: Use type: 'phone_change' to keep current session
         const { data, error } = await supabase.auth.verifyOtp({
             phone: phoneNumber,
             token: token,
-            type: 'sms'
+            type: 'phone_change' 
         });
 
-        // 🛑 CHECK FOR ERRORS
-        if (error) {
-            console.error("❌ SUPABASE ERROR:", JSON.stringify(error, null, 2));
-            throw error; // Jump to catch block
-        }
+        if (error) throw error;
 
-        console.log("✅ Verification Success:", data);
+        console.log("Phone Linked Successfully!", data);
+        
+        // At this point, state.user.email is STILL there (SAFE!)
+        // And state.user.phone is now updated.
 
-        // Close Popup
         closePhonePopup();
         
-        // Handle Order
         if (state.isCheckoutFlow) {
+            // Now finalizeOrder works because the email session is preserved
             if (typeof finalizeOrder === 'function') {
-                console.log("Proceeding to finalize order...");
                 await finalizeOrder(phoneNumber);
-            } else {
-                throw new Error("finalizeOrder function is missing!");
             }
         } else {
-            alert("Phone Verified!");
+            alert("Phone Verified & Saved to Profile!");
             window.location.reload();
         }
 
     } catch (err) {
-        console.error("⚠️ CATCH BLOCK ERROR:", err);
-        
-        // Specific help for common errors
-        if (err.message && err.message.includes("Invalid login credentials")) {
-            alert("Verification Failed: The number or code does not match.\n\nTip: Check if your Dashboard has the number with a '+' (e.g. +91) but you typed it without one.");
-        } else {
-            alert("Verification Failed: " + (err.message || "Unknown error"));
-        }
-        
-        // Reset Button
+        console.error("Verify Error:", err);
+        alert("Verification Failed: " + err.message);
         btn.innerText = "Verify & Complete Order";
         btn.disabled = false;
     }
