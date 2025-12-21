@@ -674,15 +674,45 @@
             badge.classList.toggle('hidden', totalItems === 0);
         }
     }
-    async function removeFromCart(id) {
-      if (state.user) {
-        await supabase.from('cart_items').delete().match({ user_id: state.user.id, product_id: id });
-        await fetchCart();
-      } else {
-        state.cart = state.cart.filter(item => item.id !== id);
+    // 🌟 ROBUST REMOVE FUNCTION (Instant Feedback)
+    window.removeFromCart = async (id) => {
+        // 1. Optimistic UI Update: Remove it locally first!
+        // We use '!=' (loose inequality) to ensure "5" matches 5
+        const itemExists = state.cart.some(item => item.id == id);
+        
+        if (!itemExists) {
+            console.error("Item not found in local cart:", id);
+            return; 
+        }
+
+        // Filter out the item locally
+        state.cart = state.cart.filter(item => item.id != id);
+        
+        // Update the screen immediately
         render();
-      }
-    }
+        updateCartCount();
+        showToast("Item removed");
+
+        // 2. Sync with Server (Background)
+        // Only if logged in. If guest, we are done!
+        if (state.user) {
+            try {
+                const { error } = await supabase
+                    .from('cart_items')
+                    .delete()
+                    .match({ user_id: state.user.id, product_id: id });
+
+                if (error) {
+                    console.error("Supabase Delete Error:", error);
+                    showToast("Error syncing with server");
+                    // Optionally refresh cart if sync fails
+                    await fetchCart(); 
+                }
+            } catch (err) {
+                console.error("Network Error:", err);
+            }
+        }
+    };
     // 🌟 HELPER: Calculates the new quantity dynamically
     function adjustQuantity(id, change) {
         const item = state.cart.find(i => i.id === id);
