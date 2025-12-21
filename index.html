@@ -20,9 +20,9 @@
     }
 
     /* Transition for color changes */
-    body, button, header, footer, div {
-      transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
-    }
+    body, button.transition-enabled, .card {
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
 
     /* Tailwind Overrides */
     .bg-indigo-600 { background-color: var(--color-primary); }
