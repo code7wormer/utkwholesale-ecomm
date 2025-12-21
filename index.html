@@ -263,11 +263,6 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoem1yeWhueXpoZmV3c3lhbWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NTgwMTAsImV4cCI6MjA4MDMzNDAxMH0.qvCid4pmsdcRogce4RZH5adl90Eq5d3ibwVoJI5qr-I';
     const ADMIN_EMAIL = 'utkwholesale.sup@gmail.com'; 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    //EMAIL SHIT
-
-    (function(){
-      emailjs.init("4abn3obf_dhQF5ykh"); // REPLACE WITH YOUR PUBLIC KEY
-    })();
     // --- 🎨 Theme Configuration ---
     const CATEGORY_THEMES = {
       'candies-chocolates': { primary: '#ec4899', secondary: '#be185d', icon: '🍬' },
@@ -1526,7 +1521,7 @@
     // 🌟 EMAILJS CONFIGURATION
     (function(){
       // ⚠️ REPLACE WITH YOUR PUBLIC KEY
-      emailjs.init("YOUR_PUBLIC_KEY"); 
+      emailjs.init("4abn3obf_dhQF5ykh"); 
     })();
     function CartPage() {
       const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -1618,7 +1613,7 @@
             };
 
             // ⚠️ REPLACE WITH YOUR SERVICE ID AND TEMPLATE ID
-            await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", templateParams);
+            await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
 
             // Clear Cart from Supabase
             await supabase.from('cart_items').delete().eq('user_id', state.user.id);
