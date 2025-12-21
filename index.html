@@ -492,130 +492,129 @@
         // Open the Popup instead of sending email immediately
         state.isCheckoutFlow = true; 
         openPhonePopup();
-    };
+    };s
 
     // 2. Triggered by the "Send Code" button in popup
    window.handleSendOtp = async function() {
-    console.log("====== SEND OTP FUNCTION STARTED ======");
-    
     const phoneInput = document.getElementById('user-phone');
     const btn = document.getElementById('btn-send-otp');
-    
-    console.log("1. Elements found:", {
-        phoneInput: !!phoneInput,
-        btn: !!btn,
-        btnText: btn?.innerText,
-        btnDisabled: btn?.disabled
-    });
-    
-    const phoneNumber = phoneInput.value.trim();
-    console.log("2. Phone number entered:", phoneNumber, "Length:", phoneNumber.length);
+    let phoneNumber = phoneInput.value.trim();
 
-    // 1. Basic Validation
-    if (phoneNumber.length < 5) {
-        console.error("VALIDATION FAILED: Phone too short");
+    // Add + if missing
+    if (!phoneNumber.startsWith('+')) {
+        phoneNumber = '+' + phoneNumber;
+    }
+
+    if (phoneNumber.length < 6) {
         alert("Please enter a valid phone number.");
         return;
     }
-    console.log("3. ✓ Validation passed");
-    
-    // 2. Ensure User is Logged In
-    console.log("4. Checking user session:", {
-        userExists: !!state.user,
-        userId: state.user?.id,
-        userEmail: state.user?.email
-    });
     
     if (!state.user) {
-        console.error("FATAL: No user session found");
         alert("Session lost. Please log in again.");
         return;
     }
-    console.log("5. ✓ User session valid");
 
-    // 3. Lock Button
-    console.log("6. Locking button...");
-    const originalText = btn.innerText;
     btn.innerText = "Sending...";
     btn.disabled = true;
-    console.log("7. Button locked:", btn.innerText, btn.disabled);
 
     try {
-        console.log("8. Starting Supabase API call...");
-        console.log("   → Phone:", phoneNumber);
-        console.log("   → User ID:", state.user.id);
-
-        // 4. Call Supabase
-        const startTime = Date.now();
-        const { data, error } = await supabase.auth.updateUser({
-            phone: phoneNumber
-        });
-        const duration = Date.now() - startTime;
+        console.log("Sending OTP to:", phoneNumber);
         
-        console.log("9. Supabase response received (took " + duration + "ms)");
-        console.log("   → Data:", data);
-        console.log("   → Error:", error);
+        // Send OTP without creating a new session
+        const { data, error } = await supabase.auth.signInWithOtp({
+            phone: phoneNumber,
+            options: {
+                shouldCreateUser: false  // Don't create new user
+            }
+        });
+        
+        console.log("Response:", { data, error });
 
-        // 5. Handle Errors
         if (error) {
-            console.error("❌ SUPABASE ERROR DETECTED");
-            console.error("   → Status:", error.status);
-            console.error("   → Message:", error.message);
-            console.error("   → Code:", error.code);
-            console.error("   → Full Error:", JSON.stringify(error, null, 2));
+            console.error("Error:", error);
             
-            let errorMessage = "Error Sending Code: " + error.message;
-            
-            if (error.message.includes("already registered") || error.status === 422) {
-                console.warn("   → CAUSE: Phone number already registered");
-                errorMessage = "This phone number is already used by another account.\n\n" +
-                             "TESTING FIX:\n" +
-                             "1. Go to Supabase Dashboard\n" +
-                             "2. Authentication → Users\n" +
-                             "3. Find and DELETE the user with phone: " + phoneNumber;
+            // For testing: Show test number info
+            if (error.message.includes("not authorized") || error.status === 400) {
+                alert("⚠️ For testing, use:\nPhone: 19810555692\nOTP: 123456\n\n(Or configure Messagebird for real numbers)");
+            } else {
+                alert("Error: " + error.message);
             }
             
-            alert(errorMessage);
-            
-            console.log("10. Unlocking button after error...");
-            btn.innerText = originalText;
+            btn.innerText = "Send Verification Code";
             btn.disabled = false;
-            console.log("11. Button unlocked:", btn.innerText, btn.disabled);
-            console.log("====== FUNCTION ENDED (ERROR) ======");
             return;
         }
 
-        // 6. Success
-        console.log("✅ SUCCESS: OTP sent successfully");
-        console.log("12. Showing success UI...");
+        console.log("✅ OTP sent");
+        alert("Verification code sent to " + phoneNumber);
         
-        alert("Code sent to " + phoneNumber);
+        // Store phone for verification step
+        window.pendingPhone = phoneNumber;
         
-        console.log("13. Switching to OTP input screen...");
         document.getElementById('step-phone-input').classList.add('hidden');
         document.getElementById('step-otp-input').classList.remove('hidden');
-        phoneInput.value = phoneNumber;
-        
-        console.log("14. ✓ UI switched successfully");
-        console.log("====== FUNCTION ENDED (SUCCESS) ======");
 
     } catch (err) {
-        // 7. Catch Unexpected Crashes
-        console.error("💥 UNEXPECTED CRASH");
-        console.error("   → Error Type:", err.name);
-        console.error("   → Error Message:", err.message);
-        console.error("   → Stack Trace:", err.stack);
-        console.error("   → Full Error:", err);
-        
-        alert("Something went wrong: " + err.message + "\n\nCheck console for details.");
-        
-        console.log("15. Unlocking button after crash...");
-        btn.innerText = originalText;
+        console.error("Crash:", err);
+        alert("Error: " + err.message);
+        btn.innerText = "Send Verification Code";
         btn.disabled = false;
-        console.log("16. Button unlocked after crash");
-        console.log("====== FUNCTION ENDED (CRASH) ======");
     }
-};    // 3. Triggered by "Verify" button in popup
+};
+
+window.handleVerifyOtp = async function() {
+    const otpInput = document.getElementById('user-otp');
+    const btn = document.getElementById('btn-verify-otp');
+    const token = otpInput.value.trim();
+
+    if (token.length !== 6) {
+        alert("Please enter the 6-digit code.");
+        return;
+    }
+
+    btn.innerText = "Verifying...";
+    btn.disabled = true;
+
+    try {
+        console.log("Verifying OTP for:", window.pendingPhone);
+        
+        // Verify the OTP
+        const { data, error } = await supabase.auth.verifyOtp({
+            phone: window.pendingPhone,
+            token: token,
+            type: 'sms'
+        });
+
+        console.log("Verify response:", { data, error });
+
+        if (error) {
+            console.error("Verification failed:", error);
+            alert("Invalid code. Please try again.");
+            btn.innerText = "Verify & Complete Order";
+            btn.disabled = false;
+            return;
+        }
+
+        console.log("✅ Phone verified!");
+        
+        // Phone is verified, proceed with order
+        closePhonePopup();
+        
+        if (state.isCheckoutFlow && typeof finalizeOrder === 'function') {
+            await finalizeOrder(window.pendingPhone);
+        } else {
+            alert("Phone verified: " + window.pendingPhone);
+        }
+
+    } catch (err) {
+        console.error("Crash:", err);
+        alert("Error: " + err.message);
+        btn.innerText = "Verify & Complete Order";
+        btn.disabled = false;
+    }
+};
+    // 3. Triggered by "Verify" button in popup
    window.handleVerifyOtp = async function() {
     const phoneInput = document.getElementById('user-phone');
     const otpInput = document.getElementById('user-otp');
