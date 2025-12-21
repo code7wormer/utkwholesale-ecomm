@@ -845,7 +845,6 @@ async function ensureValidSession() {
   console.log("=== handleAddProduct START ===");
   
   try {
-    // Skip session check - use state directly
     console.log("Step 1: Checking admin status...");
     
     if (!state.user || !state.isAdmin) {
@@ -855,7 +854,21 @@ async function ensureValidSession() {
       return;
     }
     
-    console.log("Step 2: Admin verified, getting form data...");
+    console.log("Step 2: Refreshing session...");
+    
+    // Refresh the session to ensure it's active
+    try {
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) {
+        console.warn("Session refresh warning:", refreshError);
+      } else {
+        console.log("Session refreshed successfully");
+      }
+    } catch (refreshErr) {
+      console.warn("Could not refresh session, continuing anyway:", refreshErr);
+    }
+    
+    console.log("Step 3: Admin verified, getting form data...");
     
     const form = e.target;
     
@@ -867,7 +880,7 @@ async function ensureValidSession() {
       submitButton.innerHTML = '<div class="loader mx-auto"></div>';
     }
     
-    console.log("Step 3: Building product object...");
+    console.log("Step 4: Building product object...");
     
     const isDeal = form.is_deal.checked;
     
@@ -886,15 +899,23 @@ async function ensureValidSession() {
       is_bestseller: form.is_bestseller.checked
     };
 
-    console.log("Step 4: Product object created:", newProduct);
-    console.log("Step 5: Inserting into Supabase...");
+    console.log("Step 5: Product object created:", newProduct);
+    console.log("Step 6: Inserting into Supabase with timeout...");
 
-    const { data, error } = await supabase
+    // Add timeout to prevent hanging
+    const insertPromise = supabase
       .from('products')
       .insert([newProduct])
       .select();
     
-    console.log("Step 6: Supabase response received");
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Database operation timed out. Please try again.')), 15000)
+    );
+    
+    const result = await Promise.race([insertPromise, timeoutPromise]);
+    const { data, error } = result;
+    
+    console.log("Step 7: Supabase response received");
     console.log("Data:", data);
     console.log("Error:", error);
     
@@ -908,7 +929,7 @@ async function ensureValidSession() {
       return;
     }
     
-    console.log("Step 7: Success! Refreshing lists...");
+    console.log("Step 8: Success! Refreshing lists...");
     showToast("Product added successfully!");
     form.reset();
     document.getElementById('add-deal-price-container')?.classList.add('hidden');
@@ -916,7 +937,7 @@ async function ensureValidSession() {
     await fetchAdminProducts();
     await fetchInitialProducts();
     
-    console.log("Step 8: Complete!");
+    console.log("Step 9: Complete!");
     
     if (submitButton) {
       submitButton.disabled = false;
@@ -926,7 +947,13 @@ async function ensureValidSession() {
   } catch (err) {
     console.error("=== EXCEPTION ===");
     console.error(err);
-    alert("Error: " + err.message);
+    
+    // Check if it's a timeout error
+    if (err.message.includes('timed out')) {
+      alert("The operation timed out. Your session may have expired.\n\nPlease refresh the page and try again.");
+    } else {
+      alert("Error: " + err.message);
+    }
     
     const form = document.getElementById('add-product-form');
     const submitButton = form?.querySelector('button[type="submit"]');
@@ -937,7 +964,7 @@ async function ensureValidSession() {
   }
   
   console.log("=== handleAddProduct END ===");
-    }
+}
     window.handleAddProduct = handleAddProduct;
 
     window.toggleDealInput = (checkbox, containerId) => {
