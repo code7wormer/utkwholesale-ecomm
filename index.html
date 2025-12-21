@@ -735,7 +735,6 @@
         if (!item) return;
 
         // 2. Optimistic Update: Update Local State immediately
-        const newQuantity = item.quantity + change;
         item.quantity = newQuantity;
 
         // 3. Direct DOM Manipulation (Update numbers without re-rendering)
