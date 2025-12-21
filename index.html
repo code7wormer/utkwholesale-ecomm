@@ -315,7 +315,7 @@
             navigate('home');
 
         } catch (error) {
-            co  nsole.error('Checkout Error:', error);
+            console.error('Checkout Error:', error);
             showToast("Checkout failed. Please try again.");
             alert("Error sending email: " + JSON.stringify(error));
             btn.innerHTML = originalText;
