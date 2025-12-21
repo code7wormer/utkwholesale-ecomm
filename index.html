@@ -9,11 +9,9 @@
   <style>
     /* 🎨 Premium Color Palette & Base Styling */
     :root {
-      /* Default Global Colors */
       --default-primary: #001f3f;
       --default-secondary: #004d40;
       
-      /* Active Variables (These change dynamically via JS) */
       --color-primary: var(--default-primary);
       --color-secondary: var(--default-secondary);
       --color-accent: #ffd700; /* Gold */
@@ -30,23 +28,30 @@
     .text-indigo-600 { color: var(--color-primary); }
     .text-indigo-700 { color: var(--color-secondary); }
     
-    /* ⚙️ Sidebar Transitions */
+    /* ⚙️ Sidebar Styles */
     .sidebar-wrapper {
       position: fixed;
       left: 0;
       top: 0;
       height: 100%;
-      width: 18rem; 
+      width: 19rem; /* Slightly wider */
       background-color: white;
       box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
       z-index: 50;
       transform: translateX(-100%);
-      transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       display: flex;
       flex-direction: column;
     }
     
-    .sidebar-open .sidebar-wrapper { transform: translateX(0); }
+    /* 🌟 ANIMATION FIX: Use Keyframes so it plays on render */
+    .sidebar-open .sidebar-wrapper { 
+        animation: sidebarSlideIn 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes sidebarSlideIn {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(0); }
+    }
     
     .backdrop {
       position: fixed;
@@ -54,13 +59,27 @@
       background-color: rgba(0, 0, 0, 0.6);
       z-index: 40;
       opacity: 0;
-      transition: opacity 0.5s ease-in-out;
       pointer-events: none;
+      transition: opacity 0.5s ease;
     }
     
     .sidebar-open .backdrop { opacity: 1; pointer-events: auto; }
 
-    /* 🌟 FIX: Dropdown Animation */
+    /* Sidebar Staggered Entry - Made bolder */
+    @keyframes slideInUp {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .sidebar-open .staggered-item { 
+        opacity: 0; /* Hidden initially */
+        animation: slideInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
+    }
+    .sidebar-open .staggered-item:nth-child(1) { animation-delay: 0.15s; }
+    .sidebar-open .staggered-item:nth-child(2) { animation-delay: 0.25s; }
+    .sidebar-open .staggered-item:nth-child(3) { animation-delay: 0.35s; }
+    .sidebar-open .staggered-item:nth-child(4) { animation-delay: 0.45s; }
+
+    /* Dropdown Animation */
     .group:hover .dropdown-menu {
       visibility: visible;
       opacity: 1;
@@ -94,7 +113,7 @@
       50% { transform: translateY(0); }
     }
 
-    /* 🌟 Cart Pulse (for Add to Cart) - Keep as requested */
+    /* 🌟 Cart Pulse (Add to Cart) */
     @keyframes pulse-cart {
       0% { transform: scale(1) rotate(0deg); }
       25% { transform: scale(1.1) rotate(-10deg); }
@@ -103,7 +122,7 @@
     }
     .cart-pulse { animation: pulse-cart 0.5s ease-in-out; }
     
-    /* 🌟 Cart Bounce (for Clicking Cart Icon) */
+    /* 🌟 Cart Bounce (Click Cart) */
     @keyframes cart-bounce {
       0% { transform: scale(1); }
       50% { transform: scale(0.8); }
@@ -131,7 +150,7 @@
         transition: max-height 0.4s ease-out;
     }
     .dropdown-open {
-        max-height: 800px; /* Arbitrary large height */
+        max-height: 1000px;
         transition: max-height 0.6s ease-in;
     }
 
@@ -154,22 +173,11 @@
         to { opacity: 1; transform: translateY(0); }
     }
     
-    /* Sidebar Staggered Entry */
-    @keyframes slideInUp {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .sidebar-open .staggered-item { animation: slideInUp 0.5s ease-out forwards; }
-    .sidebar-open .staggered-item:nth-child(1) { animation-delay: 0.2s; }
-    .sidebar-open .staggered-item:nth-child(2) { animation-delay: 0.3s; }
-    .sidebar-open .staggered-item:nth-child(3) { animation-delay: 0.4s; }
-
-    /* Page Entry */
+    .page-enter { animation: slideInFromTop 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
     @keyframes slideInFromTop {
         from { opacity: 0; transform: translateY(-20px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    .page-enter { animation: slideInFromTop 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
 
     .loader {
       border: 3px solid #f3f3f3;
@@ -187,16 +195,9 @@
       outline: none;
     }
 
-    /* Toggle Switch Custom Styles */
-    .toggle-checkbox:checked {
-      right: 0;
-      border-color: var(--color-primary);
-    }
-    .toggle-checkbox:checked + .toggle-label {
-      background-color: var(--color-primary);
-    }
+    .toggle-checkbox:checked { right: 0; border-color: var(--color-primary); }
+    .toggle-checkbox:checked + .toggle-label { background-color: var(--color-primary); }
 
-    /* Hide scrollbar */
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -308,14 +309,10 @@
       toast.className = 'toast toast-success';
       toast.innerHTML = `${Icon.Check()} <span class="font-medium">${message}</span>`;
       container.appendChild(toast);
-
-      // Remove after animation (3s total: 0.3s slide + 2.2s wait + 0.5s fade)
-      setTimeout(() => {
-        toast.remove();
-      }, 3000);
+      setTimeout(() => { toast.remove(); }, 3000);
     }
 
-    // --- 🔍 Fuzzy Search Logic ---
+    // --- 🔍 Improved Fuzzy Search Logic ---
     function levenshtein(a, b) {
       if(a.length === 0) return b.length; 
       if(b.length === 0) return a.length; 
@@ -338,7 +335,7 @@
         const modal = document.getElementById('search-modal');
         if (modal.classList.contains('hidden')) {
             modal.classList.remove('hidden');
-            document.getElementById('search-input').focus();
+            setTimeout(() => document.getElementById('search-input').focus(), 100);
         } else {
             modal.classList.add('hidden');
         }
@@ -357,19 +354,33 @@
             candidates = candidates.filter(p => p.category_id == catFilter);
         }
 
-        // Fuzzy Search Logic
+        // 🌟 REFINED LOGIC: Check words individually
         const results = candidates.filter(p => {
             const name = p.name.toLowerCase();
             const desc = p.description.toLowerCase();
-            
-            // 1. Exact or partial match (High priority)
+            const words = name.split(/[\s-]+/); // Split by space or dash
+
+            // 1. Exact or Partial match (Fastest)
             if (name.includes(query) || desc.includes(query)) return true;
 
-            // 2. Fuzzy match (Allow typos based on string length)
+            // 2. Word-based Fuzzy match
+            // "marlrboro" (9) vs "marlboro" (8) -> Dist 1. Match.
+            // "tobaco" (6) vs "tobacco" (7) -> Dist 1. Match.
             const threshold = query.length > 5 ? 2 : 1; 
-            const dist = levenshtein(query, name.substring(0, Math.min(name.length, query.length + 1)));
             
-            return dist <= threshold;
+            const wordMatch = words.some(word => {
+                // Skip comparisons if lengths are too different
+                if (Math.abs(word.length - query.length) > 3) return false;
+                return levenshtein(query, word) <= threshold;
+            });
+            
+            if (wordMatch) return true;
+
+            // 3. Start-of-string match (Prefix)
+            const prefix = name.substring(0, query.length);
+            if (levenshtein(query, prefix) <= threshold) return true;
+
+            return false;
         });
 
         state.searchResults = results;
@@ -557,14 +568,12 @@
         render();
       }
 
-      // 🍞 Trigger Toast Notification
       showToast(`Added ${product.name} to cart`);
 
-      // 🌟 Add "Shake" animation to cart icon
       const cartIcon = document.getElementById('cart-icon-container');
       if (cartIcon) {
           cartIcon.classList.remove('cart-pulse');
-          void cartIcon.offsetWidth; // Trigger reflow
+          void cartIcon.offsetWidth; 
           cartIcon.classList.add('cart-pulse');
       }
     }
@@ -854,7 +863,7 @@
             </div>
             <nav class="p-4 space-y-2 overflow-y-auto flex-grow bg-white">
               
-              <div class="mb-6"> 
+              <div class="mb-6 staggered-item"> 
                 ${state.user ? `
                   <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
                     <div class="flex items-center gap-3 mb-2">
@@ -876,13 +885,15 @@
               </div>
               
               ${state.isAdmin ? `
+                <div class="staggered-item">
                 <a href="#" onclick="navigate('admin'); return false;" class="flex items-center gap-3 py-3 px-4 font-bold text-red-600 bg-red-50 rounded-xl hover:bg-red-100 transition-colors mb-4 border border-red-100">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                   Admin Dashboard
                 </a>
+                </div>
               ` : ''}
 
-              <div>
+              <div class="staggered-item">
                 <button onclick="toggleSidebarCat()" class="w-full flex items-center justify-between py-3 px-3 rounded-xl hover:bg-gray-100 transition-colors group">
                     <span class="font-extrabold text-lg text-gray-800 flex items-center gap-2">
                         <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
@@ -903,10 +914,12 @@
                 </div>
               </div>
 
+              <div class="staggered-item">
               <a href="#" onclick="navigate('about'); return false;" class="flex items-center gap-3 py-3 px-3 font-bold text-lg hover:bg-gray-50 rounded-xl transition-colors text-gray-700">
                 <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 About Us
               </a>
+              </div>
             </nav>
           </div>
       `;
