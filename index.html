@@ -495,17 +495,18 @@
     };
 
     // 2. Triggered by the "Send Code" button in popup
-  window.handleSendOtp = async function() {
+   window.handleSendOtp = async function() {
     const phoneInput = document.getElementById('user-phone');
     const btn = document.getElementById('btn-send-otp');
     let phoneNumber = phoneInput.value.trim();
 
+    // Add + if missing
     if (!phoneNumber.startsWith('+')) {
         phoneNumber = '+' + phoneNumber;
     }
 
-    if (phoneNumber.length < 11) {
-        alert("Please enter a valid phone number with country code.");
+    if (phoneNumber.length < 6) {
+        alert("Please enter a valid phone number.");
         return;
     }
     
@@ -514,25 +515,32 @@
         return;
     }
 
-    // Store current session
-    const currentSession = await supabase.auth.getSession();
-    window.savedEmailSession = currentSession.data.session;
-
     btn.innerText = "Sending...";
     btn.disabled = true;
 
     try {
         console.log("Sending OTP to:", phoneNumber);
         
+        // Send OTP without creating a new session
         const { data, error } = await supabase.auth.signInWithOtp({
             phone: phoneNumber,
+            options: {
+                shouldCreateUser: false  // Don't create new user
+            }
         });
         
         console.log("Response:", { data, error });
 
         if (error) {
             console.error("Error:", error);
-            alert("Error: " + error.message);
+            
+            // For testing: Show test number info
+            if (error.message.includes("not authorized") || error.status === 400) {
+                alert("⚠️ For testing, use:\nPhone: 19810555692\nOTP: 123456\n\n(Or configure Messagebird for real numbers)");
+            } else {
+                alert("Error: " + error.message);
+            }
+            
             btn.innerText = "Send Verification Code";
             btn.disabled = false;
             return;
@@ -541,6 +549,7 @@
         console.log("✅ OTP sent");
         alert("Verification code sent to " + phoneNumber);
         
+        // Store phone for verification step
         window.pendingPhone = phoneNumber;
         
         document.getElementById('step-phone-input').classList.add('hidden');
@@ -568,37 +577,34 @@ window.handleVerifyOtp = async function() {
     btn.disabled = true;
 
     try {
-        console.log("Verifying OTP...");
+        console.log("Verifying OTP for:", window.pendingPhone);
         
-        // Verify the OTP (this will create a phone session)
+        // Verify the OTP
         const { data, error } = await supabase.auth.verifyOtp({
             phone: window.pendingPhone,
             token: token,
             type: 'sms'
         });
 
+        console.log("Verify response:", { data, error });
+
         if (error) {
-            console.error("Verification failed:", error);
-            alert("Invalid or expired code.");
+              console.error("Verification failed:", error);
+            alert("Invalid code. Please try again.");
             btn.innerText = "Verify & Complete Order";
             btn.disabled = false;
             return;
         }
 
-        console.log("✅ OTP verified! Restoring email session...");
+        console.log("✅ Phone verified!");
         
-        // IMMEDIATELY restore the email session
-        if (window.savedEmailSession) {
-            await supabase.auth.setSession({
-                access_token: window.savedEmailSession.access_token,
-                refresh_token: window.savedEmailSession.refresh_token
-            });
-        }
-        
+        // Phone is verified, proceed with order
         closePhonePopup();
         
         if (state.isCheckoutFlow && typeof finalizeOrder === 'function') {
             await finalizeOrder(window.pendingPhone);
+        } else {
+            alert("Phone verified: " + window.pendingPhone);
         }
 
     } catch (err) {
