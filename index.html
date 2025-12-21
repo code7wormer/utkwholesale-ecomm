@@ -805,44 +805,60 @@
       if (error) console.error("Admin fetch error:", error);
     }
     
-    async function handleAddProduct(e) {
+   async function handleAddProduct(e) {
       e.preventDefault();
-      // 🛡️ Fix: Ensure we get the form element even if triggered by a button
+      
+      // 🛡️ Fix: Ensure we get the form element
       const form = e.target.tagName === 'FORM' ? e.target : e.target.closest('form');
       if (!form) return console.error("Form not found");
+
       if (!state.isAdmin) {
-          alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
+          // Use showToast instead of alert for better UI
+          showToast("Access Denied: Admin only.");
           return;
       }
-      const isDeal = form.is_deal.checked;
-      const rawName = form.name.value || 'product';
+
+      // Use FormData for cleaner data extraction
+      const formData = new FormData(form);
+      const isDeal = formData.get('is_deal') === 'on'; // Checkbox handling
+      
+      // Clean Slug Generation (Do it once!)
+      const rawName = formData.get('name') || 'product';
       const slugBase = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '');
-      const uniqueSlug = `${slugBase}-${Math.floor(Math.random() * 10000)}`; 
+      const uniqueSlug = `${slugBase}-${Math.floor(Math.random() * 10000)}`;
+
       const newProduct = {
-        name: form.name.value,
-        description: form.description.value,
-        detailed_description: form.detailed_description.value || null,
-        price: parseFloat(form.price.value),
-        image_url: form.image_url.value,
-        category_id: form.category_id.value,
-        slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000), 
-        stock_status: form.stock_status.value,
-        is_active: form.is_active.checked,
+        name: rawName,
+        price: parseFloat(formData.get('price')),
+        description: formData.get('description'),
+        detailed_description: formData.get('detailed_description') || null,
+        category_id: parseInt(formData.get('category_id')),
+        image_url: formData.get('image_url'), // 👈 Correct: Text URL
+        slug: uniqueSlug, // 👈 Correct: Use the clean slug we made above
+        stock_status: formData.get('stock_status'),
+        is_active: formData.get('is_active') === 'on',
         is_deal: isDeal,
-        deal_price: isDeal && form.deal_price.value ? parseFloat(form.deal_price.value) : null,
-        is_bestseller: form.is_bestseller.checked
+        deal_price: isDeal ? parseFloat(formData.get('deal_price')) : null,
+        is_bestseller: formData.get('is_bestseller') === 'on'
       };
 
-      const { error } = await supabase.from('products').insert([newProduct]);
-      if (error) {
-        console.error("Supabase Error:", error);
-        alert("Error adding product: " + error.message + "\nDetails: " + (error.details || 'Check console'));
-      } else {
-        alert("Product added successfully!");
+      try {
+        const { error } = await supabase.from('products').insert([newProduct]);
+        
+        if (error) throw error;
+        
+        // Success!
+        showToast("Product added successfully!");
         form.reset();
         document.getElementById('add-deal-price-container').classList.add('hidden');
+        
+        // Refresh Lists
         await fetchAdminProducts();
         await fetchInitialProducts();
+        
+      } catch (error) {
+        console.error("Supabase Error:", error);
+        showToast("Error adding product: " + error.message);
       }
     }
 
@@ -1464,29 +1480,51 @@
                 <h2 class="text-2xl font-bold mb-6 flex items-center gap-2" style="color: var(--color-secondary);">
                     <span style="color: var(--color-primary);">${Icon.Plus()}</span> Add New Product
                 </h2>
-                <form onsubmit="handleAddProduct(event)" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <form onsubmit="handleAddProduct(event)" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Name</label>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Product Name</label>
                             <input type="text" name="name" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Price</label>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Price ($)</label>
                             <input type="number" name="price" required step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
                         </div>
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Image URL</label>
-                        <input type="url" name="image_url" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Image URL</label>
+                        <div class="flex gap-4 items-start">
+                            <div class="flex-grow">
+                                <input 
+                                    type="url" 
+                                    name="image_url" 
+                                    required 
+                                    placeholder="https://res.cloudinary.com/..." 
+                                    class="w-full px-4 py-2 border rounded-lg input-focus-primary"
+                                    oninput="document.getElementById('add-img-preview').src = this.value"
+                                >
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Upload image to <a href="https://cloudinary.com" target="_blank" class="text-blue-600 hover:underline font-bold">Cloudinary</a>, copy the URL, and paste it here.
+                                </p>
+                            </div>
+                            <div class="w-16 h-16 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+                                <img id="add-img-preview" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNjY2MiIHN0cm9rZS13aWR0aD0iMiI+PHJlY3QgeD0iMyIgeT0iMyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48Y2lyY2xlIGN4PSI4LjUiIGN5PSI4LjUiIHI9IjEuNSI+PC9jaXJjbGU+PHBvbHlsaW5lIHBvaW50cz0iMjEgMTUgMTYgMTAgNSAyMSI+PC9wb2x5bGluZT48L3N2Zz4=" class="w-full h-full object-cover">
+                            </div>
+                        </div>
                     </div>
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Short Description</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Short Description</label>
                         <input type="text" name="description" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
                     </div>
+                    
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Detailed Description (Optional)</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Detailed Description</label>
                         <textarea name="detailed_description" rows="3" class="w-full px-4 py-2 border rounded-lg input-focus-primary"></textarea>
                     </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
                         <div class="flex items-center justify-between">
                             <span class="text-sm font-medium text-gray-900">Monthly Deal</span>
@@ -1495,15 +1533,13 @@
                                 <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
                             </label>
                         </div>
-
-                         <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between">
                             <span class="text-sm font-medium text-gray-900">Bestseller</span>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" name="is_bestseller" class="sr-only peer toggle-checkbox">
                                 <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
                             </label>
                         </div>
-                        
                         <div id="add-deal-price-container" class="hidden md:col-span-2 mt-2">
                              <label class="block text-sm font-medium text-gray-700">Deal Price</label>
                              <input type="number" name="deal_price" step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
@@ -1512,23 +1548,24 @@
 
                     <div class="grid grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Category</label>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Category</label>
                             <select name="category_id" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
                                 ${categoriesHtml}
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Stock Status</label>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Stock Status</label>
                             <select name="stock_status" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
                                 <option value="in_stock">In Stock</option>
                                 <option value="out_of_stock">Out of Stock</option>
                             </select>
                         </div>
-                        <div class="flex items-end pb-1">
-                            <input type="checkbox" name="is_active" checked id="is_active" class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                        <div class="flex items-end pb-3">
+                            <input type="checkbox" name="is_active" checked id="is_active" class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
                             <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700">Is Active</label>
                         </div>
                     </div>
+
                     <button type="submit" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-md hover:shadow-lg" style="background-color: var(--color-primary);">
                         Add Product
                     </button>
@@ -1536,23 +1573,43 @@
             </div>
 
             <h2 class="text-2xl font-bold mb-4" style="color: var(--color-primary);">All Products (${state.adminProducts.length})</h2>
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-                <table class="w-full text-sm text-left text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3">ID</th>
-                            <th scope="col" class="px-6 py-3">Name</th>
-                            <th scope="col" class="px-6 py-3">Price</th>
-                            <th scope="col" class="px-6 py-3">Stock</th>
-                            <th scope="col" class="px-6 py-3">Status</th>
-                            <th scope="col" class="px-6 py-3">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${state.adminProducts.map(product => AdminProductRow(product)).join('')}
-                    </tbody>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                  <thead class="bg-gray-50 text-gray-600 uppercase text-xs font-bold tracking-wider">
+                    <tr>
+                      <th class="p-4 border-b">Product</th>
+                      <th class="p-4 border-b">Price</th>
+                      <th class="p-4 border-b">Stock</th>
+                      <th class="p-4 border-b text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    ${state.adminProducts.map(p => `
+                      <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="p-4 font-medium text-gray-800 flex items-center gap-3">
+                           <img src="${p.image_url}" class="w-10 h-10 rounded object-cover border" onerror="this.src='https://placehold.co/40'">
+                           ${p.name}
+                        </td>
+                        <td class="p-4 text-green-600 font-bold">$${p.price}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded text-xs font-bold ${
+                                p.stock_status === 'in_stock' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }">${p.stock_status.replace('_', ' ').toUpperCase()}</span>
+                        </td>
+                        <td class="p-4 text-right flex justify-end gap-2">
+                          <button onclick="handleEditClick(${p.id})" class="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors">
+                            ${Icon.Edit()}
+                          </button>
+                          <button onclick="handleDeleteProduct(${p.id})" class="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors">
+                            ${Icon.Trash()}
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
                 </table>
             </div>
+
             ${EditProductModal(categoriesHtml)}
           </div>
         `;
@@ -1560,84 +1617,94 @@
 
     function EditProductModal(categoriesHtml) {
         return `
-            <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                <div class="bg-white rounded-xl shadow-2xl max-w-xl w-full p-6 relative">
-                    <h3 class="text-2xl font-bold mb-4" style="color: var(--color-primary);">Edit Product</h3>
-                    <button onclick="closeEditModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">${Icon.X()}</button>
-                    
+        <div id="edit-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden flex items-center justify-center backdrop-blur-sm transition-opacity duration-300">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4 transform transition-all scale-95 opacity-0" id="edit-modal-content">
+                <div class="p-6 border-b flex justify-between items-center bg-gray-50">
+                    <h3 class="text-xl font-bold text-gray-800">Edit Product</h3>
+                    <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors">${Icon.X()}</button>
+                </div>
+                <div class="p-6">
                     <form onsubmit="handleUpdateProduct(event)" class="space-y-4">
-                        <input type="hidden" name="id" id="edit-id">
+                        <input type="hidden" id="edit-id" name="id">
+                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Name</label>
-                                <input type="text" name="name" id="edit-name" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                <label class="block text-sm font-bold text-gray-700">Name</label>
+                                <input type="text" id="edit-name" name="name" class="w-full p-2 border rounded focus:border-indigo-500 outline-none">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Price</label>
-                                <input type="number" name="price" id="edit-price" required step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Image URL</label>
-                            <input type="url" name="image_url" id="edit-image_url" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Short Description</label>
-                            <input type="text" name="description" id="edit-description" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Detailed Description (Optional)</label>
-                            <textarea name="detailed_description" id="edit-detailed_description" rows="3" class="w-full px-4 py-2 border rounded-lg input-focus-primary"></textarea>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm font-medium text-gray-900">Monthly Deal</span>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" name="is_deal" id="edit-is_deal" onchange="toggleDealInput(this, 'edit-deal-price-container')" class="sr-only peer toggle-checkbox">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
-                                </label>
-                            </div>
-
-                             <div class="flex items-center justify-between">
-                                <span class="text-sm font-medium text-gray-900">Bestseller</span>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" name="is_bestseller" id="edit-is_bestseller" class="sr-only peer toggle-checkbox">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 toggle-label"></div>
-                                </label>
-                            </div>
-                            
-                            <div id="edit-deal-price-container" class="hidden md:col-span-2 mt-2">
-                                 <label class="block text-sm font-medium text-gray-700">Deal Price</label>
-                                 <input type="number" name="deal_price" id="edit-deal_price" step="0.01" class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                <label class="block text-sm font-bold text-gray-700">Price</label>
+                                <input type="number" id="edit-price" name="price" step="0.01" class="w-full p-2 border rounded focus:border-indigo-500 outline-none">
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">Image URL</label>
+                            <div class="flex gap-4 items-start">
+                                <input 
+                                    type="url" 
+                                    id="edit-image_url" 
+                                    name="image_url" 
+                                    class="w-full p-2 border rounded focus:border-indigo-500 outline-none flex-grow"
+                                    oninput="document.getElementById('edit-img-preview-box').src = this.value"
+                                >
+                                <img id="edit-img-preview-box" src="" class="w-10 h-10 rounded border object-cover bg-gray-100" onerror="this.src='https://placehold.co/40'">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Category</label>
-                                <select name="category_id" id="edit-category_id" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                <label class="block text-sm font-bold text-gray-700">Category</label>
+                                <select id="edit-category_id" name="category_id" class="w-full p-2 border rounded bg-white">
                                     ${categoriesHtml}
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Stock Status</label>
-                                <select name="stock_status" id="edit-stock_status" required class="w-full px-4 py-2 border rounded-lg input-focus-primary">
+                                <label class="block text-sm font-bold text-gray-700">Stock Status</label>
+                                <select id="edit-stock_status" name="stock_status" class="w-full p-2 border rounded bg-white">
                                     <option value="in_stock">In Stock</option>
+                                    <option value="low_stock">Low Stock</option>
                                     <option value="out_of_stock">Out of Stock</option>
                                 </select>
                             </div>
-                            <div class="flex items-end pb-1">
-                                <input type="checkbox" name="is_active" id="edit-is_active" class="h-4 w-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
-                                <label for="edit-is_active" class="ml-2 block text-sm font-medium text-gray-700">Is Active</label>
-                            </div>
                         </div>
-                        <button type="submit" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-md hover:shadow-lg" style="background-color: var(--color-secondary);">
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">Short Description</label>
+                            <textarea id="edit-description" name="description" rows="2" class="w-full p-2 border rounded outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">Detailed Description</label>
+                            <textarea id="edit-detailed_description" name="detailed_description" rows="3" class="w-full p-2 border rounded outline-none"></textarea>
+                        </div>
+
+                        <div class="flex flex-wrap gap-4 p-4 bg-gray-50 rounded">
+                             <label class="flex items-center gap-2">
+                                <input type="checkbox" id="edit-is_active" name="is_active" class="w-4 h-4">
+                                <span>Active</span>
+                             </label>
+                             <label class="flex items-center gap-2">
+                                <input type="checkbox" id="edit-is_bestseller" name="is_bestseller" class="w-4 h-4">
+                                <span>Bestseller</span>
+                             </label>
+                             <div class="flex items-center gap-2">
+                                <label class="flex items-center gap-2">
+                                    <input type="checkbox" id="edit-is_deal" name="is_deal" onchange="toggleDealInput(this, 'edit-deal-price-container')" class="w-4 h-4">
+                                    <span>Is Deal?</span>
+                                </label>
+                                <div id="edit-deal-price-container" class="hidden">
+                                    <input type="number" id="edit-deal_price" name="deal_price" step="0.01" class="p-1 border rounded w-24">
+                                </div>
+                             </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg shadow-lg transition-all">
                             Save Changes
                         </button>
                     </form>
                 </div>
             </div>
+        </div>
         `;
     }
 
