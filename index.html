@@ -841,62 +841,67 @@ async function ensureValidSession() {
     }
     
     async function handleAddProduct(e) {
-      e.preventDefault();
-      const session = await ensureValidSession();
-      if (!session) {
-        alert("Session expired. Please log in again.");
-        navigate('auth');
-        return;
-      }
+  e.preventDefault();
   console.log("=== handleAddProduct START ===");
   
-  
-  const { data: sessionData } = await supabase.auth.getSession();
-  console.log("🔑 Session exists:", !!sessionData.session);
-  console.log("🔑 User email:", sessionData.session?.user?.email);
-  console.log("🔑 Access token:", sessionData.session?.access_token?.substring(0, 50) + "...");
-  if (!state.isAdmin) {
+  try {
+    // Check session first
+    const session = await ensureValidSession();
+    console.log("Session check complete:", !!session);
+    
+    if (!session) {
+      alert("Session expired. Please log in again.");
+      navigate('auth');
+      return;
+    }
+    
+    const { data: sessionData } = await supabase.auth.getSession();
+    console.log("🔑 Session exists:", !!sessionData.session);
+    console.log("🔑 User email:", sessionData.session?.user?.email);
+    
+    if (!state.isAdmin) {
       console.log("Admin check failed. isAdmin:", state.isAdmin);
       alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
       return;
-  }
-  
-  console.log("Admin check passed. User:", state.user?.email);
-  
-  const form = e.target;
-  console.log("Form element:", form);
-  
-  const isDeal = form.is_deal.checked;
-  
-  const newProduct = {
-    name: form.name.value,
-    description: form.description.value,
-    detailed_description: form.detailed_description.value || null,
-    price: parseFloat(form.price.value),
-    image_url: form.image_url.value,
-    category_id: form.category_id.value,
-    slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000), 
-    stock_status: form.stock_status.value,
-    is_active: form.is_active.checked,
-    is_deal: isDeal,
-    deal_price: isDeal && form.deal_price.value ? parseFloat(form.deal_price.value) : null,
-    is_bestseller: form.is_bestseller.checked
-  };
-
-  console.log("Product object created:", JSON.stringify(newProduct, null, 2));
-  console.log("About to call Supabase insert...");
-  console.log("Supabase client:", supabase);
-
-  try {
-    // Add timeout wrapper
-    const insertPromise = supabase.from('products').insert([newProduct]);
-    console.log("Insert promise created:", insertPromise);
+    }
     
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Timeout after 10 seconds')), 10000)
-    );
+    console.log("Admin check passed. User:", state.user?.email);
     
-    const { data, error } = await Promise.race([insertPromise, timeoutPromise]);
+    const form = e.target;
+    console.log("Form element:", form);
+    
+    // Get the submit button and disable it
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<div class="loader mx-auto"></div>';
+    }
+    
+    const isDeal = form.is_deal.checked;
+    
+    const newProduct = {
+      name: form.name.value,
+      description: form.description.value,
+      detailed_description: form.detailed_description.value || null,
+      price: parseFloat(form.price.value),
+      image_url: form.image_url.value,
+      category_id: form.category_id.value,
+      slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000), 
+      stock_status: form.stock_status.value,
+      is_active: form.is_active.checked,
+      is_deal: isDeal,
+      deal_price: isDeal && form.deal_price.value ? parseFloat(form.deal_price.value) : null,
+      is_bestseller: form.is_bestseller.checked
+    };
+
+    console.log("Product object created:", JSON.stringify(newProduct, null, 2));
+    console.log("About to call Supabase insert...");
+
+    // Direct Supabase insert
+    const { data, error } = await supabase
+      .from('products')
+      .insert([newProduct])
+      .select();
     
     console.log("Supabase response - data:", data);
     console.log("Supabase response - error:", error);
@@ -906,7 +911,7 @@ async function ensureValidSession() {
       alert("Error adding product: " + error.message + "\nDetails: " + (error.details || JSON.stringify(error)));
     } else {
       console.log("Product added successfully!");
-      alert("Product added successfully!");
+      showToast("Product added successfully!");
       form.reset();
       document.getElementById('add-deal-price-container').classList.add('hidden');
       
@@ -915,9 +920,26 @@ async function ensureValidSession() {
       await fetchInitialProducts();
       console.log("Product lists refreshed");
     }
+    
+    // Re-enable the button
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.innerHTML = 'Add Product';
+    }
+    
   } catch (err) {
-    console.error("Caught exception:", err);
-    alert("Error: " + err.message + "\n\nThis might be a Supabase configuration issue. Check your RLS policies.");
+    console.error("=== CAUGHT EXCEPTION ===");
+    console.error("Error name:", err.name);
+    console.error("Error message:", err.message);
+    console.error("Error stack:", err.stack);
+    alert("Error: " + err.message);
+    
+    // Re-enable button on error
+    const submitButton = document.querySelector('button[type="submit"][form="add-product-form"]');
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.innerHTML = 'Add Product';
+    }
   }
   
   console.log("=== handleAddProduct END ===");
