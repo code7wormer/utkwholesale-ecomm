@@ -256,46 +256,7 @@
   </div>
 
   <div id="app" class="min-h-screen flex flex-col font-sans"></div>
-  <div id="phone-popup" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[150] hidden backdrop-blur-sm">
-  <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full relative border border-gray-100 animate-slideUp">
-    
-    <button onclick="closePhonePopup()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors">
-      <i class="fa-solid fa-x"></i>}
-    </button>
-    
-    <div class="text-center mb-6">
-      <div class="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">📱</div>
-      <h2 class="text-2xl font-extrabold text-gray-800">Verify Phone Number</h2>
-      <p class="text-sm text-gray-500 mt-2">We need a verified number to process your order.</p>
-    </div>
 
-    <div id="step-phone-input">
-      <label class="block text-sm font-bold text-gray-700 mb-2 text-left">Phone Number</label>
-      <div class="relative">
-        <input type="tel" id="user-phone" placeholder="+1559XXXXXX" class="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-lg transition-all">
-      </div>
-      <!-- <p class="text-xs text-gray-400 mt-2 text-left">Include country code (e.g. +1 for USA)</p> -->
-      
-      <button onclick="handleSendOtp()" id="btn-send-otp" class="mt-6 w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl btn-animate">
-        Send Verification Code
-      </button>
-    </div>
-
-    <div id="step-otp-input" class="hidden">
-      <label class="block text-sm font-bold text-gray-700 mb-2 text-left">Enter 6-Digit Code</label>
-      <input type="text" id="user-otp" placeholder="000000" maxlength="6" class="w-full py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-center tracking-[0.5em] text-2xl font-mono mb-4 transition-all">
-      
-      <button onclick="handleVerifyOtp()" id="btn-verify-otp" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-all shadow-lg hover:shadow-xl btn-animate">
-        Verify & Complete Order
-      </button>
-      
-      <button onclick="resetPhoneFlow()" class="w-full text-gray-500 text-sm mt-4 hover:underline">
-        Entered wrong number?
-      </button>
-    </div>
-
-  </div>
-</div>
   <script type="module">
     // --- Configuration ---
     const SUPABASE_URL = 'https://thzmryhnyzhfewsyamjh.supabase.co';
@@ -472,209 +433,6 @@
     }
     window.handleCartClick = handleCartClick;
 
-
-
-    // --- 📱 PHONE AUTH & CHECKOUT LOGIC ---
-
-    // 1. Triggered when user clicks "Checkout" in Cart
-    window.handleCheckout = async function() {
-        if (!state.user) {
-            alert("Please log in to checkout.");
-            state.authMode = 'signin';
-            navigate('auth');
-            return;
-        }
-        if (state.cart.length === 0) {
-            alert("Your cart is empty!");
-            return;
-        }
-
-        // Open the Popup instead of sending email immediately
-        state.isCheckoutFlow = true; 
-        openPhonePopup();
-    };
-
-    // 2. Triggered by the "Send Code" button in popup
-   window.handleSendOtp = async function() {
-    const phoneInput = document.getElementById('user-phone');
-    const btn = document.getElementById('btn-send-otp');
-    let phoneNumber = phoneInput.value.trim();
-
-    // Add + if missing
-    if (!phoneNumber.startsWith('+')) {
-        phoneNumber = '+' + phoneNumber;
-    }
-
-    if (phoneNumber.length < 6) {
-        alert("Please enter a valid phone number.");
-        return;
-    }
-    
-    if (!state.user) {
-        alert("Session lost. Please log in again.");
-        return;
-    }
-
-    btn.innerText = "Sending...";
-    btn.disabled = true;
-
-    try {
-        console.log("Sending OTP to:", phoneNumber);
-        
-        // Send OTP without creating a new session
-        const { data, error } = await supabase.auth.signInWithOtp({
-            phone: phoneNumber,
-            options: {
-                shouldCreateUser: false  // Don't create new user
-            }
-        });
-        
-        console.log("Response:", { data, error });
-
-        if (error) {
-            console.error("Error:", error);
-            
-            // For testing: Show test number info
-            if (error.message.includes("not authorized") || error.status === 400) {
-                alert("⚠️ For testing, use:\nPhone: 19810555692\nOTP: 123456\n\n(Or configure Messagebird for real numbers)");
-            } else {
-                alert("Error: " + error.message);
-            }
-            
-            btn.innerText = "Send Verification Code";
-            btn.disabled = false;
-            return;
-        }
-
-        console.log("✅ OTP sent");
-        alert("Verification code sent to " + phoneNumber);
-        
-        // Store phone for verification step
-        window.pendingPhone = phoneNumber;
-        
-        document.getElementById('step-phone-input').classList.add('hidden');
-        document.getElementById('step-otp-input').classList.remove('hidden');
-
-    } catch (err) {
-        console.error("Crash:", err);
-        alert("Error: " + err.message);
-        btn.innerText = "Send Verification Code";
-        btn.disabled = false;
-    }
-};
-
-window.handleVerifyOtp = async function() {
-    const otpInput = document.getElementById('user-otp');
-    const btn = document.getElementById('btn-verify-otp');
-    const token = otpInput.value.trim();
-
-    if (token.length !== 6) {
-        alert("Please enter the 6-digit code.");
-        return;
-    }
-
-    btn.innerText = "Verifying...";
-    btn.disabled = true;
-
-    try {
-        console.log("Verifying OTP for:", window.pendingPhone);
-        
-        // Verify the OTP
-        const { data, error } = await supabase.auth.verifyOtp({
-            phone: window.pendingPhone,
-            token: token,
-            type: 'sms'
-        });
-
-        console.log("Verify response:", { data, error });
-
-        if (error) {
-              console.error("Verification failed:", error);
-            alert("Invalid code. Please try again.");
-            btn.innerText = "Verify & Complete Order";
-            btn.disabled = false;
-            return;
-        }
-
-        console.log("✅ Phone verified!");
-        
-        // Phone is verified, proceed with order
-        closePhonePopup();
-        
-        if (state.isCheckoutFlow && typeof finalizeOrder === 'function') {
-            await finalizeOrder(window.pendingPhone);
-        } else {
-            alert("Phone verified: " + window.pendingPhone);
-        }
-
-    } catch (err) {
-        console.error("Crash:", err);
-        alert("Error: " + err.message);
-        btn.innerText = "Verify & Complete Order";
-        btn.disabled = false;
-    }
-};
-    // 4. The ACTUAL Order Processing (Sends Email + Clears Cart)
-    async function finalizeOrder(verifiedPhone) {
-    showToast("Processing Order...");
-    
-    try {
-        // Calculate Totals
-        const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        
-        // Prepare Email Content
-        const orderDetails = state.cart
-            .map(item => `${item.name} (x${item.quantity}) - $${(item.price * item.quantity).toFixed(2)}`)
-            .join('\n');
-
-        const templateParams = {
-            to_name: "Admin",
-            from_name: state.user.email,  // ✅ ADD THIS
-            message: orderDetails, 
-            customer_email: state.user.email,  // ✅ ADD THIS
-            message: orderDetails,
-            total_amount: `$${total.toFixed(2)}`,
-            contact_phone: verifiedPhone  // ✅ This is already there
-        };
-
-        // Send Email
-        await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
-
-        // Clear Cart
-        if (state.user) {
-            await supabase.from('cart_items').delete().eq('user_id', state.user.id);
-        }
-        state.cart = [];
-        
-        // Success Message
-        alert(`Order Placed Successfully!\nWe will contact you at: ${verifiedPhone}`);
-        navigate('home');
-
-    } catch (error) {
-        console.error('Order Error:', error);
-        alert("Failed to place order. Please try again.");
-    } finally {
-        state.isCheckoutFlow = false;
-    }
-}
-
-    // --- Popup Helpers ---
-    window.openPhonePopup = () => document.getElementById('phone-popup').classList.remove('hidden');
-    
-    window.closePhonePopup = () => {
-        document.getElementById('phone-popup').classList.add('hidden');
-        resetPhoneFlow();
-    };
-
-    window.resetPhoneFlow = () => {
-        document.getElementById('step-phone-input').classList.remove('hidden');
-        document.getElementById('step-otp-input').classList.add('hidden');
-        document.getElementById('btn-send-otp').innerText = "Send Verification Code";
-        document.getElementById('btn-send-otp').disabled = false;
-        document.getElementById('btn-verify-otp').innerText = "Verify & Complete Order";
-        document.getElementById('btn-verify-otp').disabled = false;
-        document.getElementById('user-otp').value = "";
-    };
     // --- Router with Transitions ---
     async function navigate(page, slug = null) {
       if (page === 'category' && slug) {
@@ -1973,64 +1731,64 @@ window.handleVerifyOtp = async function() {
       `;
     }
     // 🌟 CHECKOUT HANDLER
-    // async function handleCheckout() {
-    //     if (state.cart.length === 0) {
-    //         showToast("Your cart is empty!");
-    //         return;
-    //     }
-    //     if (!state.user) {
-    //         showToast("Please login to checkout.");
-    //         navigate('auth');
-    //         return;
-    //     }
+    async function handleCheckout() {
+        if (state.cart.length === 0) {
+            showToast("Your cart is empty!");
+            return;
+        }
+        if (!state.user) {
+            showToast("Please login to checkout.");
+            navigate('auth');
+            return;
+        }
 
-    //     const btn = document.getElementById('checkout-btn');
-    //     const originalText = btn.innerHTML;
-    //     btn.innerHTML = '<div class="loader" style="width: 20px; height: 20px; border-top-color: white; display: inline-block;"></div> Processing...';
-    //     btn.disabled = true;
+        const btn = document.getElementById('checkout-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<div class="loader" style="width: 20px; height: 20px; border-top-color: white; display: inline-block;"></div> Processing...';
+        btn.disabled = true;
 
-    //     try {
-    //         const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        try {
+            const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             
-    //         // Format order details
-    //         const orderDetails = state.cart.map(item => 
-    //             `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
-    //         ).join('\n');
+            // Format order details
+            const orderDetails = state.cart.map(item => 
+                `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
+            ).join('\n');
 
-    //         const templateParams = {
-    //             // Customer Details (For the email body)
-    //             customer_name: state.user.email.split('@')[0],
-    //             customer_email: state.user.email,
+            const templateParams = {
+                // Customer Details (For the email body)
+                customer_name: state.user.email.split('@')[0],
+                customer_email: state.user.email,
                 
-    //             // 🌟 CRITICAL: This makes the "Reply" button in your inbox email the Customer
-    //             reply_to: state.user.email,
+                // 🌟 CRITICAL: This makes the "Reply" button in your inbox email the Customer
+                reply_to: state.user.email,
 
-    //             // The Order Data
-    //             message: orderDetails,
-    //             total_amount: `$${total.toFixed(2)}`
-    //         };
+                // The Order Data
+                message: orderDetails,
+                total_amount: `$${total.toFixed(2)}`
+            };
 
-    //         // Send Email (Ensure you used your REAL Public Key in emailjs.init previously)
-    //         await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
+            // Send Email (Ensure you used your REAL Public Key in emailjs.init previously)
+            await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
 
-    //         // Clear Cart
-    //         if (state.user) {
-    //             await supabase.from('cart_items').delete().eq('user_id', state.user.id);
-    //         }
+            // Clear Cart
+            if (state.user) {
+                await supabase.from('cart_items').delete().eq('user_id', state.user.id);
+            }
             
-    //         state.cart = [];
-    //         showToast("Order placed successfully!, We will reach out to you soon!");
-    //         navigate('home');
+            state.cart = [];
+            showToast("Order placed successfully!, We will reach out to you soon!");
+            navigate('home');
 
-    //     } catch (error) {
-    //         console.error('Checkout Error:', error);
-    //         showToast("Checkout failed. Please try again.");
-    //         alert("Error sending email: " + JSON.stringify(error));
-    //         btn.innerHTML = originalText;
-    //         btn.disabled = false;
-    //     }
-    // }
-    // window.handleCheckout = handleCheckout;
+        } catch (error) {
+            console.error('Checkout Error:', error);
+            showToast("Checkout failed. Please try again.");
+            alert("Error sending email: " + JSON.stringify(error));
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+    window.handleCheckout = handleCheckout;
     function render() {
       let content = '';
       switch(state.currentPage) {
