@@ -973,15 +973,13 @@
         const totalItems = state.cart.reduce((acc, item) => acc + item.quantity, 0);
         const isHidden = totalItems === 0 ? 'hidden' : '';
         
-        // Safety: Ensure CATEGORY_THEMES exists to prevent crashes if not defined elsewhere
-        const themes = window.CATEGORY_THEMES || { 'default': { icon: '📦' } };
-
+        function Header() {
         return `
           <header class="bg-white shadow-md sticky top-0 z-40 border-b border-gray-100">
             <div class="w-full px-6 py-3 flex items-center justify-between">
               <div class="flex items-center gap-4">
                 
-                <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 btn-animate">
+                <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 btn-animate">
                   ${Icon.Menu()}
                 </button>
                 
@@ -998,17 +996,16 @@
                       <div class="py-2 max-h-[70vh] overflow-y-auto">
                           ${state.categories.length === 0 ? '<div class="p-4 text-center text-gray-500">Loading categories...</div>' : ''}
                           ${state.categories.map(cat => {
-                              // Use the safety 'themes' object
-                              const theme = themes[cat.slug] || themes['default'] || { icon: '📦' };
+                              const theme = CATEGORY_THEMES[cat.slug] || CATEGORY_THEMES['default'];
                               return `
                                   <a href="#" onclick="navigate('category', '${cat.slug}'); return false;" class="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group/item border-b border-gray-50 last:border-0">
-                                      <span class="text-2xl group-hover/item:scale-125 transition-transform duration-300 w-8 text-center">${theme.icon}</span>
+                                      <span class="text-2xl group-hover/item:scale-125 transition-transform duration-300 w-8 text-center">${theme.icon || '📦'}</span>
                                       <div class="flex flex-col">
                                           <span class="text-base font-bold text-gray-800">${cat.name}</span>
                                           <span class="text-xs text-gray-400">View products</span>
                                       </div>
                                   </a>
-                              `;
+                              `
                           }).join('')}
                       </div>
                   </div>
@@ -1039,10 +1036,11 @@
 
                 <button id="cart-icon-container" onclick="handleCartClick(); return false;" class="relative p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 btn-animate">
                   ${Icon.Cart()}
-                  
-                  <span id="cart-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white ${isHidden}">
-                    ${totalItems}
-                  </span>
+                  ${state.cart.length > 0 ? `
+                    <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white">
+                      ${state.cart.reduce((acc, item) => acc + item.quantity, 0)}
+                    </span>
+                  ` : ''}
                 </button>
               </div>
             </div>
