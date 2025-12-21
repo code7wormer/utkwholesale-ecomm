@@ -710,13 +710,17 @@
     
     async function handleAddProduct(e) {
       e.preventDefault();
+      // 🛡️ Fix: Ensure we get the form element even if triggered by a button
+      const form = e.target.tagName === 'FORM' ? e.target : e.target.closest('form');
+      if (!form) return console.error("Form not found");
       if (!state.isAdmin) {
           alert("You are not logged in as Admin. Check your email: " + ADMIN_EMAIL);
           return;
       }
-      const form = e.target;
       const isDeal = form.is_deal.checked;
-      
+      const rawName = form.name.value || 'product';
+      const slugBase = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '');
+      const uniqueSlug = `${slugBase}-${Math.floor(Math.random() * 10000)}`; 
       const newProduct = {
         name: form.name.value,
         description: form.description.value,
@@ -794,13 +798,15 @@
 
     async function handleUpdateProduct(e) {
         e.preventDefault();
-        
+
+        // 🛡️ Fix: Ensure we get the form element
+        const form = e.target.tagName === 'FORM' ? e.target : e.target.closest('form');
+        if (!form) return console.error("Edit Form not found");
+      
         if (!state.isAdmin) {
             alert("⛔ ACCESS DENIED: The system does not recognize you as the admin.");
             return;
         }
-
-        const form = e.target;
         const id = form.id.value;
         const isDeal = form.is_deal.checked;
 
