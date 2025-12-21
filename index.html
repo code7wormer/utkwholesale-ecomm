@@ -1014,12 +1014,11 @@
               `}
 
               <button id="cart-icon-container" onclick="handleCartClick(); return false;" class="relative p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 btn-animate">
-                ${Icon.Cart()}
-                ${state.cart.length > 0 ? `
-                  <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white">
-                    ${state.cart.reduce((acc, item) => acc + item.quantity, 0)}
-                  </span>
-                ` : ''}
+                 ${Icon.Cart()}
+                 
+                 <span id="cart-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center border-2 border-white ${isHidden}">
+                    ${totalItems}
+                 </span>
               </button>
             </div>
           </div>
