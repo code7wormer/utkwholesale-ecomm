@@ -492,7 +492,7 @@
         // Open the Popup instead of sending email immediately
         state.isCheckoutFlow = true; 
         openPhonePopup();
-    };s
+    };
 
     // 2. Triggered by the "Send Code" button in popup
    window.handleSendOtp = async function() {
@@ -589,7 +589,7 @@ window.handleVerifyOtp = async function() {
         console.log("Verify response:", { data, error });
 
         if (error) {
-            console.error("Verification failed:", error);
+              console.error("Verification failed:", error);
             alert("Invalid code. Please try again.");
             btn.innerText = "Verify & Complete Order";
             btn.disabled = false;
@@ -615,12 +615,9 @@ window.handleVerifyOtp = async function() {
     }
 };
     // 3. Triggered by "Verify" button in popup
-   window.handleVerifyOtp = async function() {
-    const phoneInput = document.getElementById('user-phone');
+  window.handleVerifyOtp = async function() {
     const otpInput = document.getElementById('user-otp');
     const btn = document.getElementById('btn-verify-otp');
-    
-    const phoneNumber = phoneInput.value.trim();
     const token = otpInput.value.trim();
 
     if (token.length !== 6) {
@@ -632,42 +629,43 @@ window.handleVerifyOtp = async function() {
     btn.disabled = true;
 
     try {
-        console.log(`Verifying phone link...`);
-
-        // ⚡ CHANGE: Use type: 'phone_change' to keep current session
+        console.log("Verifying OTP for:", window.pendingPhone);
+        
+        // Verify the OTP
         const { data, error } = await supabase.auth.verifyOtp({
-            phone: phoneNumber,
+            phone: window.pendingPhone,
             token: token,
-            type: 'phone_change' 
+            type: 'sms'
         });
 
-        if (error) throw error;
+        console.log("Verify response:", { data, error });
 
-        console.log("Phone Linked Successfully!", data);
+        if (error) {
+            console.error("Verification failed:", error);
+            alert("Invalid code. Please try again.");
+            btn.innerText = "Verify & Complete Order";
+            btn.disabled = false;
+            return;
+        }
+
+        console.log("✅ Phone verified!");
         
-        // At this point, state.user.email is STILL there (SAFE!)
-        // And state.user.phone is now updated.
-
+        // Phone is verified, proceed with order
         closePhonePopup();
         
-        if (state.isCheckoutFlow) {
-            // Now finalizeOrder works because the email session is preserved
-            if (typeof finalizeOrder === 'function') {
-                await finalizeOrder(phoneNumber);
-            }
+        if (state.isCheckoutFlow && typeof finalizeOrder === 'function') {
+            await finalizeOrder(window.pendingPhone);
         } else {
-            alert("Phone Verified & Saved to Profile!");
-            window.location.reload();
+            alert("Phone verified: " + window.pendingPhone);
         }
 
     } catch (err) {
-        console.error("Verify Error:", err);
-        alert("Verification Failed: " + err.message);
+        console.error("Crash:", err);
+        alert("Error: " + err.message);
         btn.innerText = "Verify & Complete Order";
         btn.disabled = false;
     }
 };
-
     // 4. The ACTUAL Order Processing (Sends Email + Clears Cart)
     async function finalizeOrder(verifiedPhone) {
         showToast("Processing Order...");
