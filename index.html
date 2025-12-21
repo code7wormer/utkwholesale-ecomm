@@ -741,18 +741,12 @@
         const qtyEl = document.getElementById(`qty-${id}`);
         const itemTotalEl = document.getElementById(`item-total-${id}`);
         const grandTotalEl = document.getElementById(`cart-grand-total`);
-        updateCartCount();
-        if (qtyEl && itemTotalEl && grandTotalEl) {
-            // Update the quantity number
-            qtyEl.innerText = newQuantity;
-            
-            // Update the item's total price
-            const itemTotal = item.price * newQuantity;
-            itemTotalEl.innerText = `$${itemTotal.toFixed(2)}`;
-
-            // Recalculate and update the Grand Total
-            const newGrandTotal = state.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-            grandTotalEl.innerText = `$${newGrandTotal.toFixed(2)}`;
+        
+        if (qtyEl) qtyEl.innerText = newQuantity;
+        if (itemTotalEl) itemTotalEl.innerText = `$${(item.price * newQuantity).toFixed(2)}`;
+        if (grandTotalEl) {
+             const total = state.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+             grandTotalEl.innerText = `$${total.toFixed(2)}`;
         }
 
 
