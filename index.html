@@ -1468,20 +1468,18 @@ window.checkSessionStatus = async function() {
     window.scrollSection = (id, direction) => {
     const container = document.getElementById(id);
     if (container) {
-        const scrollAmount = container.offsetWidth * 0.8;
+        const scrollAmount = container.offsetWidth * 0.75;
         const start = container.scrollLeft;
         const target = start + (direction === 'left' ? -scrollAmount : scrollAmount);
-        const duration = 500; // milliseconds
+        const duration = 600; // Slightly longer for smoother feel
         const startTime = performance.now();
         
         function animate(currentTime) {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
             
-            // Easing function (ease-in-out)
-            const easeProgress = progress < 0.5 
-                ? 2 * progress * progress 
-                : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+            // Smoother easing function (ease-out-cubic)
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
             
             container.scrollLeft = start + (target - start) * easeProgress;
             
