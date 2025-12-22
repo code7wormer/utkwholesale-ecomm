@@ -18,6 +18,37 @@
       --color-accent: #ffd700; /* Gold */
     }
 
+    /* Add after the existing :root section */
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    }
+    
+    .shine-effect {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .shine-effect::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s;
+    }
+    
+    .shine-effect:hover::before {
+      left: 100%;
+    }
+
     /* Transition for color changes */
     body, button.transition-enabled, .card {
       transition: background-color 0.5s ease, color 0.5s ease;
@@ -235,6 +266,26 @@
     }
     @keyframes fadeOutToast {
       to { opacity: 0; visibility: hidden; }
+    }
+    /* Animated Gradient Background */
+    .gradient-bg {
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+      background-size: 200% 200%;
+      animation: gradientShift 8s ease infinite;
+    }
+    
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    
+    @keyframes animate-fade-in {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-fade-in {
+      animation: animate-fade-in 1s ease-out;
     }
 
   </style>
@@ -1324,7 +1375,7 @@ async function ensureValidSession() {
       const displayPrice = isDeal ? product.deal_price : product.price;
       
       return `
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] group flex flex-col h-full">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] group flex flex-col h-full shine-effect">
           <div class="relative">
             <img src="${product.image_url}" alt="${product.name}" class="w-full h-64 object-cover transition-opacity duration-300 group-hover:opacity-90">
             ${isDeal ? '<div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">DEAL</div>' : ''}
@@ -1397,11 +1448,18 @@ async function ensureValidSession() {
       };
 
       return `
-        <div class="flex-1 pb-12">
-          <div class="py-16 text-white transition-all duration-500 mb-8" style="background-image: linear-gradient(to right, var(--color-primary), var(--color-secondary));">
-            <div class="max-w-7xl mx-auto px-6 text-center md:text-left">
-              <h1 class="text-4xl md:text-6xl font-extrabold mb-4">The Premium Collection</h1>
-              <p class="text-lg opacity-90 mb-8 max-w-xl">Discover exclusive items curated for your lifestyle.</p>
+          <div class="relative py-20 text-white transition-all duration-500 mb-8 overflow-hidden">
+            <div class="absolute inset-0 gradient-bg"></div>
+            <div class="absolute inset-0 opacity-20">
+              <div class="absolute w-96 h-96 bg-white rounded-full blur-3xl -top-48 -left-48 animate-pulse"></div>
+              <div class="absolute w-96 h-96 bg-white rounded-full blur-3xl -bottom-48 -right-48 animate-pulse" style="animation-delay: 1s"></div>
+            </div>
+            <div class="relative max-w-7xl mx-auto px-6 text-center">
+              <h1 class="text-5xl md:text-7xl font-extrabold mb-6 drop-shadow-2xl animate-fade-in">The Premium Collection</h1>
+              <p class="text-xl md:text-2xl opacity-90 mb-8 max-w-2xl mx-auto drop-shadow-lg">Discover exclusive items curated for your lifestyle.</p>
+              <button onclick="navigate('category', state.categories[0]?.slug)" class="bg-white text-gray-900 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-2xl hover:shadow-white/50">
+                Shop Now →
+              </button>
             </div>
           </div>
 
