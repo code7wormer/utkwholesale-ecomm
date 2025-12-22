@@ -922,7 +922,22 @@ async function ensureValidSession() {
       }
       if (error) console.error("Admin fetch error:", error);
     }
-    
+  // 🔍 DIAGNOSTIC: Check session status
+window.checkSessionStatus = async function() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    const expiresAt = session.expires_at * 1000;
+    const now = Date.now();
+    const timeLeft = (expiresAt - now) / 1000 / 60; // minutes
+    console.log("✅ Session valid");
+    console.log("⏰ Time until expiry:", timeLeft.toFixed(1), "minutes");
+    console.log("📅 Expires at:", new Date(expiresAt).toLocaleString());
+    return true;
+  } else {
+    console.log("❌ No session found");
+    return false;
+  }
+};
   async function handleAddProduct(e) {
   e.preventDefault();
   console.log("=== handleAddProduct START ===");
