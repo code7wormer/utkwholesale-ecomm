@@ -6,6 +6,9 @@
   <title>ShopHub - Premium Online Store</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
   <style>
     /* Styles*/ 
     :root {
@@ -826,6 +829,7 @@ async function ensureValidSession() {
               console.error("Supabase Save Error:", error);
           }
       }
+      pulseCartIcon();
     }
 
     // 🌟 ROBUST REMOVE FUNCTION (Instant Feedback)
@@ -1265,7 +1269,7 @@ window.checkSessionStatus = async function() {
                 </button>
               `}
 
-              <button id="cart-icon-container" onclick="handleCartClick(); return false;" class="relative p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 btn-animate">
+              <button id="cart-icon-container" onclick="handleCartClick(); return false;" class="cart-icon relative p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 btn-animate">
                 ${Icon.Cart()}
                 ${state.cart.length > 0 ? `
                   <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white">
@@ -1315,7 +1319,7 @@ window.checkSessionStatus = async function() {
             </div>
             <nav class="p-4 space-y-2 overflow-y-auto flex-grow bg-white">
               
-              <div class="mb-6 staggered-item"> 
+              <div class="mb-6 staggered-item sidebar-menu-item"> 
                 ${state.user ? `
                   <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 shadow-sm">
                     <div class="flex items-center gap-3 mb-2">
@@ -1354,7 +1358,7 @@ window.checkSessionStatus = async function() {
                     <svg id="sidebar-cat-icon" class="w-5 h-5 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 
-                <div id="sidebar-cat-content" class="dropdown-content pl-2">
+                <div id="sidebar-cat-content" class="dropdown-content pl-2 sidebar-menu-item">
                   <div class="space-y-1 mt-1 border-l-2 border-gray-100 ml-4 pl-2">
                     ${state.categories.map(cat => {
                       return `
@@ -1366,7 +1370,7 @@ window.checkSessionStatus = async function() {
                 </div>
               </div>
 
-              <div class="staggered-item">
+              <div class="staggered-item sidebar-menu-item">
               <a href="#" onclick="navigate('about'); return false;" class="flex items-center gap-3 py-3 px-3 font-bold text-lg hover:bg-gray-50 rounded-xl transition-colors text-gray-700">
                 <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 About Us
@@ -1429,7 +1433,7 @@ window.checkSessionStatus = async function() {
       const displayPrice = isDeal ? product.deal_price : product.price;
       
       return `
-            <div class="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group flex flex-col h-full">          
+            <div class="product-card-animate bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group flex flex-col h-full">          
             <div class="relative">
             <img src="${product.image_url.split(',')[0].trim()}" alt="${product.name}" class="w-full h-64 object-cover transition-opacity duration-300 group-hover:opacity-90">
             ${isDeal ? '<div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">DEAL</div>' : ''}
@@ -1574,9 +1578,9 @@ window.setProductImage = (index) => {
               <div class="absolute w-96 h-96 bg-white rounded-full blur-3xl -bottom-48 -right-48 animate-pulse" style="animation-delay: 1s"></div>
             </div>
             <div class="relative max-w-7xl mx-auto px-6 text-center">
-              <h1 class="text-5xl md:text-6xl font-bold mb-6 drop-shadow-2xl tracking-tight" style="letter-spacing: -0.02em;">Discover Timeless Elegance</h1>
-              <p class="text-lg md:text-xl opacity-90 mb-8 max-w-2xl mx-auto font-light">Curated collections for the discerning customer.</p>
-            <button onclick="document.getElementById('bestsellers-section').scrollIntoView({ behavior: 'smooth', block: 'start' })" class="px-8 py-4 rounded-full font-semibold text-base hover:scale-105 transition-all shadow-xl" style="background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%); color: #1a1a2e;">
+              <h1 class="hero-title text-5xl md:text-6xl font-bold mb-6 drop-shadow-2xl tracking-tight" style="letter-spacing: -0.02em;">Discover at UTK</h1>
+              <p class="hero-subtitle text-lg md:text-xl opacity-90 mb-8 max-w-2xl mx-auto font-light">Curated just for you.</p>
+            <button onclick="smoothScrollTo('bestsellers-section')" class="hero-cta px-8 py-4 rounded-full font-semibold text-base hover:scale-105 transition-all shadow-xl" style="background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%); color: #1a1a2e;">
               Explore Collection
             </button>
             </div>
@@ -1584,23 +1588,23 @@ window.setProductImage = (index) => {
 
           <div id="bestsellers-section" class="max-w-7xl mx-auto px-4 mb-12">
             <div class="flex items-center justify-between mb-4 px-2">
-                 <h2 class="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
+                 <h2 class="section-header-animate text-3xl font-extrabold text-gray-900 flex items-center gap-3">
                   <span class="text-2xl">✨</span> Bestsellers
                 </h2>
                  <div class="hidden md:flex gap-2">
-                    <button onclick="scrollSection('bestsellers-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
-                    <button onclick="scrollSection('bestsellers-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
+                    <button onclick="smoothScrollSection('bestsellers-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
+                    <button onclick="smoothScrollSection('bestsellers-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
                  </div>
             </div>
             
             <div class="relative group">
-                <button onclick="scrollSection('bestsellers-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
+                <button onclick="smoothScrollSection('bestsellers-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
                 
                 <div id="bestsellers-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide scroll-smooth snap-x items-stretch" style="scroll-behavior: smooth;">
                     ${bestsellers.length > 0 ? bestsellers.map(p => renderSliderCardWrapper(p)).join('') : '<p class="text-gray-500 pl-2">No bestsellers marked yet.</p>'}
                 </div>
 
-                <button onclick="scrollSection('bestsellers-scroll', 'right')" class="md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronRight()}</button>
+                <button onclick="smoothScrollSection('bestsellers-scroll', 'right')" class="md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronRight()}</button>
             </div>
           </div>
 
@@ -1608,23 +1612,23 @@ window.setProductImage = (index) => {
 
           <div class="max-w-7xl mx-auto px-4 mb-12">
             <div class="flex items-center justify-between mb-4 px-2">
-                 <h2 class="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
+                 <h2 class="section-header-animate text-3xl font-extrabold text-gray-900 flex items-center gap-3">
                   <span class="text-2xl">💎</span> Limites Time Deals
                 </h2>
                  <div class="hidden md:flex gap-2">
-                    <button onclick="scrollSection('deals-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
-                    <button onclick="scrollSection('deals-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
+                    <button onclick="smoothScrollSection('deals-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
+                    <button onclick="smoothScrollSection('deals-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
                  </div>
             </div>
             
             <div class="relative group">
-                <button onclick="scrollSection('deals-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
+                <button onclick="smoothScrollSection('deals-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
 
                 <div id="deals-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide scroll-smooth snap-x items-stretch">
                     ${monthlyDeals.length > 0 ? monthlyDeals.map(p => renderSliderCardWrapper(p)).join('') : '<p class="text-gray-500 pl-2">No active deals right now.</p>'}
                 </div>
                 
-                <button onclick="scrollSection('deals-scroll', 'right')" class="md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronRight()}</button>
+                <button onclick="smoothScrollSection('deals-scroll', 'right')" class="md:hidden absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronRight()}</button>
             </div>
           </div>
 
@@ -1632,12 +1636,12 @@ window.setProductImage = (index) => {
 
           <div class="max-w-7xl mx-auto px-4">
              <h2 class="text-2xl font-extrabold text-gray-800 mb-6 px-2">Browse by Category</h2>
-             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+             <div class="category-section grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 ${state.categories.map(cat => {
                     const theme = CATEGORY_THEMES[cat.slug] || CATEGORY_THEMES['default'];
                     return `
                     <div onclick="navigate('category', '${cat.slug}')" 
-                         class="cursor-pointer bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center justify-center gap-3 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                         class="category-card-animate cursor-pointer bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center justify-center gap-3 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
                          style="border-bottom: 4px solid ${theme.primary}">
                         <div class="text-4xl group-hover:scale-110 transition-transform duration-300">${theme.icon || '📦'}</div>
                         <span class="font-bold text-center text-gray-800 group-hover:text-indigo-600">${cat.name}</span>
@@ -1962,7 +1966,230 @@ window.setProductImage = (index) => {
           </div>
         `;
     }
-
+    // ==========================================
+    // 🎨 GSAP ANIMATIONS - INIT
+    // ==========================================
+    
+    // Configure GSAP
+    gsap.registerPlugin(ScrollTrigger);
+    
+    // Global smooth scroll
+    gsap.to("body", { duration: 0 }); // Initialize
+    
+    // ==========================================
+    // 1️⃣ SMOOTH SCROLL FOR HERO BUTTON
+    // ==========================================
+    window.smoothScrollTo = (elementId) => {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+      
+      gsap.to(window, {
+        duration: 1.5,
+        scrollTo: { y: element, offsetY: 80 },
+        ease: "power3.inOut"
+      });
+    };
+    
+    // ==========================================
+    // 2️⃣ HERO SECTION ANIMATIONS
+    // ==========================================
+    function animateHero() {
+      const heroExists = document.querySelector('.hero-title');
+      if (!heroExists) return;
+      
+      // Title
+      gsap.from('.hero-title', {
+        duration: 1.2,
+        y: 50,
+        opacity: 0,
+        ease: "power3.out",
+        delay: 0.2
+      });
+      
+      // Subtitle
+      gsap.from('.hero-subtitle', {
+        duration: 1,
+        y: 30,
+        opacity: 0,
+        ease: "power3.out",
+        delay: 0.5
+      });
+      
+      // Button
+      gsap.from('.hero-cta', {
+        duration: 0.8,
+        scale: 0.8,
+        opacity: 0,
+        ease: "back.out(1.7)",
+        delay: 0.8
+      });
+    }
+    
+    // ==========================================
+    // 3️⃣ PRODUCT CARD SCROLL ANIMATIONS
+    // ==========================================
+    function animateProductCards() {
+      // Animate all product cards as they enter viewport
+      gsap.utils.toArray('.product-card-animate').forEach((card, index) => {
+        gsap.from(card, {
+          scrollTrigger: {
+            trigger: card,
+            start: "top 85%",
+            toggleActions: "play none none none"
+          },
+          duration: 0.8,
+          y: 60,
+          opacity: 0,
+          ease: "power3.out",
+          delay: index * 0.1 // Stagger effect
+        });
+      });
+    }
+    
+    // ==========================================
+    // 4️⃣ SMOOTH SIDE SCROLL (Bestsellers/Deals)
+    // ==========================================
+    window.smoothScrollSection = (id, direction) => {
+      const container = document.getElementById(id);
+      if (!container) return;
+      
+      const scrollAmount = container.offsetWidth * 0.7;
+      const newScrollLeft = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+      
+      gsap.to(container, {
+        scrollLeft: newScrollLeft,
+        duration: 0.8,
+        ease: "power2.inOut"
+      });
+    };
+    
+    // ==========================================
+    // 5️⃣ CATEGORY CARDS STAGGER
+    // ==========================================
+    function animateCategoryCards() {
+      gsap.from('.category-card-animate', {
+        scrollTrigger: {
+          trigger: '.category-section',
+          start: "top 80%",
+          toggleActions: "play none none none"
+        },
+        duration: 0.6,
+        scale: 0.8,
+        opacity: 0,
+        stagger: 0.1,
+        ease: "back.out(1.5)"
+      });
+    }
+    
+    // ==========================================
+    // 6️⃣ SECTION HEADERS
+    // ==========================================
+    function animateSectionHeaders() {
+      gsap.utils.toArray('.section-header-animate').forEach(header => {
+        gsap.from(header, {
+          scrollTrigger: {
+            trigger: header,
+            start: "top 90%",
+            toggleActions: "play none none none"
+          },
+          duration: 0.8,
+          x: -50,
+          opacity: 0,
+          ease: "power3.out"
+        });
+      });
+    }
+    
+    // ==========================================
+    // 7️⃣ HEADER SLIDE DOWN
+    // ==========================================
+    function animateHeader() {
+      const header = document.querySelector('header');
+      if (!header) return;
+      
+      gsap.from(header, {
+        duration: 0.8,
+        y: -100,
+        opacity: 0,
+        ease: "power3.out"
+      });
+    }
+    
+    // ==========================================
+    // 8️⃣ SIDEBAR MENU ITEMS STAGGER
+    // ==========================================
+    function animateSidebar() {
+      if (!state.menuOpen) return;
+      
+      gsap.from('.sidebar-menu-item', {
+        duration: 0.5,
+        x: -50,
+        opacity: 0,
+        stagger: 0.1,
+        ease: "power3.out",
+        delay: 0.2
+      });
+    }
+    
+    // ==========================================
+    // 9️⃣ PAGE TRANSITION
+    // ==========================================
+    function pageTransition(callback) {
+      // Fade out current content
+      gsap.to('#app main', {
+        duration: 0.3,
+        opacity: 0,
+        y: -20,
+        ease: "power2.in",
+        onComplete: () => {
+          callback();
+          // Fade in new content
+          gsap.from('#app main', {
+            duration: 0.5,
+            opacity: 0,
+            y: 20,
+            ease: "power2.out"
+          });
+        }
+      });
+    }
+    
+    // ==========================================
+    // 🔄 REFRESH ANIMATIONS ON RENDER
+    // ==========================================
+    function initAllAnimations() {
+      // Kill all existing ScrollTriggers to prevent duplicates
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        animateHero();
+        animateProductCards();
+        animateCategoryCards();
+        animateSectionHeaders();
+        animateHeader();
+        animateSidebar();
+      }, 50);
+    }
+    
+    // ==========================================
+    // 🎬 CART ICON PULSE (on add to cart)
+    // ==========================================
+    window.pulseCartIcon = () => {
+      const cartIcon = document.querySelector('.cart-icon');
+      if (!cartIcon) return;
+      
+      gsap.fromTo(cartIcon, 
+        { scale: 1 },
+        { 
+          scale: 1.3,
+          duration: 0.3,
+          ease: "back.out(3)",
+          yoyo: true,
+          repeat: 1
+        }
+      );
+    };
     function EditProductModal(categoriesHtml) {
         return `
             <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -2252,6 +2479,7 @@ window.handleCheckout = handleCheckout;
         </main>
         ${Footer()}
       `;
+      initAllAnimations();
     }
 
     window.toggleMenu = () => { state.menuOpen = !state.menuOpen; render(); };
