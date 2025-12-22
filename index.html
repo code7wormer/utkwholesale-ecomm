@@ -1466,13 +1466,13 @@ async function ensureValidSession() {
             <div class="relative max-w-7xl mx-auto px-6 text-center">
               <h1 class="text-5xl md:text-7xl font-extrabold mb-6 drop-shadow-2xl animate-fade-in">The Premium Collection</h1>
               <p class="text-xl md:text-2xl opacity-90 mb-8 max-w-2xl mx-auto drop-shadow-lg">Discover exclusive items curated for your lifestyle.</p>
-              <button onclick="navigate('category', state.categories[0]?.slug)" class="bg-white text-gray-900 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-2xl hover:shadow-white/50">
-                Shop Now →
-              </button>
+            <button onclick="document.getElementById('bestsellers-section').scrollIntoView({ behavior: 'smooth', block: 'start' })" class="bg-white text-gray-900 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-2xl hover:shadow-white/50">
+              Shop Now ↓
+            </button>
             </div>
           </div>
 
-          <div class="max-w-7xl mx-auto px-4 mb-12">
+          <div id="bestsellers-section" class="max-w-7xl mx-auto px-4 mb-12">
             <div class="flex items-center justify-between mb-4 px-2">
                  <h2 class="text-2xl font-extrabold text-gray-800 flex items-center gap-2">🔥 Bestsellers</h2>
                  <div class="hidden md:flex gap-2">
