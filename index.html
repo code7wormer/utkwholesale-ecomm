@@ -1518,7 +1518,7 @@ window.checkSessionStatus = async function() {
             <div class="relative group">
                 <button onclick="scrollSection('bestsellers-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
                 
-                <div id="bestsellers-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide scroll-smooth snap-x items-stretch">
+                <div id="bestsellers-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide scroll-smooth snap-x items-stretch" style="scroll-behavior: smooth;">
                     ${bestsellers.length > 0 ? bestsellers.map(p => renderSliderCardWrapper(p)).join('') : '<p class="text-gray-500 pl-2">No bestsellers marked yet.</p>'}
                 </div>
 
