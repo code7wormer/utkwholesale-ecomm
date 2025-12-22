@@ -303,7 +303,23 @@
       animation: animate-fade-in 1s ease-out forwards;
       animation-play-state: running;
     }
+/* Prevent flash of content before animations */
+.product-card-animate,
+.category-card-animate,
+.hero-title,
+.hero-subtitle,
+.hero-cta {
+  opacity: 0;
+}
 
+/* Show immediately if animations don't load */
+.no-js .product-card-animate,
+.no-js .category-card-animate,
+.no-js .hero-title,
+.no-js .hero-subtitle,
+.no-js .hero-cta {
+  opacity: 1;
+}
 /* Prevent re-animation */
 .animate-fade-in.animated {
   animation: none;
@@ -784,10 +800,25 @@ async function ensureValidSession() {
     // Update cart counter without full re-render
 function updateCartDisplay() {
   const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
-  const badge = document.getElementById('cart-badge');
-  if (badge) {
-    badge.textContent = totalItems;
-    badge.style.display = totalItems > 0 ? 'flex' : 'none';
+  const cartContainer = document.getElementById('cart-icon-container');
+  
+  if (cartContainer) {
+    // Find or create the badge
+    let badge = document.getElementById('cart-badge');
+    
+    if (totalItems > 0) {
+      if (!badge) {
+        // Create badge if it doesn't exist
+        badge = document.createElement('span');
+        badge.id = 'cart-badge';
+        badge.className = 'absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white';
+        cartContainer.appendChild(badge);
+      }
+      badge.textContent = totalItems;
+      badge.style.display = 'flex';
+    } else if (badge) {
+      badge.style.display = 'none';
+    }
   }
 }
     async function addToCart(product) {
@@ -1281,7 +1312,7 @@ window.checkSessionStatus = async function() {
               <button id="cart-icon-container" onclick="handleCartClick(); return false;" class="cart-icon relative p-2 hover:bg-gray-100 rounded-lg transition-all duration-300 btn-animate">
                 ${Icon.Cart()}
                 ${state.cart.length > 0 ? `
-                  <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white">
+                  <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white">
                     ${state.cart.reduce((acc, item) => acc + item.quantity, 0)}
                   </span>
                 ` : ''}
@@ -1609,7 +1640,7 @@ window.setProductImage = (index) => {
             <div class="relative group">
                 <button onclick="smoothScrollSection('bestsellers-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
                 
-                <div id="bestsellers-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide scroll-smooth snap-x items-stretch" style="scroll-behavior: smooth;">
+                <div id="bestsellers-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide snap-x items-stretch">
                     ${bestsellers.length > 0 ? bestsellers.map(p => renderSliderCardWrapper(p)).join('') : '<p class="text-gray-500 pl-2">No bestsellers marked yet.</p>'}
                 </div>
 
@@ -1633,7 +1664,7 @@ window.setProductImage = (index) => {
             <div class="relative group">
                 <button onclick="smoothScrollSection('deals-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
 
-                <div id="deals-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide scroll-smooth snap-x items-stretch">
+                <div id="deals-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide snap-x items-stretch">
                     ${monthlyDeals.length > 0 ? monthlyDeals.map(p => renderSliderCardWrapper(p)).join('') : '<p class="text-gray-500 pl-2">No active deals right now.</p>'}
                 </div>
                 
@@ -1641,7 +1672,7 @@ window.setProductImage = (index) => {
             </div>
           </div>
 
-          <hr class="border-gray-100 max-w-7xl mx-auto mb-12" />
+          <hr class="border-gray-100 max-w-7xl mx-auto mb-6" />
 
           <div class="max-w-7xl mx-auto px-4">
              <h2 class="text-2xl font-extrabold text-gray-800 mb-6 px-2">Browse by Category</h2>
@@ -1661,6 +1692,7 @@ window.setProductImage = (index) => {
           </div>
 
         </div>
+        <div class="mb-16"></div>
       `;
     }
 
@@ -2067,14 +2099,20 @@ window.setProductImage = (index) => {
   const container = document.getElementById(id);
   if (!container) return;
   
-  const cardWidth = 280 + 24; // card width + gap
-  const scrollAmount = cardWidth * 2; // Scroll 2 cards at a time
+  // Get the actual card width from first card
+  const firstCard = container.querySelector('.min-w-\\[280px\\]');
+  const cardWidth = firstCard ? firstCard.offsetWidth : 280;
+  const gap = 24; // gap-6 = 24px
+  
+  // Scroll by container width for smooth full-screen scrolling
+  const scrollAmount = container.offsetWidth * 0.8; // Scroll 80% of visible area
   const newScrollLeft = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
   
+  // Use the same sexy easing as the hero button
   gsap.to(container, {
     scrollLeft: newScrollLeft,
-    duration: 0.6,
-    ease: "power2.out"
+    duration: 1.2,
+    ease: "power3.inOut" // Same as smoothScrollTo
   });
 };
     
@@ -2207,6 +2245,17 @@ window.setProductImage = (index) => {
       }
     }, 50);
   }
+    // Fallback: Show elements if GSAP fails to load
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    // If elements are still invisible after 2 seconds, show them
+    document.querySelectorAll('.product-card-animate, .category-card-animate, .hero-title, .hero-subtitle, .hero-cta').forEach(el => {
+      if (window.getComputedStyle(el).opacity === '0') {
+        el.style.opacity = '1';
+      }
+    });
+  }, 2000);
+});
     
     // ==========================================
     // 🎬 CART ICON PULSE (on add to cart)
