@@ -781,7 +781,15 @@ async function ensureValidSession() {
       state.cart = [];
       await fetchCart();
     }
-
+    // Update cart counter without full re-render
+function updateCartDisplay() {
+  const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+  const badge = document.getElementById('cart-badge');
+  if (badge) {
+    badge.textContent = totalItems;
+    badge.style.display = totalItems > 0 ? 'flex' : 'none';
+  }
+}
     async function addToCart(product) {
       // 🌟 1. Calculate Price immediately (Deal Check)
       const priceToUse = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
@@ -808,7 +816,8 @@ async function ensureValidSession() {
       }
 
       // 4. Render & Feedback
-      render();
+      // 4. Update cart counter only (no full re-render)
+      updateCartDisplay();
       showToast(`Added ${product.name} to cart`);
 
       // Trigger Animation
@@ -2030,6 +2039,11 @@ window.setProductImage = (index) => {
     // ==========================================
     function animateProductCards() {
       // Animate all product cards as they enter viewport
+      const cards = document.querySelectorAll('.product-card-animate');
+  if (cards.length === 0) return;
+  
+  // Reset any existing styles to ensure visibility
+  gsap.set(cards, { opacity: 1, y: 0 });
       gsap.utils.toArray('.product-card-animate').forEach((card, index) => {
         gsap.from(card, {
           scrollTrigger: {
@@ -2050,36 +2064,43 @@ window.setProductImage = (index) => {
     // 4️⃣ SMOOTH SIDE SCROLL (Bestsellers/Deals)
     // ==========================================
     window.smoothScrollSection = (id, direction) => {
-      const container = document.getElementById(id);
-      if (!container) return;
-      
-      const scrollAmount = container.offsetWidth * 0.7;
-      const newScrollLeft = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
-      
-      gsap.to(container, {
-        scrollLeft: newScrollLeft,
-        duration: 0.8,
-        ease: "power2.inOut"
-      });
-    };
+  const container = document.getElementById(id);
+  if (!container) return;
+  
+  const cardWidth = 280 + 24; // card width + gap
+  const scrollAmount = cardWidth * 2; // Scroll 2 cards at a time
+  const newScrollLeft = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+  
+  gsap.to(container, {
+    scrollLeft: newScrollLeft,
+    duration: 0.6,
+    ease: "power2.out"
+  });
+};
     
     // ==========================================
     // 5️⃣ CATEGORY CARDS STAGGER
     // ==========================================
     function animateCategoryCards() {
-      gsap.from('.category-card-animate', {
-        scrollTrigger: {
-          trigger: '.category-section',
-          start: "top 80%",
-          toggleActions: "play none none none"
-        },
-        duration: 0.6,
-        scale: 0.8,
-        opacity: 0,
-        stagger: 0.1,
-        ease: "back.out(1.5)"
-      });
-    }
+  const cards = document.querySelectorAll('.category-card-animate');
+  if (cards.length === 0) return;
+  
+  // Reset any existing styles
+  gsap.set(cards, { opacity: 1, scale: 1 });
+  
+  gsap.from('.category-card-animate', {
+    scrollTrigger: {
+      trigger: '.category-section',
+      start: "top 80%",
+      toggleActions: "play none none reverse"
+    },
+    duration: 0.6,
+    scale: 0.9,
+    opacity: 0,
+    stagger: 0.08,
+    ease: "power2.out"
+  });
+}
     
     // ==========================================
     // 6️⃣ SECTION HEADERS
@@ -2158,19 +2179,34 @@ window.setProductImage = (index) => {
     // 🔄 REFRESH ANIMATIONS ON RENDER
     // ==========================================
     function initAllAnimations() {
-      // Kill all existing ScrollTriggers to prevent duplicates
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-      
-      // Small delay to ensure DOM is ready
-      setTimeout(() => {
+    // Kill all existing ScrollTriggers to prevent duplicates
+    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+      // Only animate hero on home page initial load
+      if (state.currentPage === 'home' && !window.heroAnimated) {
         animateHero();
-        animateProductCards();
-        animateCategoryCards();
-        animateSectionHeaders();
+        window.heroAnimated = true;
+      }
+      
+      // Only animate header once
+      if (!window.headerAnimated) {
         animateHeader();
+        window.headerAnimated = true;
+      }
+      
+      // These can re-animate on scroll
+      animateProductCards();
+      animateCategoryCards();
+      animateSectionHeaders();
+      
+      // Only animate sidebar when it's actually open
+      if (state.menuOpen) {
         animateSidebar();
-      }, 50);
-    }
+      }
+    }, 50);
+  }
     
     // ==========================================
     // 🎬 CART ICON PULSE (on add to cart)
@@ -2482,7 +2518,17 @@ window.handleCheckout = handleCheckout;
       initAllAnimations();
     }
 
-    window.toggleMenu = () => { state.menuOpen = !state.menuOpen; render(); };
+    window.toggleMenu = () => { 
+      state.menuOpen = !state.menuOpen; 
+      // Just toggle classes instead of full re-render
+      const appContainer = document.getElementById('app');
+      if (state.menuOpen) {
+        appContainer.classList.add('sidebar-open');
+        setTimeout(() => animateSidebar(), 50);
+      } else {
+        appContainer.classList.remove('sidebar-open');
+      }
+    };
     window.navigate = navigate;
     window.addToCart = addToCart;
     window.removeFromCart = removeFromCart;
