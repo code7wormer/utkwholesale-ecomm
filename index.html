@@ -2229,9 +2229,16 @@ window.setProductImage = (index) => {
     // Small delay to ensure DOM is ready
     setTimeout(() => {
       // Only animate hero on home page initial load
-      if (state.currentPage === 'home' && !window.heroAnimated) {
-        animateHero();
-        window.heroAnimated = true;
+      // Animate hero on home page (always on home page render)
+      if (state.currentPage === 'home') {
+        const heroExists = document.querySelector('.hero-title');
+        if (heroExists && !window.heroAnimated) {
+          animateHero();
+          window.heroAnimated = true;
+        } else if (heroExists) {
+          // If already animated, just make sure it's visible
+          gsap.set(['.hero-title', '.hero-subtitle', '.hero-cta'], { opacity: 1 });
+        }
       }
       
       // Only animate header once
