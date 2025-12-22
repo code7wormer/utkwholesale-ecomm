@@ -1586,6 +1586,7 @@ async function ensureValidSession() {
           </div>
       </td>
           <td class="px-6 py-4 font-bold text-gray-900">${product.name}</td>
+          <td class="px-6 py-4 text-gray-600">${state.categories.find(c => c.id === product.category_id)?.name || 'N/A'}</td>
           <td class="px-6 py-4 text-gray-700" title="${product.id}">${truncatedId}</td>
           <td class="px-6 py-4 text-gray-700">$${product.price.toFixed(2)}</td>
           <td class="px-6 py-4">
@@ -1711,6 +1712,7 @@ async function ensureValidSession() {
                         <tr>
                             <th class="py-3 px-6 text-left">Image</th>
                             <th scope="col" class="px-6 py-3">Name</th>
+                            <th scope="col" class="px-6 py-3">Category</th>
                             <th scope="col" class="px-6 py-3">ID</th>
                             <th scope="col" class="px-6 py-3">Price</th>
                             <th scope="col" class="px-6 py-3">Stock</th>
