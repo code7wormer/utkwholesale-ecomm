@@ -1466,15 +1466,33 @@ window.checkSessionStatus = async function() {
 
     // 🌟 Helper for Scrolling
     window.scrollSection = (id, direction) => {
-        const container = document.getElementById(id);
-        if (container) {
-            const scrollAmount = 320; 
-            container.scrollBy({ 
-                left: direction === 'left' ? -scrollAmount : scrollAmount, 
-                behavior: 'smooth' 
-            });
+    const container = document.getElementById(id);
+    if (container) {
+        const scrollAmount = container.offsetWidth * 0.8;
+        const start = container.scrollLeft;
+        const target = start + (direction === 'left' ? -scrollAmount : scrollAmount);
+        const duration = 500; // milliseconds
+        const startTime = performance.now();
+        
+        function animate(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function (ease-in-out)
+            const easeProgress = progress < 0.5 
+                ? 2 * progress * progress 
+                : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+            
+            container.scrollLeft = start + (target - start) * easeProgress;
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
         }
-    };
+        
+        requestAnimationFrame(animate);
+    }
+};
 
     function HomePage() {
       // Filter Data
