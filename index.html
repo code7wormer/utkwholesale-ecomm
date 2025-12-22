@@ -538,7 +538,12 @@ async function ensureValidSession() {
             await fetchAdminProducts();
         }
         
-        render();
+        const appContainer = document.getElementById('app');
+    appContainer.style.display = 'none';
+    requestAnimationFrame(() => {
+      appContainer.style.display = '';
+      render();
+    });
       }
     }
 
@@ -1534,7 +1539,7 @@ async function ensureValidSession() {
             </div>
             <div>
               <div class="mb-4">
-                <span class="font-semibold tracking-wide text-sm uppercase" style="color: var(--color-secondary);">Detailed View</span>
+                <span class="font-semibold tracking-wide text-sm uppercase" style="color: var(--color-secondary);">Product Information</span>
                 <h1 class="text-4xl font-extrabold text-gray-900 mt-2">${product.name}</h1>
               </div>
               
