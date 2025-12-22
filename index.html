@@ -279,14 +279,23 @@
       50% { background-position: 100% 50%; }
     }
     
+    // REPLACE WITH THIS:
     @keyframes animate-fade-in {
       from { opacity: 0; transform: translateY(-20px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
     .animate-fade-in {
-      animation: animate-fade-in 1s ease-out;
+      animation: animate-fade-in 1s ease-out forwards;
+      animation-play-state: running;
     }
+
+/* Prevent re-animation */
+.animate-fade-in.animated {
+  animation: none;
+  opacity: 1;
+  transform: translateY(0);
+}
 
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
