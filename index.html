@@ -469,6 +469,23 @@ async function ensureValidSession() {
             img.classList.add('hidden');
         }
     };
+    window.updateMultiImagePreview = (urls, previewId) => {
+        const container = document.getElementById(previewId);
+        const urlArray = urls.split(',').map(u => u.trim()).filter(u => u !== '');
+        
+        if (urlArray.length === 0) {
+            container.classList.add('hidden');
+            return;
+        }
+        
+        container.classList.remove('hidden');
+        container.innerHTML = urlArray.map((url, idx) => `
+            <div class="relative">
+                <img src="${url}" alt="Preview ${idx + 1}" class="w-24 h-24 object-cover rounded-lg border-2 border-gray-200 shadow-sm">
+                ${idx === 0 ? '<span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">Main</span>' : ''}
+            </div>
+        `).join('');
+    };
     window.toggleSearch = () => {
         const modal = document.getElementById('search-modal');
         if (modal.classList.contains('hidden')) {
@@ -1077,7 +1094,7 @@ async function ensureValidSession() {
         document.getElementById('edit-stock_status').value = product.stock_status;
         document.getElementById('edit-is_active').checked = product.is_active;
         document.getElementById('edit-image_url').value = product.image_url;
-        window.updateImagePreview(product.image_url, 'edit-product-preview');
+        window.updateMultiImagePreview(product.image_url, 'edit-product-preview');
         const isDealCheckbox = document.getElementById('edit-is_deal');
         isDealCheckbox.checked = product.is_deal || false;
         
@@ -1386,7 +1403,7 @@ async function ensureValidSession() {
       return `
         <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] group flex flex-col h-full shine-effect">
           <div class="relative">
-            <img src="${product.image_url}" alt="${product.name}" class="w-full h-64 object-cover transition-opacity duration-300 group-hover:opacity-90">
+            <img src="${product.image_url.split(',')[0].trim()}" alt="${product.name}" class="w-full h-64 object-cover transition-opacity duration-300 group-hover:opacity-90">
             ${isDeal ? '<div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">DEAL</div>' : ''}
             <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <button onclick="navigate('product', '${product.slug}'); return false;" class="bg-white text-gray-900 px-4 py-2 rounded-full font-medium text-sm hover:bg-gray-100 shadow-md">View</button>
@@ -1603,7 +1620,27 @@ async function ensureValidSession() {
           </button>
           <div class="grid md:grid-cols-2 gap-10">
             <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
-              <img src="${product.image_url}" alt="${product.name}" class="w-full rounded-lg object-contain max-h-[40rem] shadow-lg">
+              ${(() => {
+                const images = product.image_url.split(',').map(u => u.trim()).filter(u => u);
+                if (images.length === 1) {
+                  return `<img src="${images[0]}" alt="${product.name}" class="w-full rounded-lg object-contain max-h-[40rem] shadow-lg">`;
+                }
+                return `
+                  <div class="space-y-4">
+                    <img id="main-product-image" src="${images[0]}" alt="${product.name}" class="w-full rounded-lg object-contain max-h-[40rem] shadow-lg transition-opacity duration-300">
+                    <div class="flex gap-2 overflow-x-auto pb-2">
+                      ${images.map((img, idx) => `
+                        <img 
+                          src="${img}" 
+                          alt="${product.name} ${idx + 1}"
+                          onclick="document.getElementById('main-product-image').src='${img}'; event.target.parentElement.querySelectorAll('img').forEach(i => i.classList.remove('border-indigo-600')); event.target.classList.add('border-indigo-600');"
+                          class="w-20 h-20 object-cover rounded-lg border-2 ${idx === 0 ? 'border-indigo-600' : 'border-gray-200'} cursor-pointer hover:border-indigo-400 transition-all hover:scale-105"
+                        >
+                      `).join('')}
+                    </div>
+                  </div>
+                `;
+              })()}
             </div>
             <div>
               <div class="mb-4">
@@ -1706,16 +1743,17 @@ async function ensureValidSession() {
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-1">Image URL</label>
-                        <input 
-                            type="url" 
-                            name="image_url" 
-                            required 
-                            placeholder="https://example.com/image.jpg"
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                            oninput="updateImagePreview(this.value, 'add-product-preview')"
-                        >
-                        <img id="add-product-preview" src="" alt="Preview" class="hidden mt-3 w-32 h-32 object-cover rounded-lg border-2 border-gray-200 shadow-sm">
+                      <label class="block text-sm font-bold text-gray-700 mb-1">Image URLs (comma-separated)</label>
+                      <textarea 
+                        name="image_url" 
+                        required 
+                        rows="3"
+                        placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg, https://example.com/image3.jpg"
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                        oninput="updateMultiImagePreview(this.value, 'add-product-preview')"
+                      ></textarea>
+                      <div id="add-product-preview" class="hidden mt-3 flex gap-2 flex-wrap"></div>
+                      <p class="text-xs text-gray-500 mt-1">Separate multiple image URLs with commas. First image will be the main image.</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Short Description</label>
@@ -1818,16 +1856,16 @@ async function ensureValidSession() {
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Image URL</label>
-                            <input 
-                                type="url" 
-                                id="edit-image_url" 
-                                name="image_url" 
-                                required 
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                oninput="updateImagePreview(this.value, 'edit-product-preview')"
-                            >
-                            <img id="edit-product-preview" src="" alt="Preview" class="hidden mt-3 w-32 h-32 object-cover rounded-lg border-2 border-gray-200 shadow-sm">
+                          <label class="block text-sm font-bold text-gray-700 mb-1">Image URLs (comma-separated)</label>
+                          <textarea 
+                            id="edit-image_url" 
+                            name="image_url" 
+                            required 
+                            rows="3"
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            oninput="updateMultiImagePreview(this.value, 'edit-product-preview')"
+                          ></textarea>
+                          <div id="edit-product-preview" class="hidden mt-3 flex gap-2 flex-wrap"></div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Short Description</label>
