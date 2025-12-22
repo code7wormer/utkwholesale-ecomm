@@ -1461,14 +1461,14 @@ window.checkSessionStatus = async function() {
 
     function Footer() {
       return `
-        <footer class="mt-auto transition-colors duration-500" style="background-color: var(--color-primary);">
+        <footer class="mt-auto transition-colors duration-500 border-t border-gray-200" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
           <div class="max-w-7xl mx-auto px-4 py-8 text-white">
             <div class="flex flex-col md:flex-row justify-between items-center">
               <div class="text-center md:text-left mb-4 md:mb-0">
-                <h3 class="text-xl font-extrabold" style="color: var(--color-accent);">ShopHub</h3>
+                <h3 class="text-2xl font-bold tracking-tight" style="color: var(--color-accent);">ShopHub</h3>
                 <p class="text-gray-300 text-sm mt-1">Your trusted premium shopping destination</p>
               </div>
-              <div class="text-sm text-gray-400">© 2024 ShopHub. All rights reserved.</div>
+              <div class="text-sm text-gray-400">© 2024 UTKWholesale. All rights reserved.</div>
             </div>
           </div>
         </footer>
@@ -1568,23 +1568,25 @@ window.setProductImage = (index) => {
 
       return `
           <div class="relative py-20 text-white transition-all duration-500 mb-8 overflow-hidden">
-            <div class="absolute inset-0 gradient-bg"></div>
+          <div class="absolute inset-0" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);"></div>
             <div class="absolute inset-0 opacity-20">
               <div class="absolute w-96 h-96 bg-white rounded-full blur-3xl -top-48 -left-48 animate-pulse"></div>
               <div class="absolute w-96 h-96 bg-white rounded-full blur-3xl -bottom-48 -right-48 animate-pulse" style="animation-delay: 1s"></div>
             </div>
             <div class="relative max-w-7xl mx-auto px-6 text-center">
-              <h1 class="text-5xl md:text-7xl font-extrabold mb-6 drop-shadow-2xl animate-fade-in">The Premium Collection</h1>
-              <p class="text-xl md:text-2xl opacity-90 mb-8 max-w-2xl mx-auto drop-shadow-lg">Discover exclusive items curated for your lifestyle.</p>
-            <button onclick="document.getElementById('bestsellers-section').scrollIntoView({ behavior: 'smooth', block: 'start' })" class="bg-white text-gray-900 px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-transform shadow-2xl hover:shadow-white/50">
-              Shop Now ↓
+              <h1 class="text-5xl md:text-6xl font-bold mb-6 drop-shadow-2xl tracking-tight" style="letter-spacing: -0.02em;">Discover Timeless Elegance</h1>
+              <p class="text-lg md:text-xl opacity-90 mb-8 max-w-2xl mx-auto font-light">Curated collections for the discerning customer.</p>
+            <button onclick="document.getElementById('bestsellers-section').scrollIntoView({ behavior: 'smooth', block: 'start' })" class="px-8 py-4 rounded-full font-semibold text-base hover:scale-105 transition-all shadow-xl" style="background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%); color: #1a1a2e;">
+              Explore Collection
             </button>
             </div>
           </div>
 
           <div id="bestsellers-section" class="max-w-7xl mx-auto px-4 mb-12">
             <div class="flex items-center justify-between mb-4 px-2">
-                 <h2 class="text-2xl font-extrabold text-gray-800 flex items-center gap-2">🔥 Bestsellers</h2>
+                 <h2 class="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
+                  <span class="text-2xl">✨</span> Bestsellers
+                </h2>
                  <div class="hidden md:flex gap-2">
                     <button onclick="scrollSection('bestsellers-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
                     <button onclick="scrollSection('bestsellers-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
@@ -1606,7 +1608,9 @@ window.setProductImage = (index) => {
 
           <div class="max-w-7xl mx-auto px-4 mb-12">
             <div class="flex items-center justify-between mb-4 px-2">
-                 <h2 class="text-2xl font-extrabold text-gray-800 flex items-center gap-2">⚡ Monthly Deals</h2>
+                 <h2 class="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
+                  <span class="text-2xl">💎</span> Limites Time Deals
+                </h2>
                  <div class="hidden md:flex gap-2">
                     <button onclick="scrollSection('deals-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
                     <button onclick="scrollSection('deals-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
