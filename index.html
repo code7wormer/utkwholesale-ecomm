@@ -1481,6 +1481,44 @@ window.checkSessionStatus = async function() {
             ? 4 * t * t * t 
             : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
+
+      // Image gallery navigation
+      window.changeProductImage = (direction, images) => {
+          const mainImg = document.getElementById('main-product-image');
+          const currentIndex = parseInt(mainImg.getAttribute('data-current-index'));
+          const newIndex = (currentIndex + direction + images.length) % images.length;
+          
+          setProductImage(newIndex, images);
+      };
+      
+      window.setProductImage = (index, images) => {
+          const mainImg = document.getElementById('main-product-image');
+          const thumbnails = document.querySelectorAll('.product-thumbnail');
+          
+          // Fade out
+          mainImg.style.opacity = '0';
+          mainImg.style.transform = 'scale(0.95)';
+          
+          setTimeout(() => {
+              mainImg.src = images[index];
+              mainImg.setAttribute('data-current-index', index);
+              
+              // Update thumbnail borders
+              thumbnails.forEach((thumb, idx) => {
+                  if (idx === index) {
+                      thumb.classList.remove('border-gray-200');
+                      thumb.classList.add('border-indigo-600');
+                  } else {
+                      thumb.classList.remove('border-indigo-600');
+                      thumb.classList.add('border-gray-200');
+                  }
+              });
+              
+              // Fade in
+              mainImg.style.opacity = '1';
+              mainImg.style.transform = 'scale(1)';
+          }, 250);
+      };
     
     function animation(currentTime) {
         if (!startTime) startTime = currentTime;
@@ -1652,10 +1690,13 @@ window.checkSessionStatus = async function() {
         <div class="flex-1 max-w-7xl mx-auto px-4 py-12 page-enter">
           <button 
               onclick="navigate('home'); return false;" 
-              class="mb-6 text-gray-500 hover:text-gray-800 font-medium z-50 relative" 
+              class="mb-6 text-gray-500 hover:text-gray-800 font-medium z-50 relative transition-all duration-300 hover:scale-110 hover:-translate-x-2 flex items-center gap-2 group" 
               style="pointer-events: auto;"
           >
-              ← Back
+              <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+               ← Back
           </button>
           <div class="grid md:grid-cols-2 gap-10">
             <div class="bg-white p-6 rounded-xl shadow-2xl border border-gray-100">
@@ -1666,14 +1707,28 @@ window.checkSessionStatus = async function() {
                 }
                 return `
                   <div class="space-y-4">
-                    <img id="main-product-image" src="${images[0]}" alt="${product.name}" class="w-full rounded-lg object-contain max-h-[40rem] shadow-lg transition-opacity duration-300">
-                    <div class="flex gap-2 overflow-x-auto pb-2">
+                    <div class="relative group">
+                      <img id="main-product-image" src="${images[0]}" alt="${product.name}" class="w-full rounded-lg object-contain max-h-[40rem] shadow-lg transition-all duration-500" data-current-index="0">
+                      
+                      ${images.length > 1 ? `
+                        <button onclick="changeProductImage(-1, ${JSON.stringify(images)})" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110">
+                          <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        
+                        <button onclick="changeProductImage(1, ${JSON.stringify(images)})" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110">
+                          <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                      ` : ''}
+                    </div>
+                    
+                    <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                       ${images.map((img, idx) => `
                         <img 
                           src="${img}" 
                           alt="${product.name} ${idx + 1}"
-                          onclick="document.getElementById('main-product-image').src='${img}'; event.target.parentElement.querySelectorAll('img').forEach(i => i.classList.remove('border-indigo-600')); event.target.classList.add('border-indigo-600');"
-                          class="w-20 h-20 object-cover rounded-lg border-2 ${idx === 0 ? 'border-indigo-600' : 'border-gray-200'} cursor-pointer hover:border-indigo-400 transition-all hover:scale-105"
+                          onclick="setProductImage(${idx}, ${JSON.stringify(images)})"
+                          class="product-thumbnail w-20 h-20 object-cover rounded-lg border-2 ${idx === 0 ? 'border-indigo-600' : 'border-gray-200'} cursor-pointer hover:border-indigo-400 transition-all hover:scale-105"
+                          data-index="${idx}"
                         >
                       `).join('')}
                     </div>
