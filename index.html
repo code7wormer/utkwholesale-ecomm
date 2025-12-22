@@ -247,6 +247,34 @@
 .back-btn-enter {
   animation: slideInFromLeft 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+
+    /* Category page background */
+.category-page-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  transition: opacity 0.5s ease;
+}
+
+.category-page-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.85); /* White overlay for readability */
+  backdrop-filter: blur(2px);
+}
+
+/* Darker overlay for better contrast */
+.category-page-bg.dark-overlay::before {
+  background: rgba(0, 0, 0, 0.3);
+}
     /* 🍞 TOAST NOTIFICATION STYLES */
     #toast-container {
       position: fixed;
@@ -425,15 +453,15 @@ async function ensureValidSession() {
 }
     // --- 🎨 Theme Configuration ---
     const CATEGORY_THEMES = {
-      'candies-chocolates': { primary: '#ec4899', secondary: '#be185d', icon: '🍬' },
-      'tobacco-products':   { primary: '#78350f', secondary: '#451a03', icon: '🚬' },
-      'automotive':         { primary: '#dc2626', secondary: '#991b1b', icon: '🚗' },
-      'medicines':          { primary: '#059669', secondary: '#065f46', icon: '💊' },
-      'toys':               { primary: '#f59e0b', secondary: '#b45309', icon: '🧸' },
-      'household':          { primary: '#4f46e5', secondary: '#312e81', icon: '🏠' },
-      'general-grocery':    { primary: '#0891b2', secondary: '#164e63', icon: '🥦' },
-      'snacks':             { primary: '#d97706', secondary: '#92400e', icon: '🍿' },
-      'default':            { primary: '#001f3f', secondary: '#004d40', icon: '✨' }
+      'candies-chocolates': { primary: '#ec4899', secondary: '#be185d', icon: '🍬',background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1766428127/denny-muller-mGP8gyGb8zY-unsplash_wolk6q.jpg'  },
+      'tobacco-products':   { primary: '#78350f', secondary: '#451a03', icon: '🚬',background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1766428125/ander-burdain-H98jBUACm14-unsplash_fnpez4.jpg' },
+      'automotive':         { primary: '#dc2626', secondary: '#991b1b', icon: '🚗', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1766428124/alex-suprun-AHnhdjyTNGM-unsplash_hohn2o.jpg'},
+      'medicines':          { primary: '#059669', secondary: '#065f46', icon: '💊', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1766428134/towfiqu-barbhuiya-w8p9cQDLX7I-unsplash_alpikb.jpg'},
+      'toys':               { primary: '#f59e0b', secondary: '#b45309', icon: '🧸', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1766428136/xavi-cabrera-kn-UmDZQDjM-unsplash_tsizhm.jpg'},
+      'household':          { primary: '#4f46e5', secondary: '#312e81', icon: '🏠', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1766428125/anna-oliinyk-nCPpMv69m1s-unsplash_yxhml3.jpg'},
+      'general-grocery':    { primary: '#0891b2', secondary: '#164e63', icon: '🥦', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1766428134/nrd-D6Tu_L3chLE-unsplash_ov7pfs.jpg'},
+      'snacks':             { primary: '#d97706', secondary: '#92400e', icon: '🍿', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1766428129/di-weng-2lu4hpLgBxY-unsplash_blao9v.jpg'},
+      'default':            { primary: '#001f3f', secondary: '#004d40', icon: '✨', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1766428131/mike-petrucci-c9FQyqIECds-unsplash_ramfzl.jpg'}
     };
 
     // --- Icons ---
@@ -612,6 +640,10 @@ async function ensureValidSession() {
 
     // --- Router with Transitions ---
     async function navigate(page, slug = null) {
+      const bgElement = document.querySelector('.category-page-bg');
+      if (bgElement && page !== 'category') {
+        bgElement.style.opacity = '0';
+      }
       if (page === 'category' && slug) {
         const theme = CATEGORY_THEMES[slug] || CATEGORY_THEMES['default'];
         
@@ -1707,6 +1739,24 @@ window.setProductImage = (index) => {
     function CategoryPage() {
       const category = state.categories.find(c => c.slug === state.currentSlug);
       if (!category) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Category not found</div></div>';
+      function CategoryPage() {
+      const category = state.categories.find(c => c.slug === state.currentSlug);
+      if (!category) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Category not found</div></div>';
+      
+      // Get theme for this category
+      const theme = CATEGORY_THEMES[category.slug] || CATEGORY_THEMES['default'];
+      
+      // Set background dynamically
+      setTimeout(() => {
+        let bgElement = document.querySelector('.category-page-bg');
+        if (!bgElement) {
+          bgElement = document.createElement('div');
+          bgElement.className = 'category-page-bg';
+          document.body.appendChild(bgElement);
+        }
+        bgElement.style.backgroundImage = `url('${theme.background}')`;
+        bgElement.style.opacity = '1';
+      }, 0);
       const products = state.products.filter(p => p.category_id === category.id);
       
       return `
@@ -2582,7 +2632,7 @@ window.handleCheckout = handleCheckout;
         ${Sidebar()}
         <main class="flex-grow">
           ${content}
-        </main>
+        </main>  
         ${Footer()}
       `;
       initAllAnimations();
@@ -2607,7 +2657,16 @@ window.handleCheckout = handleCheckout;
     window.handleGoogleLogin = handleGoogleLogin;
     window.handleLogout = handleLogout;
     window.handleAddProduct = handleAddProduct;
-    window.setAuthMode = (mode) => { state.authMode = mode; render(); };
+    window.setAuthMode = (mode) => { state.authMode = mode; 
+    render();
+    if (state.currentPage !== 'category') {
+      const bgElement = document.querySelector('.category-page-bg');
+      if (bgElement) {
+        bgElement.style.opacity = '0';
+        setTimeout(() => bgElement.remove(), 500);
+      }
+    }
+    };
 
     async function fetchInitialProducts() {
         const { data, error } = await supabase.from('products').select('*').eq('is_active', true);
