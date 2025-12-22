@@ -9,12 +9,13 @@
   <style>
     /* Styles*/ 
     :root {
-      --default-primary: #001f3f;
-      --default-secondary: #004d40;
+      --default-primary: #1a1a2e;      /* Deep charcoal navy */
+      --default-secondary: #16213e;    /* Rich dark blue */
       
       --color-primary: var(--default-primary);
       --color-secondary: var(--default-secondary);
-      --color-accent: #ffd700; /* Gold */
+      --color-accent: #d4af37;         /* Elegant gold */
+      --color-accent-dark: #b8941f;    /* Darker gold for hover */
     }
 
     /* Add after the existing :root section */
@@ -306,7 +307,9 @@
   opacity: 1;
   transform: translateY(0);
 }
-
+body {
+  background-color: #f8f9fa;  /* Soft off-white */
+}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
@@ -1420,21 +1423,19 @@ window.checkSessionStatus = async function() {
       `;
     }
 
-    // 🌟 Modified ProductCard
+    //Modified ProductCard
     function ProductCard(product) {
       const isDeal = product.is_deal && product.deal_price;
       const displayPrice = isDeal ? product.deal_price : product.price;
       
       return `
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02] group flex flex-col h-full shine-effect">
-          <div class="relative">
+            <div class="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group flex flex-col h-full">          <div class="relative">
             <img src="${product.image_url.split(',')[0].trim()}" alt="${product.name}" class="w-full h-64 object-cover transition-opacity duration-300 group-hover:opacity-90">
             ${isDeal ? '<div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">DEAL</div>' : ''}
-            <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <button onclick="navigate('product', '${product.slug}'); return false;" class="bg-white text-gray-900 px-4 py-2 rounded-full font-medium text-sm hover:bg-gray-100 shadow-md">View</button>
-              <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="text-white px-4 py-2 rounded-full font-bold text-sm shadow-md" style="background-color: var(--color-accent); color: var(--color-primary);">+ Add</button>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+              <button onclick="navigate('product', '${product.slug}'); return false;" class="bg-white text-gray-900 px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-gray-50 shadow-lg transform hover:scale-105 transition-all">View Details</button>
+              <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg transform hover:scale-105 transition-all" style="background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%); color: white;">Add to Cart</button>
             </div>
-          </div>
           <div class="p-4 flex flex-col flex-grow">
             <h3 class="font-extrabold text-xl mb-1 truncate" style="color: var(--color-primary);">${product.name}</h3>
             <p class="text-gray-500 text-sm mb-3 line-clamp-2 h-10">${product.description}</p>
