@@ -236,20 +236,13 @@
       scroll-behavior: smooth;
     }
 
-    .back-btn-enter {
-  animation: slideInFromLeft 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  opacity: 0;
+    @keyframes slideInFromLeft {
+  0% { opacity: 0; transform: translateX(-30px); }
+  100% { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes slideInFromLeft {
-  from { 
-    opacity: 0; 
-    transform: translateX(-30px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateX(0); 
-  }
+.back-btn-enter {
+  animation: slideInFromLeft 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
     /* 🍞 TOAST NOTIFICATION STYLES */
     #toast-container {
