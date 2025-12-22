@@ -1736,9 +1736,6 @@ window.setProductImage = (index) => {
       `;
     }
 
-    function CategoryPage() {
-      const category = state.categories.find(c => c.slug === state.currentSlug);
-      if (!category) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Category not found</div></div>';
       function CategoryPage() {
       const category = state.categories.find(c => c.slug === state.currentSlug);
       if (!category) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Category not found</div></div>';
