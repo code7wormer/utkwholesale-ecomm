@@ -843,24 +843,24 @@ window.setProductImage = (index) => {
   state.cart = [];
   state.user = null;
   state.isAdmin = false;
-
-  // 4. Hide Overlay with animation
-  if (overlay) {
-      overlay.classList.remove('opacity-100', 'pointer-events-auto');
-      overlay.classList.add('opacity-0', 'pointer-events-none');
+  window.location.reload();
+  // // 4. Hide Overlay with animation
+  // if (overlay) {
+  //     overlay.classList.remove('opacity-100', 'pointer-events-auto');
+  //     overlay.classList.add('opacity-0', 'pointer-events-none');
       
-      // Wait for CSS fade-out transition (500ms) before navigating
-      setTimeout(() => {
-          overlay.classList.add('hidden');
-          overlay.classList.remove('flex');
+  //     // Wait for CSS fade-out transition (500ms) before navigating
+  //     setTimeout(() => {
+  //         overlay.classList.add('hidden');
+  //         overlay.classList.remove('flex');
           
-          // 5. Navigate AFTER overlay is fully hidden
-          navigate('home');
-      }, 500); 
-  } else {
-      // If no overlay, just navigate immediately
-      navigate('home');
-  }
+  //         // 5. Navigate AFTER overlay is fully hidden
+  //         navigate('home');
+  //     }, 500); 
+  // } else {
+  //     // If no overlay, just navigate immediately
+  //     navigate('home');
+  // }
 }
 
 
