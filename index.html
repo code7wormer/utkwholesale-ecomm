@@ -1126,8 +1126,7 @@ window.checkSessionStatus = async function() {
   }
   
   const form = e.target;
-  const submitButton = form.querySelector('button[type="submit"]');
-  
+const submitButton = e.target.tagName === 'FORM' ? e.target.querySelector('button[type="submit"]') : e.target;  
   try {
     // Disable button
     submitButton.disabled = true;
