@@ -1166,20 +1166,12 @@ window.checkSessionStatus = async function() {
     console.log("Step 5: Product object created");
     console.log("Step 6: Inserting into Supabase...");
 
-    // Insert with timeout
-    const insertPromise = supabase
-      .from('products')
-      .insert([newProduct])
-      .select();
-    
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('INSERT_TIMEOUT')), 10000)
-    );
-    
-    const result = await Promise.race([insertPromise, timeoutPromise]);
-    const { data, error } = result;
-    
-    console.log("Step 7: Response received");
+
+const { error } = await supabase
+  .from('products')
+  .insert([newProduct]);
+
+console.log("Step 7: Insert complete");
     
     if (error) {
       console.error("Supabase Error:", error);
