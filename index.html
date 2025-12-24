@@ -1133,6 +1133,12 @@ window.checkSessionStatus = async function() {
     submitButton.disabled = true;
     submitButton.innerHTML = '<div class="loader mx-auto"></div>';
     
+    // ADD THIS: Set a timeout to refresh if it takes too long
+    const timeoutId = setTimeout(() => {
+      alert("Request is taking too long. Refreshing page...");
+      window.location.reload();
+    }, 10000); // 10 seconds
+    
     // Build product
     const isDeal = form.is_deal.checked;
     const newProduct = {
@@ -1152,6 +1158,9 @@ window.checkSessionStatus = async function() {
 
     // Insert
     const { error } = await supabase.from('products').insert([newProduct]);
+    
+    // CLEAR THE TIMEOUT if successful
+    clearTimeout(timeoutId);
     
     if (error) {
       if (error.message?.includes('JWT') || error.code === 'PGRST301') {
