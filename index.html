@@ -1085,15 +1085,21 @@ function updateCartDisplay() {
     }
     
     // --- Admin Functions ---
-    async function fetchAdminProducts() {
-      if (!state.isAdmin) return;
-      const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
-      if (data) {
-        state.adminProducts = data;
-        render();
+   async function fetchAdminProducts() {
+  if (!state.isAdmin) return;
+  const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
+  if (data) {
+    state.adminProducts = data;
+    // DON'T call render() - just update the table if we're on admin page
+    if (state.currentPage === 'admin') {
+      const tbody = document.querySelector('#admin-products-table tbody');
+      if (tbody) {
+        tbody.innerHTML = state.adminProducts.map(p => AdminProductRow(p)).join('');
       }
-      if (error) console.error("Admin fetch error:", error);
     }
+  }
+  if (error) console.error("Admin fetch error:", error);
+}
   // 🔍 DIAGNOSTIC: Check session status
 window.checkSessionStatus = async function() {
   const { data: { session } } = await supabase.auth.getSession();
