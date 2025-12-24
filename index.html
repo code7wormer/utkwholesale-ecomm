@@ -2703,9 +2703,11 @@ window.handleCheckout = handleCheckout;
       initAllAnimations();
       if (state.user && window.revealPrices) window.revealPrices();
       // Attach image navigation listenersi
-document.querySelectorAll('.image-nav-btn').forEach(btn => {
-  btn.onclick = () => window.changeProductImage(parseInt(btn.dataset.imageNav));
-});
+setTimeout(() => {
+  document.querySelectorAll('.image-nav-btn').forEach(btn => {
+    btn.onclick = () => window.changeProductImage(parseInt(btn.dataset.imageNav));
+  });
+}, 100);
     }
 
     window.toggleMenu = () => { 
