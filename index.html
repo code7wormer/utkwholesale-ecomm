@@ -1252,7 +1252,9 @@ window.checkSessionStatus = async function() {
             is_bestseller: form.is_bestseller.checked
         };
 
-        const { error } = await supabase.from('products').update(updates).eq('id', id);
+        console.log("Attempting insert...");
+const { error } = await window.supabaseClient.from('products').insert([newProduct]);
+console.log("Insert returned:", error);
         if (error) {
             alert("Error updating product: " + error.message);
         } else {
