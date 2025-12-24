@@ -1539,8 +1539,6 @@ window.checkSessionStatus = async function() {
             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center gap-3 opacity-0 transition-all duration-300">
               <button onclick="navigate('product', '${product.slug}'); return false;" class="bg-white text-gray-900 px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-gray-50 shadow-lg transform hover:scale-105 transition-all">View Details</button>
               <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg transform hover:scale-105 transition-all" style="background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%); color: white;">Add to Cart</button>
-              <button onclick="shareProduct('${product.slug}'); event.stopPropagation();" class="bg-gray-800 text-white px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-gray-700 shadow-lg transform hover:scale-105 transition-all">Share</button>
-            </div>
             </div>
           <div class="p-4 flex flex-col flex-grow">
             <h3 class="font-extrabold text-xl mb-1 truncate" style="color: var(--color-primary);">${product.name}</h3>
@@ -1908,6 +1906,9 @@ window.checkSessionStatus = async function() {
                 <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="flex-1 text-white px-8 py-4 rounded-lg font-bold transition-all text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1" style="background-color: var(--color-primary);">
                   Add to Cart
                 </button>
+                <button id="share-product-btn" onclick="shareProduct('${product.slug}')" class="bg-gray-800 text-white px-8 py-4 rounded-lg font-bold transition-all text-lg shadow-lg hover:shadow-xl">
+                  Share
+                </button>
               </div>
             </div>
           </div>
@@ -2194,32 +2195,27 @@ window.checkSessionStatus = async function() {
 
 
     function initShareButtonAnimation() {
-  const cards = document.querySelectorAll('.product-card-animate');
+  const shareBtn = document.getElementById('share-product-btn');
+  if (!shareBtn) return;
   
-  cards.forEach(card => {
-    card.addEventListener('mouseenter', () => {
-      const shareBtn = card.querySelector('button:last-child'); // Gets the share button
-      if (shareBtn && shareBtn.textContent === 'Share') {
-        
-        // Continuous pulse glow
-        gsap.to(shareBtn, {
-          boxShadow: "0 0 20px rgba(212, 175, 55, 0.8), 0 0 40px rgba(212, 175, 55, 0.4)",
-          duration: 0.8,
-          ease: "power1.inOut",
-          yoyo: true,
-          repeat: -1 // Infinite loop
-        });
-        
-        // Small scale pulse
-        gsap.to(shareBtn, {
-          scale: 1.05,
-          duration: 0.8,
-          ease: "power1.inOut",
-          yoyo: true,
-          repeat: -1
-        });
-      }
-    });
+  // Continuous pulse glow
+  gsap.to(shareBtn, {
+    boxShadow: "0 0 20px rgba(212, 175, 55, 0.8), 0 0 40px rgba(212, 175, 55, 0.4)",
+    duration: 0.8,
+    ease: "power1.inOut",
+    yoyo: true,
+    repeat: -1
+  });
+  
+  // Small scale pulse
+  gsap.to(shareBtn, {
+    scale: 1.05,
+    duration: 0.8,
+    ease: "power1.inOut",
+    yoyo: true,
+    repeat: -1
+  });
+}
     
     card.addEventListener('mouseleave', () => {
       const shareBtn = card.querySelector('button:last-child');
@@ -2415,10 +2411,12 @@ window.checkSessionStatus = async function() {
         animateSidebar();
       }
     }, 50);
-      initCardHoverAnimations();
-      initShareButtonAnimation();
-  }
+      initCardHoverAnimations(); 
+    
+    }
 // Ensure GSAP is loaded before animating
+
+    
 if (typeof gsap === 'undefined') {
   // GSAP didn't load, show everything immediately
   document.querySelectorAll('.product-card-animate, .category-card-animate, .hero-title, .hero-subtitle, .hero-cta').forEach(el => {
