@@ -783,42 +783,45 @@ async function ensureValidSession() {
     }
 
     async function handleLogout() {
-      const overlay = document.getElementById('logout-overlay');
+  const overlay = document.getElementById('logout-overlay');
+  
+  // 1. Show Overlay Animation
+  if (overlay) {
+      overlay.classList.remove('hidden');
+      // Small delay to ensure the browser processes the 'hidden' removal before fading in
+      setTimeout(() => {
+          overlay.classList.remove('opacity-0', 'pointer-events-none');
+          overlay.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+      }, 10);
+  }
+
+  // 2. Wait for 1.5 seconds so user sees the message
+  await new Promise(resolve => setTimeout(resolve, 1500));
+
+  // 3. Perform Sign Out Logic FIRST (before DOM changes)
+  await supabase.auth.signOut();
+  state.cart = [];
+  state.user = null;
+  state.isAdmin = false;
+
+  // 4. Hide Overlay with animation
+  if (overlay) {
+      overlay.classList.remove('opacity-100', 'pointer-events-auto');
+      overlay.classList.add('opacity-0', 'pointer-events-none');
       
-      // 1. Show Overlay Animation
-      if (overlay) {
-          overlay.classList.remove('hidden');
-          // Small delay to ensure the browser processes the 'hidden' removal before fading in
-          setTimeout(() => {
-              overlay.classList.remove('opacity-0', 'pointer-events-none');
-              overlay.classList.add('flex', 'opacity-100', 'pointer-events-auto');
-          }, 10);
-      }
-
-      // 2. Wait for 1.5 seconds so user sees the message
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // 3. Perform Sign Out Logic
-      await supabase.auth.signOut();
-      state.cart = [];
-      state.user = null;
-      state.isAdmin = false;
-      
-      // 4. Reset View
-      navigate('home');
-
-      // 5. Hide Overlay
-      if (overlay) {
-          overlay.classList.remove('opacity-100', 'pointer-events-auto');
-          overlay.classList.add('opacity-0', 'pointer-events-none');
+      // Wait for CSS fade-out transition (500ms) before navigating
+      setTimeout(() => {
+          overlay.classList.add('hidden');
+          overlay.classList.remove('flex');
           
-          // Wait for CSS fade-out transition (500ms) before hiding element
-          setTimeout(() => {
-              overlay.classList.add('hidden');
-              overlay.classList.remove('flex');
-          }, 500); 
-      }
-    }
+          // 5. Navigate AFTER overlay is fully hidden
+          navigate('home');
+      }, 500); 
+  } else {
+      // If no overlay, just navigate immediately
+      navigate('home');
+  }
+}
 
     async function fetchCart() {
       // If not logged in, keep the local guest cart. Do not overwrite it.
