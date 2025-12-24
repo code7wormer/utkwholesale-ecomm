@@ -1136,7 +1136,7 @@ window.checkSessionStatus = async function() {
     try {
       const { data: { session }, error } = await Promise.race([
         supabase.auth.getSession(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
       ]);
       
       if (session && !error) {
