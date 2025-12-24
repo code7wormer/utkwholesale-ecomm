@@ -2226,20 +2226,14 @@ window.setProductImage = (index) => {
   const container = document.getElementById(id);
   if (!container) return;
   
-  // Get the actual card width from first card
-  const firstCard = container.querySelector('.min-w-\\[280px\\]');
-  const cardWidth = firstCard ? firstCard.offsetWidth : 280;
-  const gap = 24; // gap-6 = 24px
-  
-  // Scroll by container width for smooth full-screen scrolling
-  const scrollAmount = container.offsetWidth * 0.8; // Scroll 80% of visible area
+  // Scroll by 80% of container width for smooth navigation
+  const scrollAmount = container.offsetWidth * 0.8;
   const newScrollLeft = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
   
-  // Use the same sexy easing as the hero button
-  gsap.to(container, {
-    scrollLeft: newScrollLeft,
-    duration: 1.2,
-    ease: "power3.inOut" // Same as smoothScrollTo
+  // Use native smooth scroll - GPU accelerated, buttery smooth
+  container.scrollTo({
+    left: newScrollLeft,
+    behavior: 'smooth'
   });
 };
     
