@@ -1164,8 +1164,17 @@ window.checkSessionStatus = async function() {
     };
 
     console.log("Step 5: Product object created");
-    console.log("Step 6: Inserting into Supabase...");
+  console.log("Step 6: Refreshing session before insert...");
 
+// Force refresh session to get a fresh token
+const { error: refreshError } = await supabase.auth.refreshSession();
+if (refreshError) {
+  alert("Session expired. Please log in again.");
+  navigate('auth');
+  return;
+}
+
+console.log("Session refreshed, inserting...");
 
 const { error } = await supabase
   .from('products')
