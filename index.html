@@ -954,6 +954,7 @@ function updateCartDisplay() {
           state.cart.push({
               ...product,
               id: product.id,
+              image_url: product.image_url.split(',')[0].trim(),
               price: priceToUse,
               quantity: 1
           });
