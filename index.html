@@ -114,6 +114,8 @@
     .sidebar-open .staggered-item:nth-child(3) { animation-delay: 0.35s; }
     .sidebar-open .staggered-item:nth-child(4) { animation-delay: 0.45s; }
 
+
+    
     /* Dropdown Animation */
     .group:hover .dropdown-menu {
       visibility: visible;
@@ -1526,18 +1528,22 @@ window.checkSessionStatus = async function() {
             <h3 class="font-extrabold text-xl mb-1 truncate" style="color: var(--color-primary);">${product.name}</h3>
             <p class="text-gray-500 text-sm mb-3 line-clamp-2 h-10">${product.description}</p>
             <div class="mt-auto flex items-center justify-between">
-              <div>
-                 ${isDeal ? `
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-400 line-through">$${product.price.toFixed(2)}</span>
-                        <span class="text-2xl font-extrabold text-red-600">$${displayPrice.toFixed(2)}</span>
-                    </div>
-                 ` : `
-                    <span class="text-2xl font-extrabold" style="color: var(--color-secondary);">$${displayPrice.toFixed(2)}</span>
-                 `}
-              </div>
-              ${product.stock_status === 'in_stock' ? '<span class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-bold">In Stock</span>' : '<span class="px-3 py-1 bg-red-100 text-red-700 text-xs rounded-full font-bold">Out</span>'}
+            <div>
+              ${!state.user ? `
+                <button onclick="navigate('auth')" class="price-placeholder hover:underline">
+                  Login to check prices →
+                </button>
+              ` : isDeal ? `
+                  <div class="flex items-center gap-2">
+                      <span class="text-sm text-gray-400 line-through price-reveal">$${product.price.toFixed(2)}</span>
+                      <span class="text-2xl font-extrabold text-red-600 price-reveal">$${displayPrice.toFixed(2)}</span>
+                  </div>
+               ` : `
+                  <span class="text-2xl font-extrabold price-reveal" style="color: var(--color-secondary);">$${displayPrice.toFixed(2)}</span>
+               `}
             </div>
+            ${product.stock_status === 'in_stock' ? '<span class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-bold">In Stock</span>' : '<span class="px-3 py-1 bg-red-100 text-red-700 text-xs rounded-full font-bold">Out</span>'}
+          </div>
           </div>
         </div>
       `;
@@ -1619,7 +1625,34 @@ window.setProductImage = (index) => {
         }, 50);
     }, 250);
 };
-    
+
+    function revealPrices() {
+        if (!state.user) return;
+        
+        const priceElements = document.querySelectorAll('.price-reveal');
+        
+        gsap.from(priceElements, {
+          duration: 0.8,
+          opacity: 0,
+          scale: 0.8,
+          rotateX: -90,
+          transformOrigin: "50% 50%",
+          stagger: 0.1,
+          ease: "back.out(1.7)",
+          onStart: function() {
+            // Add a subtle glow effect
+            gsap.to(priceElements, {
+              textShadow: "0 0 20px rgba(212, 175, 55, 0.5)",
+              duration: 0.3,
+              yoyo: true,
+              repeat: 1
+            });
+          }
+        });
+      }
+
+
+      
     function animation(currentTime) {
         if (!startTime) startTime = currentTime;
         const timeElapsed = currentTime - startTime;
@@ -1875,15 +1908,19 @@ window.setProductImage = (index) => {
                 <h1 class="text-4xl font-extrabold text-gray-900 mt-2">${product.name}</h1>
               </div>
               
-              ${isDeal ? `
+              ${!state.user ? `
+                  <button onclick="navigate('auth')" class="price-placeholder text-2xl hover:underline mb-6">
+                    Login to check prices →
+                  </button>
+              ` : isDeal ? `
                   <div class="flex items-center gap-3 mb-6">
-                      <span class="text-xl text-gray-400 line-through">$${product.price.toFixed(2)}</span>
-                      <p class="text-3xl font-bold text-red-600">$${displayPrice.toFixed(2)}</p>
+                      <span class="text-xl text-gray-400 line-through price-reveal">$${product.price.toFixed(2)}</span>
+                      <p class="text-3xl font-bold text-red-600 price-reveal">$${displayPrice.toFixed(2)}</p>
                   </div>
               ` : `
-                  <p class="text-3xl font-bold mb-6" style="color: var(--color-primary);">$${displayPrice.toFixed(2)}</p>
+                  <p class="text-3xl font-bold mb-6 price-reveal" style="color: var(--color-primary);">$${displayPrice.toFixed(2)}</p>
               `}
-              
+                
               <div class="text-gray-600 mb-8 space-y-4">
                 <p class="text-lg leading-relaxed">${product.description}</p>
                 ${product.detailed_description ? `<div class="p-4 bg-gray-50 border-l-4" style="border-color: var(--color-accent);"><p>${product.detailed_description}</p></div>` : ''}
@@ -2633,6 +2670,7 @@ window.handleCheckout = handleCheckout;
         ${Footer()}
       `;
       initAllAnimations();
+      setTimeout(() => revealPrices(), 100);
     }
 
     window.toggleMenu = () => { 
