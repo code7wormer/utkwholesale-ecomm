@@ -537,61 +537,6 @@ async function ensureValidSession() {
       setTimeout(() => { toast.remove(); }, 3000);
     }
 
-
-
-
-     window.revealPrices = function() {
-        if (!state.user) return;
-        
-        const priceElements = document.querySelectorAll('.price-reveal');
-        
-        gsap.from(priceElements, {
-          duration: 0.8,
-          opacity: 0,
-          scale: 0.8,
-          rotateX: -90,
-          transformOrigin: "50% 50%",
-          stagger: 0.1,
-          ease: "back.out(1.7)",
-          onStart: function() {
-            // Add a subtle glow effect
-            gsap.to(priceElements, {
-              textShadow: "0 0 20px rgba(212, 175, 55, 0.5)",
-              duration: 0.3,
-              yoyo: true,
-              repeat: 1
-            });
-          }
-        });
-      }
-
-
-
-
-          // Image gallery navigation
-window.changeProductImage = (direction) => {
-    const mainImg = document.getElementById('main-product-image');
-    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
-    const currentIndex = parseInt(mainImg.getAttribute('data-current-index'));
-    const newIndex = (currentIndex + direction + images.length) % images.length;
-    
-    setProductImage(newIndex);
-};
-
-window.setProductImage = (index) => {
-    const mainImg = document.getElementById('main-product-image');
-    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
-    const thumbnails = document.querySelectorAll('.product-thumbnail');
-
-
-
-
-  
-
-
-
-
-    
     // --- 🔍 Improved Fuzzy Search Logic ---
     function levenshtein(a, b) {
       if(a.length === 0) return b.length; 
@@ -782,32 +727,6 @@ window.setProductImage = (index) => {
       }
     }
 
-
-
-
-  window.navigate = navigate;
-    window.addToCart = addToCart;
-    window.removeFromCart = removeFromCart;
-    window.updateQuantity = updateQuantity;
-    window.handleAuth = handleAuth;
-    window.handleGoogleLogin = handleGoogleLogin;
-    window.handleLogout = handleLogout;
-    window.setAuthMode = (mode) => { state.authMode = mode; 
-    render();
-    if (state.currentPage !== 'category') {
-      const bgElement = document.querySelector('.category-page-bg');
-      if (bgElement) {
-        bgElement.style.opacity = '0';
-        setTimeout(() => bgElement.remove(), 500);
-      }
-    }
-    };
-
-
-
-
-  
-
     function updateTheme(slug) {
       const theme = CATEGORY_THEMES[slug] || CATEGORY_THEMES['default'];
       document.documentElement.style.setProperty('--color-primary', theme.primary);
@@ -904,9 +823,6 @@ window.setProductImage = (index) => {
   }
 }
 
-   
-    
-    
     async function fetchCart() {
       // If not logged in, keep the local guest cart. Do not overwrite it.
       if (!state.user) return; 
@@ -1699,7 +1615,20 @@ window.checkSessionStatus = async function() {
     }
 
       // Image gallery navigation
+      // Image gallery navigation
+window.changeProductImage = (direction) => {
+    const mainImg = document.getElementById('main-product-image');
+    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
+    const currentIndex = parseInt(mainImg.getAttribute('data-current-index'));
+    const newIndex = (currentIndex + direction + images.length) % images.length;
+    
+    setProductImage(newIndex);
+};
 
+window.setProductImage = (index) => {
+    const mainImg = document.getElementById('main-product-image');
+    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
+    const thumbnails = document.querySelectorAll('.product-thumbnail');
     
     // Fade out
     mainImg.style.opacity = '0';
@@ -1728,7 +1657,31 @@ window.checkSessionStatus = async function() {
     }, 250);
 };
 
-   
+    window.revealPrices = function() {
+        if (!state.user) return;
+        
+        const priceElements = document.querySelectorAll('.price-reveal');
+        
+        gsap.from(priceElements, {
+          duration: 0.8,
+          opacity: 0,
+          scale: 0.8,
+          rotateX: -90,
+          transformOrigin: "50% 50%",
+          stagger: 0.1,
+          ease: "back.out(1.7)",
+          onStart: function() {
+            // Add a subtle glow effect
+            gsap.to(priceElements, {
+              textShadow: "0 0 20px rgba(212, 175, 55, 0.5)",
+              duration: 0.3,
+              yoyo: true,
+              repeat: 1
+            });
+          }
+        });
+      }
+
 
       
     function animation(currentTime) {
@@ -2766,7 +2719,23 @@ document.querySelectorAll('.image-nav-btn').forEach(btn => {
         appContainer.classList.remove('sidebar-open');
       }
     };
-    
+    window.navigate = navigate;
+    window.addToCart = addToCart;
+    window.removeFromCart = removeFromCart;
+    window.updateQuantity = updateQuantity;
+    window.handleAuth = handleAuth;
+    window.handleGoogleLogin = handleGoogleLogin;
+    window.handleLogout = handleLogout;
+    window.setAuthMode = (mode) => { state.authMode = mode; 
+    render();
+    if (state.currentPage !== 'category') {
+      const bgElement = document.querySelector('.category-page-bg');
+      if (bgElement) {
+        bgElement.style.opacity = '0';
+        setTimeout(() => bgElement.remove(), 500);
+      }
+    }
+    };
 
     async function fetchInitialProducts() {
         const { data, error } = await supabase.from('products').select('*').eq('is_active', true);
@@ -2821,3 +2790,4 @@ document.querySelectorAll('.image-nav-btn').forEach(btn => {
   </script>
 </body>
 </html>
+
