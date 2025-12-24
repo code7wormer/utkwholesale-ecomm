@@ -1125,13 +1125,20 @@ window.checkSessionStatus = async function() {
     return;
   }
   
-  const form = e.target;
-const submitButton = e.target.tagName === 'FORM' ? e.target.querySelector('button[type="submit"]') : e.target;  
+ const form = e.target.tagName === 'FORM' ? e.target : e.target.closest('form');
+  if (!form) {
+    console.error("Form not found!");
+    return;
+  }
+  
+  const submitButton = form.querySelector('button[type="submit"]');
+  
   try {
     // Disable button
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<div class="loader mx-auto"></div>';
-    
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<div class="loader mx-auto"></div>';
+    }
     // Build product
     const isDeal = form.is_deal.checked;
     const newProduct = {
