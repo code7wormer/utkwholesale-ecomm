@@ -2701,14 +2701,10 @@ window.handleCheckout = handleCheckout;
         ${Footer()}
       `;
       initAllAnimations();
-      if (state.user && typeof revealPrices === 'function') revealPrices();
-      // Attach image navigation listeners
+      if (state.user && window.revealPrices) window.revealPrices();
+      // Attach image navigation listenersi
 document.querySelectorAll('.image-nav-btn').forEach(btn => {
-  btn.onclick = () => {
-    if (typeof changeProductImage === 'function') {
-      changeProductImage(parseInt(btn.dataset.imageNav));
-    }
-  };
+  btn.onclick = () => window.changeProductImage(parseInt(btn.dataset.imageNav));
 });
     }
 
