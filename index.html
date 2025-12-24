@@ -1539,6 +1539,8 @@ window.checkSessionStatus = async function() {
             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center gap-3 opacity-0 transition-all duration-300">
               <button onclick="navigate('product', '${product.slug}'); return false;" class="bg-white text-gray-900 px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-gray-50 shadow-lg transform hover:scale-105 transition-all">View Details</button>
               <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg transform hover:scale-105 transition-all" style="background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%); color: white;">Add to Cart</button>
+    
+            </div>
             </div>
           <div class="p-4 flex flex-col flex-grow">
             <h3 class="font-extrabold text-xl mb-1 truncate" style="color: var(--color-primary);">${product.name}</h3>
@@ -1907,8 +1909,8 @@ window.checkSessionStatus = async function() {
                   Add to Cart
                 </button>
                 <button id="share-product-btn" onclick="shareProduct('${product.slug}')" class="bg-gray-800 text-white px-8 py-4 rounded-lg font-bold transition-all text-lg shadow-lg hover:shadow-xl">
-                  Share
-                </button>
+    Share
+  </button>
               </div>
             </div>
           </div>
@@ -2397,12 +2399,10 @@ window.checkSessionStatus = async function() {
         animateSidebar();
       }
     }, 50);
-      initCardHoverAnimations(); 
-    
-    }
+      initCardHoverAnimations();
+      initShareButtonAnimation();
+  }
 // Ensure GSAP is loaded before animating
-
-    
 if (typeof gsap === 'undefined') {
   // GSAP didn't load, show everything immediately
   document.querySelectorAll('.product-card-animate, .category-card-animate, .hero-title, .hero-subtitle, .hero-cta').forEach(el => {
