@@ -1821,7 +1821,7 @@ window.checkSessionStatus = async function() {
         <div class="flex-1 max-w-7xl mx-auto px-4 py-12 page-enter">
           <button
       onpointerdown="this.classList.add('scale-95')"
-      onclick="setTimeout(() => navigate('home'), 80)"
+      onclick="setTimeout(() => window.history.back(), 80)"
       class="back-btn-enter mb-6 z-50 relative group flex items-center gap-2
              bg-white px-4 py-2 rounded-lg shadow-sm
              text-gray-500 font-semibold
