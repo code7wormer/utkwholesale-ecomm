@@ -1129,41 +1129,41 @@ window.checkSessionStatus = async function() {
       return;
     }
     
-    console.log("Step 2: Validating session...");
+    console.log("Step 2: Checking and refreshing session...");
+
+try {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  
+  if (!session || error) {
+    alert("Not logged in. Please log in again.");
+    navigate('auth');
+    return;
+  }
+  
+  const expiresAt = session.expires_at * 1000;
+  const now = Date.now();
+  const fiveMinutes = 5 * 60 * 1000;
+  
+  // Auto-refresh if session expires in less than 5 minutes
+  if (expiresAt - now < fiveMinutes) {
+    console.log("Session expiring soon, auto-refreshing...");
+    const { error: refreshError } = await supabase.auth.refreshSession();
     
-    // Check if session is actually valid
-    let sessionValid = false;
-    try {
-      const { data: { session }, error } = await Promise.race([
-        supabase.auth.getSession(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
-      ]);
-      
-      if (session && !error) {
-        // Check token expiry
-        const expiresAt = session.expires_at * 1000;
-        const now = Date.now();
-        
-        if (expiresAt > now) {
-          sessionValid = true;
-          console.log("Session is valid");
-        } else {
-          console.log("Session expired");
-        }
-      }
-    } catch (err) {
-      console.warn("Session check failed:", err.message);
-    }
-    
-    // If session is invalid or check timed out, reload page
-    if (!sessionValid) {
-      alert("Your session has expired. Please refresh the page and try again.");
-      const shouldReload = confirm("Click OK to refresh now, or Cancel to refresh manually.");
-      if (shouldReload) {
-        window.location.reload();
-      }
+    if (refreshError) {
+      alert("Session refresh failed. Please log in again.");
+      navigate('auth');
       return;
     }
+    console.log("✅ Session refreshed successfully");
+  } else {
+    console.log("✅ Session valid");
+  }
+} catch (err) {
+  console.error("Session error:", err);
+  alert("Authentication error. Please log in again.");
+  navigate('auth');
+  return;
+}
     
     console.log("Step 3: Getting form data...");
     
