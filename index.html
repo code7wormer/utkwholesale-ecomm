@@ -1132,7 +1132,17 @@ window.checkSessionStatus = async function() {
     console.log("Step 2: Checking and refreshing session...");
 
 try {
-  const { data: { session }, error } = await supabase.auth.getSession();
+  console.log("Fetching session...");
+  
+  // Add timeout to prevent hanging forever
+  const sessionPromise = supabase.auth.getSession();
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error('Session check timeout')), 8000)
+  );
+  
+  const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]);
+  
+  console.log("Session fetched:", session ? "exists" : "null");
   
   if (!session || error) {
     alert("Not logged in. Please log in again.");
@@ -1144,12 +1154,15 @@ try {
   const now = Date.now();
   const fiveMinutes = 5 * 60 * 1000;
   
+  console.log("Session expires in:", Math.round((expiresAt - now) / 1000 / 60), "minutes");
+  
   // Auto-refresh if session expires in less than 5 minutes
   if (expiresAt - now < fiveMinutes) {
     console.log("Session expiring soon, auto-refreshing...");
     const { error: refreshError } = await supabase.auth.refreshSession();
     
     if (refreshError) {
+      console.error("Refresh error:", refreshError);
       alert("Session refresh failed. Please log in again.");
       navigate('auth');
       return;
@@ -1160,8 +1173,13 @@ try {
   }
 } catch (err) {
   console.error("Session error:", err);
-  alert("Authentication error. Please log in again.");
-  navigate('auth');
+  
+  if (err.message === 'Session check timeout') {
+    alert("Session check is taking too long. Please try again or refresh the page.");
+  } else {
+    alert("Authentication error. Please log in again.");
+    navigate('auth');
+  }
   return;
 }
     
