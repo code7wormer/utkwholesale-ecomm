@@ -863,6 +863,21 @@ window.setProductImage = (index) => {
   }
 }
 
+
+  //LINK GENERATOR
+window.shareProduct = (productSlug) => {
+  const productUrl = `${window.location.origin}${window.location.pathname}#product-${productSlug}`;
+  
+  // Copy to clipboard
+  navigator.clipboard.writeText(productUrl).then(() => {
+    showToast("Product link copied to clipboard!");
+  }).catch(() => {
+    // Fallback if clipboard fails
+    alert(`Share this link:\n${productUrl}`);
+  });
+};
+
+    
     async function fetchCart() {
       // If not logged in, keep the local guest cart. Do not overwrite it.
       if (!state.user) return; 
@@ -1524,6 +1539,7 @@ window.checkSessionStatus = async function() {
             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center gap-3 opacity-0 transition-all duration-300">
               <button onclick="navigate('product', '${product.slug}'); return false;" class="bg-white text-gray-900 px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-gray-50 shadow-lg transform hover:scale-105 transition-all">View Details</button>
               <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg transform hover:scale-105 transition-all" style="background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-dark) 100%); color: white;">Add to Cart</button>
+              <button onclick="shareProduct('${product.slug}'); event.stopPropagation();" class="bg-gray-800 text-white px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-gray-700 shadow-lg transform hover:scale-105 transition-all">Share</button>
             </div>
             </div>
           <div class="p-4 flex flex-col flex-grow">
@@ -2175,7 +2191,49 @@ window.checkSessionStatus = async function() {
     });
   });
 }
+
+
+    function initShareButtonAnimation() {
+  const cards = document.querySelectorAll('.product-card-animate');
+  
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      const shareBtn = card.querySelector('button:last-child'); // Gets the share button
+      if (shareBtn && shareBtn.textContent === 'Share') {
+        
+        // Continuous pulse glow
+        gsap.to(shareBtn, {
+          boxShadow: "0 0 20px rgba(212, 175, 55, 0.8), 0 0 40px rgba(212, 175, 55, 0.4)",
+          duration: 0.8,
+          ease: "power1.inOut",
+          yoyo: true,
+          repeat: -1 // Infinite loop
+        });
+        
+        // Small scale pulse
+        gsap.to(shareBtn, {
+          scale: 1.05,
+          duration: 0.8,
+          ease: "power1.inOut",
+          yoyo: true,
+          repeat: -1
+        });
+      }
+    });
     
+    card.addEventListener('mouseleave', () => {
+      const shareBtn = card.querySelector('button:last-child');
+      if (shareBtn) {
+        gsap.killTweensOf(shareBtn); // Stop all animations
+        gsap.to(shareBtn, {
+          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+          scale: 1,
+          duration: 0.3
+        });
+      }
+    });
+  });
+}
     function animateProductCards() {
   const cards = document.querySelectorAll('.product-card-animate');
   if (cards.length === 0) return;
@@ -2358,6 +2416,7 @@ window.checkSessionStatus = async function() {
       }
     }, 50);
       initCardHoverAnimations();
+      initShareButtonAnimation();
   }
 // Ensure GSAP is loaded before animating
 if (typeof gsap === 'undefined') {
