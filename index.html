@@ -2100,7 +2100,7 @@ window.setProductImage = (index) => {
                             <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700">Is Active</label>
                         </div>
                     </div>
-                    <button type="submit" form="add-product-form" onclick="console.log('Button Clicked!')" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-md hover:shadow-lg" style="background-color: var(--color-primary);">
+                    <button type="submit" onclick="console.log('Button Clicked!')" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-md hover:shadow-lg" style="background-color: var(--color-primary);">
                         Add Product
                     </button>
                 </form>
@@ -2722,7 +2722,6 @@ window.handleCheckout = handleCheckout;
     window.handleAuth = handleAuth;
     window.handleGoogleLogin = handleGoogleLogin;
     window.handleLogout = handleLogout;
-    window.handleAddProduct = handleAddProduct;
     window.setAuthMode = (mode) => { state.authMode = mode; 
     render();
     if (state.currentPage !== 'category') {
