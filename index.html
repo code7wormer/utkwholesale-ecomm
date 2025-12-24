@@ -1657,7 +1657,7 @@ window.setProductImage = (index) => {
     }, 250);
 };
 
-    function revealPrices() {
+    window.revealPrices = function() {
         if (!state.user) return;
         
         const priceElements = document.querySelectorAll('.price-reveal');
