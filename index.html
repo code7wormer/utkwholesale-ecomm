@@ -1183,6 +1183,7 @@ window.checkSessionStatus = async function() {
     
     if (error) {
       console.error("Supabase Error:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
       
       // Check if it's an auth error
       if (error.message.includes('JWT') || error.message.includes('expired') || error.message.includes('session')) {
@@ -1214,6 +1215,8 @@ window.checkSessionStatus = async function() {
     
   } catch (err) {
     console.error("=== EXCEPTION ===", err);
+    console.error("Error message:", err.message);
+    console.error("Error stack:", err.stack);
     
     const form = document.getElementById('add-product-form');
     const submitButton = form?.querySelector('button[type="submit"]');
