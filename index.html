@@ -1708,7 +1708,7 @@ window.setProductImage = (index) => {
       // 🌟 Wrapper to hold the Normal Product Card inside slider logic
       const renderSliderCardWrapper = (product) => {
         return `
-        <div class="min-w-[280px] w-[280px] h-full snap-start">
+        <div class="min-w-[280px] w-[280px] h-full">
              ${ProductCard(product)}
         </div>
         `;
@@ -1744,7 +1744,7 @@ window.setProductImage = (index) => {
             <div class="relative group">
                 <button onclick="smoothScrollSection('bestsellers-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
                 
-                <div id="bestsellers-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide snap-x items-stretch">
+                <div id="bestsellers-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide items-stretch">
                     ${bestsellers.length > 0 ? bestsellers.map(p => renderSliderCardWrapper(p)).join('') : '<p class="text-gray-500 pl-2">No bestsellers marked yet.</p>'}
                 </div>
 
@@ -1768,7 +1768,7 @@ window.setProductImage = (index) => {
             <div class="relative group">
                 <button onclick="smoothScrollSection('deals-scroll', 'left')" class="md:hidden absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 p-2 rounded-full shadow-lg backdrop-blur-sm border">${Icon.ChevronLeft()}</button>
 
-                <div id="deals-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide snap-x items-stretch">
+                <div id="deals-scroll" class="flex overflow-x-auto gap-6 pb-6 px-2 scrollbar-hide items-stretch">
                     ${monthlyDeals.length > 0 ? monthlyDeals.map(p => renderSliderCardWrapper(p)).join('') : '<p class="text-gray-500 pl-2">No active deals right now.</p>'}
                 </div>
                 
