@@ -1125,20 +1125,14 @@ window.checkSessionStatus = async function() {
     return;
   }
   
- const form = e.target.tagName === 'FORM' ? e.target : e.target.closest('form');
-  if (!form) {
-    console.error("Form not found!");
-    return;
-  }
-  
+  const form = e.target;
   const submitButton = form.querySelector('button[type="submit"]');
   
   try {
     // Disable button
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.innerHTML = '<div class="loader mx-auto"></div>';
-    }
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<div class="loader mx-auto"></div>';
+    
     // Build product
     const isDeal = form.is_deal.checked;
     const newProduct = {
@@ -1258,9 +1252,7 @@ window.checkSessionStatus = async function() {
             is_bestseller: form.is_bestseller.checked
         };
 
-        console.log("Attempting insert...");
-const { error } = await window.supabaseClient.from('products').insert([newProduct]);
-console.log("Insert returned:", error);
+        const { error } = await supabase.from('products').update(updates).eq('id', id);
         if (error) {
             alert("Error updating product: " + error.message);
         } else {
@@ -2030,7 +2022,7 @@ console.log("Insert returned:", error);
                             <label for="is_active" class="ml-2 block text-sm font-medium text-gray-700">Is Active</label>
                         </div>
                     </div>
-                    <button type="submit" onclick="handleAddProduct(event)" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-md hover:shadow-lg" style="background-color: var(--color-primary);">
+                    <button type="submit" onclick="console.log('Button Clicked!')" class="w-full text-white py-3 rounded-lg font-bold transition-colors shadow-md hover:shadow-lg" style="background-color: var(--color-primary);">
                         Add Product
                     </button>
                 </form>
@@ -2716,4 +2708,3 @@ window.handleCheckout = handleCheckout;
   </script>
 </body>
 </html>
-
