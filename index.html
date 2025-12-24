@@ -892,6 +892,7 @@ window.setProductImage = (index) => {
           return {
               ...product,           // Spread original product data
               id: item.product_id,  // ⚠️ CRITICAL: Ensure ID matches the product ID
+              image_url: product.image_url.split(',')[0].trim(),
               quantity: item.quantity,
               price: finalPrice     // Use the calculated deal price
           };
