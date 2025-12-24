@@ -2701,7 +2701,7 @@ window.handleCheckout = handleCheckout;
         ${Footer()}
       `;
       initAllAnimations();
-      if (state.user) revealPrices();
+      if (state.user && typeof revealPrices === 'function') revealPrices();
       // Attach image navigation listeners
 document.querySelectorAll('.image-nav-btn').forEach(btn => {
   btn.onclick = () => changeProductImage(parseInt(btn.dataset.imageNav));
