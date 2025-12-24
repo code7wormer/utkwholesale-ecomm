@@ -2216,20 +2216,6 @@ window.checkSessionStatus = async function() {
     repeat: -1
   });
 }
-    
-    card.addEventListener('mouseleave', () => {
-      const shareBtn = card.querySelector('button:last-child');
-      if (shareBtn) {
-        gsap.killTweensOf(shareBtn); // Stop all animations
-        gsap.to(shareBtn, {
-          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-          scale: 1,
-          duration: 0.3
-        });
-      }
-    });
-  });
-}
     function animateProductCards() {
   const cards = document.querySelectorAll('.product-card-animate');
   if (cards.length === 0) return;
