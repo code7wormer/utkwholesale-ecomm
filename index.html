@@ -537,6 +537,38 @@ async function ensureValidSession() {
       setTimeout(() => { toast.remove(); }, 3000);
     }
 
+
+
+
+     window.revealPrices = function() {
+        if (!state.user) return;
+        
+        const priceElements = document.querySelectorAll('.price-reveal');
+        
+        gsap.from(priceElements, {
+          duration: 0.8,
+          opacity: 0,
+          scale: 0.8,
+          rotateX: -90,
+          transformOrigin: "50% 50%",
+          stagger: 0.1,
+          ease: "back.out(1.7)",
+          onStart: function() {
+            // Add a subtle glow effect
+            gsap.to(priceElements, {
+              textShadow: "0 0 20px rgba(212, 175, 55, 0.5)",
+              duration: 0.3,
+              yoyo: true,
+              repeat: 1
+            });
+          }
+        });
+      }
+
+
+
+
+    
     // --- 🔍 Improved Fuzzy Search Logic ---
     function levenshtein(a, b) {
       if(a.length === 0) return b.length; 
@@ -823,6 +855,9 @@ async function ensureValidSession() {
   }
 }
 
+   
+    
+    
     async function fetchCart() {
       // If not logged in, keep the local guest cart. Do not overwrite it.
       if (!state.user) return; 
@@ -1657,31 +1692,7 @@ window.setProductImage = (index) => {
     }, 250);
 };
 
-    window.revealPrices = function() {
-        if (!state.user) return;
-        
-        const priceElements = document.querySelectorAll('.price-reveal');
-        
-        gsap.from(priceElements, {
-          duration: 0.8,
-          opacity: 0,
-          scale: 0.8,
-          rotateX: -90,
-          transformOrigin: "50% 50%",
-          stagger: 0.1,
-          ease: "back.out(1.7)",
-          onStart: function() {
-            // Add a subtle glow effect
-            gsap.to(priceElements, {
-              textShadow: "0 0 20px rgba(212, 175, 55, 0.5)",
-              duration: 0.3,
-              yoyo: true,
-              repeat: 1
-            });
-          }
-        });
-      }
-
+   
 
       
     function animation(currentTime) {
