@@ -2701,7 +2701,7 @@ window.handleCheckout = handleCheckout;
         ${Footer()}
       `;
       initAllAnimations();
-      setTimeout(() => revealPrices(), 100);
+      if (state.user) revealPrices();
     }
 
     window.toggleMenu = () => { 
