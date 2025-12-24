@@ -568,6 +568,29 @@ async function ensureValidSession() {
 
 
 
+          // Image gallery navigation
+window.changeProductImage = (direction) => {
+    const mainImg = document.getElementById('main-product-image');
+    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
+    const currentIndex = parseInt(mainImg.getAttribute('data-current-index'));
+    const newIndex = (currentIndex + direction + images.length) % images.length;
+    
+    setProductImage(newIndex);
+};
+
+window.setProductImage = (index) => {
+    const mainImg = document.getElementById('main-product-image');
+    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
+    const thumbnails = document.querySelectorAll('.product-thumbnail');
+
+
+
+
+  
+
+
+
+
     
     // --- 🔍 Improved Fuzzy Search Logic ---
     function levenshtein(a, b) {
@@ -1650,20 +1673,7 @@ window.checkSessionStatus = async function() {
     }
 
       // Image gallery navigation
-      // Image gallery navigation
-window.changeProductImage = (direction) => {
-    const mainImg = document.getElementById('main-product-image');
-    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
-    const currentIndex = parseInt(mainImg.getAttribute('data-current-index'));
-    const newIndex = (currentIndex + direction + images.length) % images.length;
-    
-    setProductImage(newIndex);
-};
 
-window.setProductImage = (index) => {
-    const mainImg = document.getElementById('main-product-image');
-    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
-    const thumbnails = document.querySelectorAll('.product-thumbnail');
     
     // Fade out
     mainImg.style.opacity = '0';
