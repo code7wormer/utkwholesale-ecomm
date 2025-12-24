@@ -333,6 +333,34 @@
       animation: animate-fade-in 1s ease-out forwards;
       animation-play-state: running;
     }
+
+
+
+
+    /* Price visibility styles */
+.price-hidden {
+  filter: blur(8px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.price-placeholder {
+  font-size: 0.875rem;
+  color: var(--color-accent);
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.price-placeholder:hover {
+  color: var(--color-accent-dark);
+}
+
+/* GSAP reveal animation styles */
+.price-reveal {
+  display: inline-block;
+  overflow: hidden;
+}
 /* Prevent flash of content before animations */
     .product-card-animate,
     .category-card-animate {
