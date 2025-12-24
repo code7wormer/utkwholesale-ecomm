@@ -1118,23 +1118,36 @@ window.checkSessionStatus = async function() {
 };
   async function handleAddProduct(e) {
   e.preventDefault();
-  
-  if (!state.user || !state.isAdmin) {
-    alert("Not logged in as Admin");
-    navigate('auth');
-    return;
-  }
-  
-  const form = e.target;
-  const submitButton = form.querySelector('button[type="submit"]');
+  console.log("=== handleAddProduct START ===");
   
   try {
-    // Disable button
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<div class="loader mx-auto"></div>';
+    console.log("Step 1: Checking admin status...");
     
-    // Build product
+    if (!state.user || !state.isAdmin) {
+      alert("You are not logged in as Admin.");
+      navigate('auth');
+      return;
+    }
+    
+    console.log("Step 2: Session check - using existing state");
+// Trust that state.user is valid - Supabase will reject if not
+
+
+    
+    console.log("Step 3: Getting form data...");
+    
+    const form = e.target;
+    const submitButton = form.querySelector('button[type="submit"]');
+    
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<div class="loader mx-auto"></div>';
+    }
+    
+    console.log("Step 4: Building product object...");
+    
     const isDeal = form.is_deal.checked;
+    
     const newProduct = {
       name: form.name.value,
       description: form.description.value,
@@ -1142,7 +1155,7 @@ window.checkSessionStatus = async function() {
       price: parseFloat(form.price.value),
       image_url: form.image_url.value,
       category_id: form.category_id.value,
-      slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Date.now(), 
+      slug: form.name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-*|-*$/g, '') + '-' + Math.floor(Math.random() * 1000), 
       stock_status: form.stock_status.value,
       is_active: form.is_active.checked,
       is_deal: isDeal,
@@ -1150,33 +1163,79 @@ window.checkSessionStatus = async function() {
       is_bestseller: form.is_bestseller.checked
     };
 
-    // Insert
-    const { error } = await supabase.from('products').insert([newProduct]);
+    console.log("Step 5: Product object created");
+  console.log("Step 6: Refreshing session before insert...");
+
+// Force refresh session to get a fresh token
+const { error: refreshError } = await supabase.auth.refreshSession();
+if (refreshError) {
+  alert("Session expired. Please log in again.");
+  navigate('auth');
+  return;
+}
+
+console.log("Session refreshed, inserting...");
+
+const { error } = await supabase
+  .from('products')
+  .insert([newProduct]);
+
+console.log("Step 7: Insert complete");
     
     if (error) {
-      if (error.message?.includes('JWT') || error.code === 'PGRST301') {
-        alert("Session expired. Refreshing page...");
-        window.location.reload();
+      console.error("Supabase Error:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      
+      // Check if it's an auth error
+      if (error.message.includes('JWT') || error.message.includes('expired') || error.message.includes('session')) {
+        alert("Your session has expired. The page will reload.");
+        setTimeout(() => window.location.reload(), 1500);
         return;
       }
-      throw error;
+      
+      alert("Error adding product: " + error.message);
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Add Product';
+      }
+      return;
     }
     
-    // Success
-    showToast("Product added!");
+    console.log("Step 8: Success!");
+    showToast("Product added successfully!");
     form.reset();
     document.getElementById('add-deal-price-container')?.classList.add('hidden');
     
     await fetchAdminProducts();
     await fetchInitialProducts();
     
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.innerHTML = 'Add Product';
+    }
+    
   } catch (err) {
-    console.error("Add product error:", err);
-    alert("Error: " + (err.message || 'Failed to add product'));
-  } finally {
-    submitButton.disabled = false;
-    submitButton.innerHTML = 'Add Product';
+    console.error("=== EXCEPTION ===", err);
+    console.error("Error message:", err.message);
+    console.error("Error stack:", err.stack);
+    
+    const form = document.getElementById('add-product-form');
+    const submitButton = form?.querySelector('button[type="submit"]');
+    
+    // If timeout, session is dead - reload required
+    if (err.message === 'INSERT_TIMEOUT' || err.message === 'timeout') {
+      alert("Connection timeout. Your session may have expired.\n\nThe page will refresh automatically.");
+      setTimeout(() => window.location.reload(), 2000);
+    } else {
+      alert("Error: " + err.message);
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Add Product';
+      }
+    }
   }
+  
+  console.log("=== handleAddProduct END ===");
 }
     window.handleAddProduct = handleAddProduct;
 
