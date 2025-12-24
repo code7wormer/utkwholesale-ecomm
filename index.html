@@ -2825,6 +2825,13 @@ window.handleCheckout = handleCheckout;
             render();
         }
       });
+      // Add this at the end of init() function, before the closing }
+// Handle direct product links
+const hash = window.location.hash;
+if (hash.startsWith('#product-')) {
+  const slug = hash.replace('#product-', '');
+  navigate('product', slug);
+}
     }
     
     init();
