@@ -556,7 +556,47 @@ async function ensureValidSession() {
       return matrix[b.length][a.length];
     }
 
+          // Image gallery navigation
+window.changeProductImage = (direction) => {
+    const mainImg = document.getElementById('main-product-image');
+    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
+    const currentIndex = parseInt(mainImg.getAttribute('data-current-index'));
+    const newIndex = (currentIndex + direction + images.length) % images.length;
+    
+    setProductImage(newIndex);
+};
 
+window.setProductImage = (index) => {
+    const mainImg = document.getElementById('main-product-image');
+    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
+    const thumbnails = document.querySelectorAll('.product-thumbnail');
+    
+    // Fade out
+    mainImg.style.opacity = '0';
+    mainImg.style.transform = 'scale(0.95)';
+    
+    setTimeout(() => {
+        mainImg.src = images[index];
+        mainImg.setAttribute('data-current-index', index);
+        
+        // Update thumbnail borders
+        thumbnails.forEach((thumb, idx) => {
+            if (idx === index) {
+                thumb.classList.remove('border-gray-200');
+                thumb.classList.add('border-indigo-600');
+            } else {
+                thumb.classList.remove('border-indigo-600');
+                thumb.classList.add('border-gray-200');
+            }
+        });
+        
+        // Fade in with slight delay
+        setTimeout(() => {
+            mainImg.style.opacity = '1';
+            mainImg.style.transform = 'scale(1)';
+        }, 50);
+    }, 250);
+};
     // 🌟 Helper to update image previews
     window.updateImagePreview = (url, previewId) => {
         const img = document.getElementById(previewId);
@@ -1615,47 +1655,7 @@ window.checkSessionStatus = async function() {
     }
 
       // Image gallery navigation
-      // Image gallery navigation
-window.changeProductImage = (direction) => {
-    const mainImg = document.getElementById('main-product-image');
-    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
-    const currentIndex = parseInt(mainImg.getAttribute('data-current-index'));
-    const newIndex = (currentIndex + direction + images.length) % images.length;
-    
-    setProductImage(newIndex);
-};
 
-window.setProductImage = (index) => {
-    const mainImg = document.getElementById('main-product-image');
-    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
-    const thumbnails = document.querySelectorAll('.product-thumbnail');
-    
-    // Fade out
-    mainImg.style.opacity = '0';
-    mainImg.style.transform = 'scale(0.95)';
-    
-    setTimeout(() => {
-        mainImg.src = images[index];
-        mainImg.setAttribute('data-current-index', index);
-        
-        // Update thumbnail borders
-        thumbnails.forEach((thumb, idx) => {
-            if (idx === index) {
-                thumb.classList.remove('border-gray-200');
-                thumb.classList.add('border-indigo-600');
-            } else {
-                thumb.classList.remove('border-indigo-600');
-                thumb.classList.add('border-gray-200');
-            }
-        });
-        
-        // Fade in with slight delay
-        setTimeout(() => {
-            mainImg.style.opacity = '1';
-            mainImg.style.transform = 'scale(1)';
-        }, 50);
-    }, 250);
-};
 
     window.revealPrices = function() {
         if (!state.user) return;
