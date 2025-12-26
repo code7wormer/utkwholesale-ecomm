@@ -714,6 +714,9 @@ window.setProductImage = (index) => {
       if (bgElement && page !== 'category') {
         bgElement.style.opacity = '0';
       }
+
+      updateURL(page, slug);
+      
       if (page === 'category' && slug) {
         const theme = CATEGORY_THEMES[slug] || CATEGORY_THEMES['default'];
         
@@ -767,6 +770,31 @@ window.setProductImage = (index) => {
       }
     }
 
+
+    
+    // Update URL hash when navigating
+function updateURL(page, slug = null) {
+      if (page === 'home') {
+        history.pushState(null, '', window.location.pathname);
+      } else if (page === 'product' && slug) {
+        history.pushState(null, '', `#product-${slug}`);
+      } else if (page === 'category' && slug) {
+        history.pushState(null, '', `#category-${slug}`);
+      } else if (page === 'cart') {
+        history.pushState(null, '', '#cart');
+      } else if (page === 'auth') {
+        history.pushState(null, '', '#auth');
+      } else if (page === 'admin') {
+        history.pushState(null, '', '#admin');
+      } else if (page === 'about') {
+        history.pushState(null, '', '#about');
+      } else if (page === 'search-results') {
+        history.pushState(null, '', '#search');
+      }
+    }
+
+
+    
     function updateTheme(slug) {
       const theme = CATEGORY_THEMES[slug] || CATEGORY_THEMES['default'];
       document.documentElement.style.setProperty('--color-primary', theme.primary);
@@ -2814,13 +2842,36 @@ window.handleCheckout = handleCheckout;
             render();
         }
       });
-      // Add this at the end of init() function, before the closing }
 // Handle direct product links
 const hash = window.location.hash;
 if (hash.startsWith('#product-')) {
   const slug = hash.replace('#product-', '');
   navigate('product', slug);
 }
+// Handle browser back/forward buttons
+window.addEventListener('popstate', () => {
+  const hash = window.location.hash;
+  
+  if (!hash || hash === '#') {
+    navigate('home');
+  } else if (hash.startsWith('#product-')) {
+    const slug = hash.replace('#product-', '');
+    navigate('product', slug);
+  } else if (hash.startsWith('#category-')) {
+    const slug = hash.replace('#category-', '');
+    navigate('category', slug);
+  } else if (hash === '#cart') {
+    navigate('cart');
+  } else if (hash === '#auth') {
+    navigate('auth');
+  } else if (hash === '#admin') {
+    navigate('admin');
+  } else if (hash === '#about') {
+    navigate('about');
+  } else if (hash === '#search') {
+    navigate('search-results');
+  }
+});
     }
     
     init();
