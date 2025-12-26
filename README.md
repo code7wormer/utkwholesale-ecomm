@@ -1,17 +1,20 @@
-TODO
-- [x] - refining add to cart, outside it should show an added button, in the product page should show quantity to add(a -number+ thing that adds to cart based on the number the user has switched it to)
+# ShopHub Deployment Guide
 
-- [x] - Get All Categories added
+## Live Site
+Your site is live at: [https://your-project.pages.dev](https://your-project.pages.dev)
 
-- [x] - Monthly Deals On Front Page (client added)
+## How to Update
+1. Edit the `index.html` file in this repository
+2. Commit and push to GitHub
+3. Cloudflare Pages will auto-deploy in ~30 seconds
 
-- [x] - Best sellers (client added)
+## Support
+For technical support, contact: [your-email@example.com]
 
-- [x] - algo for adding products
-
-- [ ] - implement search
-- [ ] - email order
-
-few more pages so the site looks fuller
-
-finishing touches
+## Features
+- ✅ Supabase backend for products & cart
+- ✅ EmailJS for order notifications
+- ✅ Google OAuth login
+- ✅ Admin dashboard for product management
+- ✅ Real-time cart updates
+- ✅ Mobile-responsive design
