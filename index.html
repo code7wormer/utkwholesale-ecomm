@@ -678,7 +678,7 @@ window.setProductImage = (index) => {
 
         state.searchResults = results;
         state.searchQuery = query;
-        
+        state.searchCategory = catFilter;
         window.toggleSearch();
         navigate('search-results');
     }
@@ -789,7 +789,9 @@ function updateURL(page, slug = null) {
       } else if (page === 'about') {
         history.pushState(null, '', '#about');
       } else if (page === 'search-results') {
-        history.pushState(null, '', '#search');
+        const query = encodeURIComponent(state.searchQuery || '');
+        const category = state.searchCategory || 'all';
+        history.pushState(null, '', `#search?q=${query}&cat=${category}`);
       }
     }
 
@@ -2850,29 +2852,66 @@ if (hash.startsWith('#product-')) {
   navigate('product', slug);
 }
 // Handle browser back/forward buttons
-window.addEventListener('popstate', () => {
-  const hash = window.location.hash;
-  
-  if (!hash || hash === '#') {
-    navigate('home');
-  } else if (hash.startsWith('#product-')) {
-    const slug = hash.replace('#product-', '');
-    navigate('product', slug);
-  } else if (hash.startsWith('#category-')) {
-    const slug = hash.replace('#category-', '');
-    navigate('category', slug);
-  } else if (hash === '#cart') {
-    navigate('cart');
-  } else if (hash === '#auth') {
-    navigate('auth');
-  } else if (hash === '#admin') {
-    navigate('admin');
-  } else if (hash === '#about') {
-    navigate('about');
-  } else if (hash === '#search') {
-    navigate('search-results');
-  }
-});
+    window.addEventListener('popstate', () => {
+      const hash = window.location.hash;
+      
+      if (!hash || hash === '#') {
+        navigate('home');
+      } else if (hash.startsWith('#product-')) {
+        const slug = hash.replace('#product-', '');
+        navigate('product', slug);
+      } else if (hash.startsWith('#category-')) {
+        const slug = hash.replace('#category-', '');
+        navigate('category', slug);
+      } else if (hash === '#cart') {
+        navigate('cart');
+      } else if (hash === '#auth') {
+        navigate('auth');
+      } else if (hash === '#admin') {
+        navigate('admin');
+      } else if (hash === '#about') {
+        navigate('about');
+      } else if (hash.startsWith('#search')) {
+        // ADD THIS: Parse search parameters from URL
+        const params = new URLSearchParams(hash.split('?')[1] || '');
+        const query = decodeURIComponent(params.get('q') || '');
+        const category = params.get('cat') || 'all';
+        
+        if (query) {
+          // Re-run the search
+          let candidates = state.products;
+          if (category !== 'all') {
+            candidates = candidates.filter(p => p.category_id == category);
+          }
+          
+          const results = candidates.filter(p => {
+            const name = p.name.toLowerCase();
+            const desc = p.description.toLowerCase();
+            const words = name.split(/[\s-]+/);
+            
+            if (name.includes(query) || desc.includes(query)) return true;
+            
+            const threshold = query.length > 5 ? 2 : 1;
+            const wordMatch = words.some(word => {
+              if (Math.abs(word.length - query.length) > 3) return false;
+              return levenshtein(query, word) <= threshold;
+            });
+            
+            if (wordMatch) return true;
+            
+            const prefix = name.substring(0, query.length);
+            if (levenshtein(query, prefix) <= threshold) return true;
+            
+            return false;
+          });
+          
+          state.searchResults = results;
+          state.searchQuery = query;
+          state.searchCategory = category;
+          navigate('search-results');
+        }
+      }
+    });
     }
     
     init();
