@@ -77,39 +77,34 @@
       display: flex;
       flex-direction: column;
     }
-
-    /* 🔥 PAPER TEAR TRANSITION OVERLAY */
-#tear-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  display: none;
-}
-
-.tear-layer {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-  clip-path: polygon(
-    0% 0%, 
-    100% 0%, 
-    100% 100%, 
-    0% 100%
-  );
-}
-
-.tear-layer-1 {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 50%, #0f3460 100%);
-  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
-}
-
-.tear-layer-2 {
-  background: linear-gradient(135deg, var(--color-secondary) 0%, #0f3460 100%);
-  filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
-  opacity: 0.8;
-}
     
+    /* 🔥 CURTAIN TRANSITION - Using proven CodePen technique */
+    #tear-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;
+      display: none;
+      flex-direction: column;
+    }
+    
+    .tear-layer {
+      position: relative;
+      background: var(--color-primary);
+      height: 16.666%; /* 100% / 6 tiles = 16.666% each */
+      width: 0%;
+      transform-origin: left;
+    }
+    
+    /* Alternate colors for depth */
+    .tear-layer:nth-child(even) {
+      background: var(--color-secondary);
+    }
+    
+    .tear-layer:nth-child(3),
+    .tear-layer:nth-child(4) {
+      background: #0f3460;
+    }  
     /* 🌟 ANIMATION FIX: Use Keyframes so it plays on render */
     .sidebar-open .sidebar-wrapper { 
         animation: sidebarSlideIn 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
@@ -433,8 +428,12 @@ body {
 <body class="bg-gray-50 text-gray-800">
   <!-- 🔥 TEAR TRANSITION OVERLAY -->
 <div id="tear-overlay">
-  <div class="tear-layer tear-layer-1"></div>
-  <div class="tear-layer tear-layer-2"></div>
+  <span class="tear-layer"></span>
+  <span class="tear-layer"></span>
+  <span class="tear-layer"></span>
+  <span class="tear-layer"></span>
+  <span class="tear-layer"></span>
+  <span class="tear-layer"></span>
 </div>
   
   <div id="category-loader" class="fixed inset-0 z-[100] hidden flex-col items-center justify-center text-white" style="background-color: var(--color-primary);">
@@ -1384,91 +1383,50 @@ window.checkSessionStatus = async function() {
 
 
     // ==========================================
-// 🔥 EPIC PAPER TEAR TRANSITION TO HOME
-// ==========================================
-window.navigateHomeWithTear = function() {
-  const overlay = document.getElementById('tear-overlay');
-  const layer1 = overlay.querySelector('.tear-layer-1');
-  const layer2 = overlay.querySelector('.tear-layer-2');
-  
-  // Show overlay
-  overlay.style.display = 'block';
-  
-  // Create the tear timeline
-  const tearTimeline = gsap.timeline({
-    onComplete: () => {
-      // Navigate after tear completes
-      navigate('home');
-      
-      // Fade out overlay
-      gsap.to(overlay, {
-        opacity: 0,
-        duration: 0.5,
-        onComplete: () => {
-          overlay.style.display = 'none';
-          gsap.set(overlay, { opacity: 1 });
-          // Reset clip paths
-          gsap.set([layer1, layer2], {
-            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'
-          });
-        }
-      });
-    }
-  });
-  
-  // 🌟 THE MAGIC: Jagged tear pattern (like paper ripping)
-  const tearPattern1 = `polygon(
-    0% 0%, 
-    5% 2%, 10% 1%, 15% 3%, 20% 1%, 25% 4%, 30% 2%, 35% 5%, 40% 3%, 45% 6%, 
-    50% 4%, 55% 7%, 60% 5%, 65% 8%, 70% 6%, 75% 9%, 80% 7%, 85% 10%, 90% 8%, 95% 11%, 100% 9%,
-    100% 0%,
-    0% 0%
-  )`;
-  
-  const tearPattern2 = `polygon(
-    0% 0%, 
-    3% 3%, 8% 2%, 13% 5%, 18% 3%, 23% 6%, 28% 4%, 33% 7%, 38% 5%, 43% 8%, 
-    48% 6%, 53% 9%, 58% 7%, 63% 10%, 68% 8%, 73% 11%, 78% 9%, 83% 12%, 88% 10%, 93% 13%, 98% 11%, 100% 14%,
-    100% 0%,
-    0% 0%
-  )`;
-  
-  // Layer 1: Main tear with jagged edge
-  tearTimeline.to(layer1, {
-    clipPath: tearPattern1,
-    duration: 0.8,
-    ease: 'power2.in',
-    onUpdate: function() {
-      // Add shake effect during tear
-      const progress = this.progress();
-      const shake = Math.sin(progress * 20) * 5;
-      layer1.style.transform = `translateX(${shake}px)`;
-    }
-  });
-  
-  // Layer 2: Secondary tear (slightly delayed for depth)
-  tearTimeline.to(layer2, {
-    clipPath: tearPattern2,
-    duration: 0.7,
-    ease: 'power2.in'
-  }, '-=0.6');
-  
-  // Continue tearing down to reveal content
-  tearTimeline.to([layer1, layer2], {
-    clipPath: 'polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)',
-    duration: 0.6,
-    ease: 'power3.inOut',
-    stagger: 0.1
-  });
-  
-  // Add paper flutter effect
-  tearTimeline.to([layer1, layer2], {
-    rotationX: 45,
-    transformOrigin: 'top center',
-    duration: 0.3,
-    ease: 'power1.out'
-  }, '-=0.3');
-};
+    // 🔥 CURTAIN TRANSITION (Adapted from CodePen)
+    // ==========================================
+    window.navigateHomeWithTear = function() {
+    const overlay = document.getElementById('tear-overlay');
+    const layers = overlay.querySelectorAll('.tear-layer');
+    
+    // Show overlay
+    overlay.style.display = 'flex';
+    
+    // Reset all layers
+    gsap.set(layers, { width: '0%', left: '0%' });
+    
+    // Create timeline
+    const tl = gsap.timeline({
+      ease: "power4.inOut",
+      onComplete: () => {
+        // Navigate after animation
+        navigate('home');
+        // Hide overlay
+        gsap.set(overlay, { display: 'none' });
+      }
+    });
+    
+    // Step 1: Tiles slide in from left (staggered)
+    tl.to(layers, {
+      duration: 0.4,
+      width: "100%",
+      left: "0%",
+      delay: 0.1,
+      stagger: 0.05,
+    });
+    
+    // Step 2: Tiles slide out to right (reverse stagger)
+    tl.to(layers, {
+      duration: 0.4,
+      width: "100%",
+      left: "100%",
+      delay: 0.15,
+      stagger: -0.05,
+    });
+    
+    // Step 3: Reset for next time
+    tl.set(layers, { left: "0", width: "0" });
+    };
     // --- Components ---
 
     function Header() {
