@@ -77,6 +77,38 @@
       display: flex;
       flex-direction: column;
     }
+
+    /* 🔥 PAPER TEAR TRANSITION OVERLAY */
+#tear-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  display: none;
+}
+
+.tear-layer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  clip-path: polygon(
+    0% 0%, 
+    100% 0%, 
+    100% 100%, 
+    0% 100%
+  );
+}
+
+.tear-layer-1 {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 50%, #0f3460 100%);
+  filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
+}
+
+.tear-layer-2 {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, #0f3460 100%);
+  filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
+  opacity: 0.8;
+}
     
     /* 🌟 ANIMATION FIX: Use Keyframes so it plays on render */
     .sidebar-open .sidebar-wrapper { 
@@ -399,6 +431,11 @@ body {
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
+  <!-- 🔥 TEAR TRANSITION OVERLAY -->
+<div id="tear-overlay">
+  <div class="tear-layer tear-layer-1"></div>
+  <div class="tear-layer tear-layer-2"></div>
+</div>
   
   <div id="category-loader" class="fixed inset-0 z-[100] hidden flex-col items-center justify-center text-white" style="background-color: var(--color-primary);">
      <div class="text-7xl mb-6 bounce-icon" id="loader-icon">✨</div>
@@ -1128,6 +1165,11 @@ function updateCartDisplay() {
             fetchCart().then(render); 
         }
     }
+
+
+
+
+
     
     // --- Admin Functions ---
    async function fetchAdminProducts() {
@@ -1161,6 +1203,10 @@ window.checkSessionStatus = async function() {
     return false;
   }
 };
+
+
+
+    
   async function handleAddProduct(e) {
   e.preventDefault();
   
@@ -1335,6 +1381,94 @@ window.checkSessionStatus = async function() {
     window.handleDeleteProduct = handleDeleteProduct;
 
 
+
+
+    // ==========================================
+// 🔥 EPIC PAPER TEAR TRANSITION TO HOME
+// ==========================================
+window.navigateHomeWithTear = function() {
+  const overlay = document.getElementById('tear-overlay');
+  const layer1 = overlay.querySelector('.tear-layer-1');
+  const layer2 = overlay.querySelector('.tear-layer-2');
+  
+  // Show overlay
+  overlay.style.display = 'block';
+  
+  // Create the tear timeline
+  const tearTimeline = gsap.timeline({
+    onComplete: () => {
+      // Navigate after tear completes
+      navigate('home');
+      
+      // Fade out overlay
+      gsap.to(overlay, {
+        opacity: 0,
+        duration: 0.5,
+        onComplete: () => {
+          overlay.style.display = 'none';
+          gsap.set(overlay, { opacity: 1 });
+          // Reset clip paths
+          gsap.set([layer1, layer2], {
+            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)'
+          });
+        }
+      });
+    }
+  });
+  
+  // 🌟 THE MAGIC: Jagged tear pattern (like paper ripping)
+  const tearPattern1 = `polygon(
+    0% 0%, 
+    5% 2%, 10% 1%, 15% 3%, 20% 1%, 25% 4%, 30% 2%, 35% 5%, 40% 3%, 45% 6%, 
+    50% 4%, 55% 7%, 60% 5%, 65% 8%, 70% 6%, 75% 9%, 80% 7%, 85% 10%, 90% 8%, 95% 11%, 100% 9%,
+    100% 0%,
+    0% 0%
+  )`;
+  
+  const tearPattern2 = `polygon(
+    0% 0%, 
+    3% 3%, 8% 2%, 13% 5%, 18% 3%, 23% 6%, 28% 4%, 33% 7%, 38% 5%, 43% 8%, 
+    48% 6%, 53% 9%, 58% 7%, 63% 10%, 68% 8%, 73% 11%, 78% 9%, 83% 12%, 88% 10%, 93% 13%, 98% 11%, 100% 14%,
+    100% 0%,
+    0% 0%
+  )`;
+  
+  // Layer 1: Main tear with jagged edge
+  tearTimeline.to(layer1, {
+    clipPath: tearPattern1,
+    duration: 0.8,
+    ease: 'power2.in',
+    onUpdate: function() {
+      // Add shake effect during tear
+      const progress = this.progress();
+      const shake = Math.sin(progress * 20) * 5;
+      layer1.style.transform = `translateX(${shake}px)`;
+    }
+  });
+  
+  // Layer 2: Secondary tear (slightly delayed for depth)
+  tearTimeline.to(layer2, {
+    clipPath: tearPattern2,
+    duration: 0.7,
+    ease: 'power2.in'
+  }, '-=0.6');
+  
+  // Continue tearing down to reveal content
+  tearTimeline.to([layer1, layer2], {
+    clipPath: 'polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)',
+    duration: 0.6,
+    ease: 'power3.inOut',
+    stagger: 0.1
+  });
+  
+  // Add paper flutter effect
+  tearTimeline.to([layer1, layer2], {
+    rotationX: 45,
+    transformOrigin: 'top center',
+    duration: 0.3,
+    ease: 'power1.out'
+  }, '-=0.3');
+};
     // --- Components ---
 
     function Header() {
@@ -1347,10 +1481,10 @@ window.checkSessionStatus = async function() {
                 ${Icon.Menu()}
               </button>
               
-              <a href="#" onclick="navigate('home'); return false;" class="text-2xl font-extrabold flex items-center gap-1 btn-animate" style="color: var(--color-primary);">
+              <a href="#" onclick="navigateHomeWithTear(); return false;" class="text-2xl font-extrabold flex items-center gap-1 btn-animate" style="color: var(--color-primary);">
                 Shop<span style="color: var(--color-accent);">Hub</span>
               </a>
-              <button onclick="navigate('home'); return false;" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 btn-animate" title="Home">
+              <button onclick="navigateHomeWithTear(); return false;" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 btn-animate" title="Home">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
             </svg>
