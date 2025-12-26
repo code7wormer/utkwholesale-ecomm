@@ -2505,12 +2505,6 @@ window.checkSessionStatus = async function() {
     // 🔄 REFRESH ANIMATIONS ON RENDER
     // ==========================================
     function initAllAnimations() {
-      // 🛡️ CRITICAL: Exit if GSAP not available
-      if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
-        console.warn('⚠️ Animations disabled - GSAP/ScrollTrigger not loaded');
-        showContentWithoutAnimations(); // Call the helper function
-        return; // Exit immediately
-      }
     // Kill all existing ScrollTriggers to prevent duplicates
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
     
@@ -2550,46 +2544,10 @@ window.checkSessionStatus = async function() {
       initShareButtonAnimation();
   }
 // Ensure GSAP is loaded before animating
-// ==========================================
-// 🛡️ GSAP SAFETY & FALLBACK SYSTEM
-// ==========================================
-
-// Check on initial load
 if (typeof gsap === 'undefined') {
-  console.warn('⚠️ GSAP failed to load - showing content without animations');
-  showContentWithoutAnimations();
-}
-
-// Fallback: Show elements if animations don't trigger within 1.5s
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.querySelectorAll('.product-card-animate, .category-card-animate').forEach(el => {
-      const opacity = window.getComputedStyle(el).opacity;
-      if (opacity === '0' || parseFloat(opacity) < 0.1) {
-        // DON'T use GSAP here - direct style manipulation
-        el.style.opacity = '1';
-        el.style.transform = 'translateY(0)';
-        console.warn('⚠️ Forced visibility for:', el);
-      }
-    });
-  }, 1500);
-});
-
-// Helper function to show all content immediately
-function showContentWithoutAnimations() {
-  const selectors = [
-    '.product-card-animate',
-    '.category-card-animate', 
-    '.hero-title',
-    '.hero-subtitle',
-    '.hero-cta'
-  ];
-  
-  selectors.forEach(selector => {
-    document.querySelectorAll(selector).forEach(el => {
-      el.style.opacity = '1';
-      el.style.transform = 'none';
-    });
+  // GSAP didn't load, show everything immediately
+  document.querySelectorAll('.product-card-animate, .category-card-animate, .hero-title, .hero-subtitle, .hero-cta').forEach(el => {
+    el.style.opacity = '1';
   });
 }
 
