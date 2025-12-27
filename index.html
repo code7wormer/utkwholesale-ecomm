@@ -33,7 +33,47 @@
       --color-accent: #d4af37;         /* Elegant gold */
       --color-accent-dark: #b8941f;    /* Darker gold for hover */
     }
+    .rotating-rainbow-border {
+    position: relative;
+    padding: 4px;
+    border-radius: 12px;
+    background: white;
+}
 
+.rotating-rainbow-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    padding: 3px;
+    background: conic-gradient(
+        from 0deg,
+        #ff0000,
+        #ff7f00,
+        #ffff00,
+        #00ff00,
+        #0000ff,
+        #8b00ff,
+        #ff0000
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: rotateBorder 4s linear infinite;
+}
+
+.rotating-rainbow-border img {
+    position: relative;
+    z-index: 1;
+    display: block;
+    border-radius: 10px;
+}
+
+@keyframes rotateBorder {
+    to {
+        transform: rotate(360deg);
+    }
+}
     /* Add after the existing :root section */
     .glass-effect {
       background: rgba(255, 255, 255, 0.1);
@@ -1984,7 +2024,11 @@ window.checkSessionStatus = async function() {
               ${(() => {
                   const images = product.image_url.split(',').map(u => u.trim()).filter(u => u);
                   if (images.length === 1) {
-                    return `<img src="${images[0]}" alt="${product.name}" class="w-full rounded-lg object-contain max-h-[40rem] shadow-lg">`;
+                    return `
+  <div class="rotating-rainbow-border">
+    <img src="${images[0]}" alt="${product.name}" class="w-full rounded-lg object-contain max-h-[40rem] shadow-lg">
+  </div>
+`;
                   }
                   
                   // Store images in a global variable for this product
@@ -1993,7 +2037,9 @@ window.checkSessionStatus = async function() {
                   return `
                     <div class="space-y-4">
                       <div class="relative group">
-                        <img id="main-product-image" src="${images[0]}" alt="${product.name}" class="w-full rounded-lg object-contain max-h-[40rem] shadow-lg transition-all duration-500" data-current-index="0" data-images="${imagesJson}">
+                        <div class="rotating-rainbow-border">
+  <img id="main-product-image" src="${images[0]}" alt="${product.name}" class="w-full rounded-lg object-contain max-h-[40rem] shadow-lg transition-all duration-500" data-current-index="0" data-images="${imagesJson}">
+</div>
                         
                         ${images.length > 1 ? `
                           <button onclick="changeProductImage(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 z-10">
