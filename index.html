@@ -1842,14 +1842,17 @@ window.checkSessionStatus = async function() {
       };
 
       return `
+          <!-- HOMEPAGE BACKGROUND (SAME AS CATEGORY PAGES) -->
           <div class="relative min-h-screen">
-          <!-- Background Image with Blur -->
-          <div class="fixed inset-0 -z-10 bg-cover bg-center" 
-               style="background-image: url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da'); 
-                      filter: blur(3px); 
-                      transform: scale(1.1);">
-          </div>
-          
+            <!-- Background Image -->
+            <div class="fixed inset-0 -z-10 bg-cover bg-center bg-fixed" 
+                 style="background-image: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1920&q=80');">
+            </div>
+            
+            <!-- Dark Overlay with Backdrop Blur (EXACT SAME AS CATEGORY PAGES) -->
+            <div class="fixed inset-0 -z-10" 
+                 style="background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(6px);">
+            </div>
           <!-- Dark Overlay -->
           <div class="fixed inset-0 -z-10" 
                style="background: rgba(255, 255, 255, 0.92);">
