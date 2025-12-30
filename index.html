@@ -2422,7 +2422,22 @@ window.checkSessionStatus = async function() {
       
       const isDeal = product.is_deal && product.deal_price;
       const displayPrice = isDeal ? product.deal_price : product.price;
-
+      // Get the category for this product to apply its theme
+      const category = state.categories.find(c => c.id === product.category_id);
+      const categorySlug = category ? category.slug : 'default';
+      const theme = CATEGORY_THEMES[categorySlug] || CATEGORY_THEMES['default'];
+      
+      // Set background dynamically (same as CategoryPage)
+      setTimeout(() => {
+        let bgElement = document.querySelector('.category-page-bg');
+        if (!bgElement) {
+          bgElement = document.createElement('div');
+          bgElement.className = 'category-page-bg';
+          document.body.appendChild(bgElement);
+        }
+        bgElement.style.backgroundImage = `url('${theme.background}')`;
+        bgElement.style.opacity = '1';
+      }, 0);
       return `
         <div class="flex-1 max-w-7xl mx-auto px-4 py-12 page-enter">
           <button
