@@ -37,6 +37,9 @@
         object-fit: cover !important;
         aspect-ratio: 1 / 1 !important;
       }
+      .product-card-img {
+        height: 200px !important;
+      }
       
       .product-card-animate .p-4 {
         padding: 0.75rem !important;
@@ -56,6 +59,9 @@
       .grid.md\:grid-cols-2 {
         grid-template-columns: repeat(3, 1fr) !important;
       }
+      .product-card-img {
+        height: 180px !important;
+      }
       
       .product-card-animate img {
         height: 180px !important;
@@ -66,7 +72,7 @@
     }
     
     /* Mobile: 2 columns, SQUARE compact cards */
-    @media (max-width: 768px) {
+    @media (max-width: 769x) {
       .grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 0.5rem !important; /* Reduced gap for more space */
@@ -75,12 +81,10 @@
       .product-card-animate {
         border-radius: 0.75rem !important;
       }
-      
+    
       /* SQUARE IMAGE - matches the 220x220 source */
-      .product-card-animate img {
+      .product-card-img {
         height: 160px !important;
-        max-height: 160px !important;
-        min-height: 160px !important;
         width: 100% !important;
         object-fit: cover !important;
       }
@@ -2067,7 +2071,7 @@ window.checkSessionStatus = async function() {
       return `
             <div class="product-card-animate bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-2xl group flex flex-col h-full">          
             <div class="relative overflow-hidden">
-            <img src="${product.image_url.split(',')[0].trim()}" alt="${product.name}" class="w-full h-64 object-cover transition-all duration-500 group-hover:scale-110">
+            <img src="${product.image_url.split(',')[0].trim()}" alt="${product.name}" class="w-full object-cover transition-all duration-500 group-hover:scale-110 product-card-img">
             ${isDeal ? '<div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse z-10">DEAL</div>' : ''}
             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center gap-3 opacity-0 transition-all duration-300">
               <button onclick="navigate('product', '${product.slug}'); return false;" class="bg-white text-gray-900 px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-gray-50 shadow-lg transform hover:scale-105 transition-all">View Details</button>
