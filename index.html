@@ -2693,11 +2693,11 @@ window.checkSessionStatus = async function() {
           start: "top 95%",
           toggleActions: "play none none none"
         },
-        duration: 0.8,
+        duration: 0.5,
         y: 0,
         opacity: 1,
         ease: "power3.out",
-        delay: index * 0.1
+        delay: Math.min(index * 0.05, 0.3)
       }
     );
   });
@@ -3272,6 +3272,11 @@ const hash = window.location.hash;
 if (hash.startsWith('#product-')) {
   const slug = hash.replace('#product-', '');
   navigate('product', slug);
+}
+// Handle direct category links
+if (hash.startsWith('#category-')) {
+  const slug = hash.replace('#category-', '');
+  navigate('category', slug);
 }
 // Handle browser back/forward buttons
     window.addEventListener('popstate', () => {
