@@ -73,6 +73,10 @@
     
     /* Mobile: 2 columns, SQUARE compact cards */
     @media (max-width: 769px) {
+      /* Fix cart items */
+      .flex-col.sm\:flex-row {
+        flex-direction: column !important;
+      }
       /* Force ONLY category page and search results to 2 columns on mobile really jugaad fix but alas */
       .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
         grid-template-columns: repeat(2, 1fr) !important;
@@ -699,10 +703,7 @@
         scroll-snap-align: start;
       }
       
-      /* Fix cart items */
-      .flex-col.sm\:flex-row {
-        flex-direction: column !important;
-      }
+      
       
       /* Fix product image gallery */
       .traveling-rainbow-border img {
