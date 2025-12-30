@@ -1587,6 +1587,24 @@ window.checkSessionStatus = async function() {
         const overlay = document.getElementById('tear-overlay');
         const layers = overlay.querySelectorAll('.tear-layer');
         
+        // ✨ SNAPSHOT the current colors BEFORE starting animation
+        const currentPrimary = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+        const currentSecondary = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim();
+        
+        // Apply the snapshotted colors directly to the layers
+        layers.forEach((layer, index) => {
+            if (index % 2 === 0) {
+                layer.style.background = currentPrimary;
+            } else {
+                layer.style.background = currentSecondary;
+            }
+            
+            // Special colors for middle layers
+            if (index === 2 || index === 3) {
+                layer.style.background = '#0f3460';
+            }
+        });
+        
         // Show overlay
         overlay.style.display = 'flex';
         
@@ -1597,6 +1615,11 @@ window.checkSessionStatus = async function() {
         const tl = gsap.timeline({
           ease: "power4.inOut",
           onComplete: () => {
+            // Reset inline styles after animation
+            layers.forEach(layer => {
+                layer.style.background = '';
+            });
+            
             // KEEP overlay visible for a moment longer
             setTimeout(() => {
               gsap.set(overlay, { display: 'none' });
