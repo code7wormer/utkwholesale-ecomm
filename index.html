@@ -3314,7 +3314,11 @@ window.handleConfirmOrder = async function() {
             await supabase.from('cart_items').delete().eq('user_id', state.user.id);
         }
         state.cart = [];
-        
+        try {
+            localStorage.removeItem('guest_cart');
+        } catch (e) {
+            console.error("localStorage clear error:", e);
+        }
         // Close popup and show success
         closePhonePopup();
         showToast(`Order Placed Successfully!\nWe will contact you at: ${fullPhone}`);
