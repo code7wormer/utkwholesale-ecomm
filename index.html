@@ -79,11 +79,18 @@
       /* SQUARE IMAGE - matches the 220x220 source */
       .product-card-animate img {
         height: 140px !important; /* Square on mobile */
+        min-height: 140px !important;
+        max-height: 140px !important;
         width: 100% !important;
         object-fit: cover !important;
         aspect-ratio: 1 / 1 !important;
       }
-      
+      .product-card-animate > div:first-child,
+      .product-card-animate .relative:first-child {
+        height: 140px !important;
+        min-height: 140px !important;
+        max-height: 140px !important;
+      }
       .product-card-animate .p-4 {
         padding: 0.5rem !important;
       }
