@@ -889,24 +889,26 @@
 
 
     // Add this helper function
-    async function wakeUpDatabase() {
-      console.log("🏓 Pinging database to wake connection...");
-      try {
-        // Do a lightweight query to force connection refresh
-        await supabase.from('categories').select('count').limit(1);
-        console.log("✅ Database connection active");
-      } catch (err) {
-        console.error("Wake-up ping failed:", err);
-      }
+  // Replace the wakeUpDatabase function with this:
+async function forceReconnect() {
+  console.log("🔌 Force reconnecting to Supabase...");
+  
+  // Destroy old client
+  if (window.supabaseClient) {
+    try {
+      await window.supabaseClient.removeAllChannels();
+    } catch (e) {
+      // Ignore errors during cleanup
     }
-
-    // ============================================
-    // FIX: Get Fresh Client to Avoid Stale Connection
-    // ============================================
-    function getFreshClient() {
-      console.log("🔄 Creating fresh Supabase client...");
-      return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
+  }
+  
+  // Create completely fresh client
+  window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  supabase = window.supabaseClient; // Update the global reference
+  
+  console.log("✅ New connection established");
+  return window.supabaseClient;
+}
 
 // Auto-refresh token before operations
 // Auto-refresh token before operations
@@ -3310,38 +3312,18 @@ window.handleConfirmOrder = async function() {
     await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
     console.log("✅ Email sent");
 
-    // ✅ FIX: Use fresh client
     if (state.user) {
   console.log("🗑️ Clearing cart from database...");
-       await wakeUpDatabase();
   
-  try {
-    // Simple timeout wrapper
-    const deleteWithTimeout = Promise.race([
-      supabase.from('cart_items').delete().eq('user_id', state.user.id),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-    ]);
-    
-    const { error } = await deleteWithTimeout;
-    
-    if (error) {
-      console.error("Cart clear error:", error);
-    } else {
-      console.log("✅ Cart cleared from DB");
-    }
-  } catch (err) {
-    console.error("Delete failed:", err.message);
-    
-    // If it times out, try ONE more time
-    if (err.message === 'timeout') {
-      console.log("🔄 Retrying delete...");
-      try {
-        const { error } = await supabase.from('cart_items').delete().eq('user_id', state.user.id);
-        if (!error) console.log("✅ Retry succeeded");
-      } catch (retryErr) {
-        console.error("Retry also failed:", retryErr);
-      }
-    }
+  // Force fresh connection
+  const client = await forceReconnect();
+  
+  const { error } = await client.from('cart_items').delete().eq('user_id', state.user.id);
+  
+  if (error) {
+    console.error("Cart clear error:", error);
+  } else {
+    console.log("✅ Cart cleared from DB");
   }
 }
 
