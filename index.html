@@ -95,7 +95,21 @@
         background-position: 300% 0%;
     }
 }
-    /* Add after the existing :root section */
+   /* Prevent content flash during tear animation */
+    #tear-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999; /* Increased from current value */
+      pointer-events: none;
+      display: none;
+      flex-direction: column;
+      background: transparent; /* Add this */
+    }
+    
+    /* Ensure overlay covers everything */
+    #tear-overlay.active {
+      pointer-events: all;
+    }
     .glass-effect {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
@@ -657,24 +671,38 @@
     window.supabaseClient = supabase;
 
 // Auto-refresh token before operations
+// Auto-refresh token before operations
 async function ensureValidSession() {
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  if (session) {
-    // Check if token is about to expire (within 5 minutes)
-    const expiresAt = session.expires_at * 1000; // Convert to ms
-    const now = Date.now();
-    const fiveMinutes = 5 * 60 * 1000;
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
     
-    if (expiresAt - now < fiveMinutes) {
-      console.log("Token expiring soon, refreshing...");
-      const { data, error } = await supabase.auth.refreshSession();
-      if (error) console.error("Token refresh failed:", error);
-      else console.log("Token refreshed successfully");
+    if (session) {
+      // Check if token is about to expire (within 10 minutes instead of 5)
+      const expiresAt = session.expires_at * 1000; // Convert to ms
+      const now = Date.now();
+      const tenMinutes = 10 * 60 * 1000;
+      
+      if (expiresAt - now < tenMinutes) {
+        console.log("Token expiring soon, refreshing...");
+        const { data, error } = await supabase.auth.refreshSession();
+        
+        if (error) {
+          console.error("Token refresh failed:", error);
+          // If refresh fails, log user out
+          await handleLogout();
+          return null;
+        }
+        
+        console.log("Token refreshed successfully");
+        return data.session;
+      }
     }
+    
+    return session;
+  } catch (error) {
+    console.error("Session check error:", error);
+    return null;
   }
-  
-  return session;
 }
     // --- 🎨 Theme Configuration ---
     const CATEGORY_THEMES = {
@@ -1052,42 +1080,51 @@ function updateURL(page, slug = null) {
     async function handleLogout() {
   const overlay = document.getElementById('logout-overlay');
   
-  // 1. Show Overlay Animation
-  if (overlay) {
-      overlay.classList.remove('hidden');
-      // Small delay to ensure the browser processes the 'hidden' removal before fading in
-      setTimeout(() => {
-          overlay.classList.remove('opacity-0', 'pointer-events-none');
-          overlay.classList.add('flex', 'opacity-100', 'pointer-events-auto');
-      }, 10);
+  try {
+    // 1. Show Overlay Animation
+    if (overlay) {
+        overlay.classList.remove('hidden');
+        setTimeout(() => {
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            overlay.classList.add('flex', 'opacity-100', 'pointer-events-auto');
+        }, 10);
+    }
+
+    // 2. Wait for 1.5 seconds so user sees the message
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // 3. Force sign out - with timeout protection
+    const logoutPromise = supabase.auth.signOut();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Logout timeout')), 5000)
+    );
+    
+    try {
+      await Promise.race([logoutPromise, timeoutPromise]);
+    } catch (error) {
+      console.warn('Logout had issues, forcing cleanup:', error);
+    }
+    
+    // 4. Clear ALL local state regardless of Supabase response
+    state.cart = [];
+    state.user = null;
+    state.isAdmin = false;
+    
+    // 5. Clear localStorage (in case cart was stored there)
+    try {
+      localStorage.clear();
+    } catch (e) {
+      console.warn('Could not clear localStorage:', e);
+    }
+    
+    // 6. Force hard reload - this always works
+    window.location.replace(window.location.origin + window.location.pathname);
+    
+  } catch (error) {
+    console.error('Logout error:', error);
+    // Even if everything fails, force reload
+    window.location.replace(window.location.origin + window.location.pathname);
   }
-
-  // 2. Wait for 1.5 seconds so user sees the message
-  await new Promise(resolve => setTimeout(resolve, 1500));
-
-  // 3. Perform Sign Out Logic FIRST (before DOM changes)
-  await supabase.auth.signOut();
-  state.cart = [];
-  state.user = null;
-  state.isAdmin = false;
-  window.location.reload();
-  // // 4. Hide Overlay with animation
-  // if (overlay) {
-  //     overlay.classList.remove('opacity-100', 'pointer-events-auto');
-  //     overlay.classList.add('opacity-0', 'pointer-events-none');
-      
-  //     // Wait for CSS fade-out transition (500ms) before navigating
-  //     setTimeout(() => {
-  //         overlay.classList.add('hidden');
-  //         overlay.classList.remove('flex');
-          
-  //         // 5. Navigate AFTER overlay is fully hidden
-  //         navigate('home');
-  //     }, 500); 
-  // } else {
-  //     // If no overlay, just navigate immediately
-  //     navigate('home');
-  // }
 }
 
 
@@ -1547,54 +1584,59 @@ window.checkSessionStatus = async function() {
     // 🔥 CURTAIN TRANSITION (Adapted from CodePen)
     // ==========================================
     window.navigateHomeWithTear = function() {
-    const overlay = document.getElementById('tear-overlay');
-    const layers = overlay.querySelectorAll('.tear-layer');
-    
-    // Show overlay
-    overlay.style.display = 'flex';
-    
-    // Reset all layers
-    gsap.set(layers, { width: '0%', left: '0%' });
-    
-    // Create timeline
-    const tl = gsap.timeline({
-      ease: "power4.inOut",
-      onComplete: () => {
-        // Navigate after animation
-        navigate('home');
-        // Hide overlay
-        gsap.set(overlay, { display: 'none' });
-      }
-    });
-    
-    // Step 1: Tiles slide in from left (staggered)
-    tl.to(layers, {
-      duration: 0.4,
-      width: "100%",
-      left: "0%",
-      delay: 0.1,
-      stagger: 0.05,
-    });
-    
-    // Step 2: Tiles slide out to right (reverse stagger)
-    tl.to(layers, {
-      duration: 0.4,
-      width: "100%",
-      left: "100%",
-      delay: 0.15,
-      stagger: -0.05,
-    });
-    
-    // Step 3: Reset for next time
-    tl.set(layers, { left: "0", width: "0" });
+        const overlay = document.getElementById('tear-overlay');
+        const layers = overlay.querySelectorAll('.tear-layer');
+        
+        // Show overlay
+        overlay.style.display = 'flex';
+        
+        // Reset all layers
+        gsap.set(layers, { width: '0%', left: '0%' });
+        
+        // Create timeline
+        const tl = gsap.timeline({
+          ease: "power4.inOut",
+          onComplete: () => {
+            // KEEP overlay visible for a moment longer
+            setTimeout(() => {
+              gsap.set(overlay, { display: 'none' });
+            }, 100);
+          }
+        });
+        
+        // Step 1: Tiles slide in from left (staggered)
+        tl.to(layers, {
+          duration: 0.4,
+          width: "100%",
+          left: "0%",
+          delay: 0.1,
+          stagger: 0.05,
+        });
+        
+        // Step 2: Navigate DURING the animation (at 50% point)
+        tl.call(() => {
+          navigate('home');
+        }, null, 0.5); // Call at 50% of total animation time
+        
+        // Step 3: Tiles slide out to right (reverse stagger)
+        tl.to(layers, {
+          duration: 0.4,
+          width: "100%",
+          left: "100%",
+          delay: 0.15,
+          stagger: -0.05,
+        }, "+=0");
+        
+        // Step 4: Reset for next time
+        tl.set(layers, { left: "0", width: "0" });
     };
     // --- Components ---
 
     function Header() {
       return `
         <header class="bg-white shadow-md sticky top-0 z-40 border-b border-gray-100">
-          <div class="w-full px-6 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-4">
+          <div class="w-full px-3 sm:px-6 py-3 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
               
               <button onclick="toggleMenu()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 btn-animate">
                 ${Icon.Menu()}
@@ -1603,7 +1645,7 @@ window.checkSessionStatus = async function() {
               <a href="#" onclick="navigateHomeWithTear(); return false;" class="text-xl md:text-2xl font-extrabold flex items-center gap-1 btn-animate" style="color: var(--color-primary);">
                 UTK<span style="color: var(--color-accent);">Wholesale</span>
               </a>
-              <button onclick="navigateHomeWithTear(); return false;" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 btn-animate" title="Home">
+             <button onclick="navigateHomeWithTear(); return false;" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 btn-animate hidden sm:block flex-shrink-0" title="Home">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
             </svg>
@@ -1636,13 +1678,13 @@ window.checkSessionStatus = async function() {
 
             </div>
             
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1 sm:gap-3 flex-shrink-0">
               <button onclick="toggleSearch()" class="p-2 hover:bg-gray-100 rounded-full text-gray-600 btn-animate">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               </button>
 
               ${state.isAdmin ? `
-                <a href="#" onclick="navigate('admin'); return false;" class="text-sm font-semibold text-red-600 hover:text-red-700 transition-colors hidden md:block mr-4">Admin Dashboard</a>
+                <a href="#" onclick="navigate('admin'); return false;" class="text-xs sm:text-sm font-semibold text-red-600 hover:text-red-700 transition-colors hidden lg:block mr-2 whitespace-nowrap">Admin</a>
               ` : ''}
               
               ${state.user ? `
@@ -1651,7 +1693,7 @@ window.checkSessionStatus = async function() {
                   <button onclick="handleLogout()" class="text-sm font-medium text-red-600 hover:text-red-700 transition-colors btn-animate">Logout</button>
                 </div>
               ` : `
-                <button onclick="navigate('auth'); return false;" class="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors btn-animate mr-2">
+                <button onclick="navigate('auth'); return false;" class="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors btn-animate">
                   ${Icon.User()}
                   <span class="hidden md:inline text-sm font-medium">Sign In</span>
                 </button>
@@ -3185,6 +3227,27 @@ if (hash.startsWith('#product-')) {
           navigate('search-results');
         }
       }
+       setInterval(async () => {
+    if (state.user) {
+      await ensureValidSession();
+    }
+  }, 5 * 60 * 1000); // Every 5 minutes
+  
+  // Refresh session on any user interaction
+  let lastActivity = Date.now();
+  const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+  
+  activityEvents.forEach(event => {
+    document.addEventListener(event, async () => {
+      const now = Date.now();
+      // Only check every 2 minutes to avoid spam
+      if (now - lastActivity > 2 * 60 * 1000) {
+        lastActivity = now;
+        if (state.user) {
+          await ensureValidSession();
+        }
+      }
+    }, { passive: true });
     });
     }
     
