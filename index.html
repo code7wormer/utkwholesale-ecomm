@@ -3302,15 +3302,37 @@ window.handleConfirmOrder = async function() {
 
     // ✅ FIX: Use fresh client
     if (state.user) {
-      console.log("🗑️ Clearing cart from database...");
-      const client = getFreshClient();
-      const { error } = await client.from('cart_items').delete().eq('user_id', state.user.id);
-      if (error) {
-        console.error("Cart clear error:", error);
-      } else {
-        console.log("✅ Cart cleared");
+  console.log("🗑️ Clearing cart from database...");
+  
+  try {
+    // Simple timeout wrapper
+    const deleteWithTimeout = Promise.race([
+      supabase.from('cart_items').delete().eq('user_id', state.user.id),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+    ]);
+    
+    const { error } = await deleteWithTimeout;
+    
+    if (error) {
+      console.error("Cart clear error:", error);
+    } else {
+      console.log("✅ Cart cleared from DB");
+    }
+  } catch (err) {
+    console.error("Delete failed:", err.message);
+    
+    // If it times out, try ONE more time
+    if (err.message === 'timeout') {
+      console.log("🔄 Retrying delete...");
+      try {
+        const { error } = await supabase.from('cart_items').delete().eq('user_id', state.user.id);
+        if (!error) console.log("✅ Retry succeeded");
+      } catch (retryErr) {
+        console.error("Retry also failed:", retryErr);
       }
     }
+  }
+}
 
     state.cart = [];
     try {
