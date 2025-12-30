@@ -3450,6 +3450,11 @@ window.handleCheckout = handleCheckout;
             // Handle Data Sync (Cart, Admin Products)
             // We await these, but if they fail, we catch the error so the UI still updates
             if (state.user) {
+                try {
+                    localStorage.removeItem('guest_cart');
+                } catch (e) {
+                    console.error("localStorage clear error:", e);
+                }
                 if (!previousUser) await mergeCart();
                 await fetchCart();
                 
