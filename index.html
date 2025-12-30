@@ -3271,7 +3271,8 @@ window.closePhonePopup = () => {
 };
 
 window.handleConfirmOrder = async function() {
-   return withValidSession(async () => {
+
+  
     const phoneInput = document.getElementById('user-phone');
     const btn = document.getElementById('btn-confirm-order');
     const phoneNumber = phoneInput.value.trim();
@@ -3327,10 +3328,12 @@ window.handleConfirmOrder = async function() {
     } catch (error) {
         console.error('Order Error:', error);
         showToast("Failed to place order. Please try again.");
+    }
+   finally {
+        // ALWAYS reset button state
         btn.innerText = "Confirm Order";
         btn.disabled = false;
     }
-   });
 };
     // 🌟 CHECKOUT HANDLER
     async function handleCheckout() {
