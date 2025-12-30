@@ -23,103 +23,100 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
   <style>
-
     /* ===== PRODUCT CARD SIZE ADJUSTMENTS ===== */
-
-/* ===== PRODUCT CARD SIZE ADJUSTMENTS ===== */
-
-/* Desktop: 4 columns, square cards */
-@media (min-width: 1024px) {
-  .grid.lg\:grid-cols-3 {
-    grid-template-columns: repeat(4, 1fr) !important;
-  }
-  
-  .product-card-animate img {
-    height: 200px !important;
-    width: 100% !important;
-    object-fit: cover !important;
-    aspect-ratio: 1 / 1 !important;
-  }
-  
-  .product-card-animate .p-4 {
-    padding: 0.75rem !important;
-  }
-  
-  .product-card-animate h3 {
-    font-size: 0.95rem !important;
-  }
-  
-  .product-card-animate p {
-    font-size: 0.813rem !important;
-  }
-}
-
-/* Tablet: 3 columns, square cards */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .grid.md\:grid-cols-2 {
-    grid-template-columns: repeat(3, 1fr) !important;
-  }
-  
-  .product-card-animate img {
-    height: 180px !important;
-    width: 100% !important;
-    object-fit: cover !important;
-    aspect-ratio: 1 / 1 !important;
-  }
-}
-
-/* Mobile: 2 columns, SQUARE compact cards */
-@media (max-width: 767px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.5rem !important; /* Reduced gap for more space */
-  }
-  
-  .product-card-animate {
-    border-radius: 0.75rem !important;
-  }
-  
-  /* SQUARE IMAGE - matches the 220x220 source */
-  .product-card-animate img {
-    height: 140px !important; /* Square on mobile */
-    width: 100% !important;
-    object-fit: cover !important;
-    aspect-ratio: 1 / 1 !important;
-  }
-  
-  .product-card-animate .p-4 {
-    padding: 0.5rem !important;
-  }
-  
-  .product-card-animate h3 {
-    font-size: 0.8rem !important;
-    margin-bottom: 0.25rem !important;
-    line-height: 1.1 !important;
-  }
-  
-  .product-card-animate p {
-    font-size: 0.7rem !important;
-    margin-bottom: 0.5rem !important;
-    line-height: 1.2 !important;
-  }
-  
-  /* Smaller price and stock badge */
-  .product-card-animate .text-2xl {
-    font-size: 1.1rem !important;
-  }
-  
-  .product-card-animate .px-3 {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    font-size: 0.65rem !important;
-  }
-  
-  /* Compact buttons in overlay */
-  .product-card-animate .absolute.inset-0 button {
-    padding: 0.4rem 0.6rem !important;
-    font-size: 0.7rem !important;
-  }
-}
+    
+    /* Desktop: 4 columns, square cards */
+    @media (min-width: 1024px) {
+      .grid.lg\:grid-cols-3 {
+        grid-template-columns: repeat(4, 1fr) !important;
+      }
+      
+      .product-card-animate img {
+        height: 200px !important;
+        width: 100% !important;
+        object-fit: cover !important;
+        aspect-ratio: 1 / 1 !important;
+      }
+      
+      .product-card-animate .p-4 {
+        padding: 0.75rem !important;
+      }
+      
+      .product-card-animate h3 {
+        font-size: 0.95rem !important;
+      }
+      
+      .product-card-animate p {
+        font-size: 0.813rem !important;
+      }
+    }
+    
+    /* Tablet: 3 columns, square cards */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .grid.md\:grid-cols-2 {
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+      
+      .product-card-animate img {
+        height: 180px !important;
+        width: 100% !important;
+        object-fit: cover !important;
+        aspect-ratio: 1 / 1 !important;
+      }
+    }
+    
+    /* Mobile: 2 columns, SQUARE compact cards */
+    @media (max-width: 767px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important; /* Reduced gap for more space */
+      }
+      
+      .product-card-animate {
+        border-radius: 0.75rem !important;
+      }
+      
+      /* SQUARE IMAGE - matches the 220x220 source */
+      .product-card-animate img {
+        height: 140px !important; /* Square on mobile */
+        width: 100% !important;
+        object-fit: cover !important;
+        aspect-ratio: 1 / 1 !important;
+      }
+      
+      .product-card-animate .p-4 {
+        padding: 0.5rem !important;
+      }
+      
+      .product-card-animate h3 {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.25rem !important;
+        line-height: 1.1 !important;
+      }
+      
+      .product-card-animate p {
+        font-size: 0.7rem !important;
+        margin-bottom: 0.5rem !important;
+        line-height: 1.2 !important;
+      }
+      
+      /* Smaller price and stock badge */
+      .product-card-animate .text-2xl {
+        font-size: 1.1rem !important;
+      }
+      
+      .product-card-animate .px-3 {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        font-size: 0.65rem !important;
+      }
+      
+      /* Compact buttons in overlay */
+      .product-card-animate .absolute.inset-0 button {
+        padding: 0.4rem 0.6rem !important;
+        font-size: 0.7rem !important;
+      }
+    }
     /* ===== MOBILE FIX: Prevent Horizontal Scroll ===== */
     * {
       box-sizing: border-box;
@@ -253,7 +250,8 @@
       left: 0;
       top: 0;
       height: 100%;
-      width: 19rem; /* Slightly wider */
+      width: 85vw; 
+      max-width: 320px
       background-color: white;
       box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
       z-index: 50;
@@ -615,7 +613,45 @@
         padding-left: 0.75rem !important;
         padding-right: 0.75rem !important;
       }
-      
+          /* Prevent max-width container overflow */
+    .max-w-7xl,
+    .max-w-6xl,
+    .max-w-5xl,
+    .max-w-4xl,
+    .max-w-3xl,
+    .max-w-2xl {
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
+      max-width: 100% !important;
+    }
+    /* FIX: Prevent grid overflow */
+  .grid {
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+  
+  /* FIX: Constrain images */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  /* FIX: Text overflow */
+  * {
+    max-width: 100%;
+  }
+
+    @media (max-width: 640px) {
+      .max-w-7xl,
+      .max-w-6xl,
+      .max-w-5xl,
+      .max-w-4xl,
+      .max-w-3xl,
+      .max-w-2xl {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+      }
+    }
       /* Fix hero text size */
       .hero-title {
         font-size: 2.5rem !important;
@@ -643,6 +679,9 @@
       #deals-scroll {
         -webkit-overflow-scrolling: touch;
         scroll-snap-type: x mandatory;
+        max-width: 100vw !important; 
+        overflow-x: auto !important;
+        overflow-y: hidden !important; 
       }
       
       #bestsellers-scroll > div,
@@ -666,10 +705,6 @@
       }
       
       /* Fix sidebar width */
-      .sidebar-wrapper {
-        width: 85vw !important;
-        max-width: 320px;
-      }
     }
     
     @media (max-width: 640px) {
@@ -689,6 +724,47 @@
       .text-3xl {
         font-size: 1.5rem !important;
       }
+    }
+
+
+    /* ===== FINAL OVERFLOW PREVENTION ===== */
+    * {
+      box-sizing: border-box !important;
+    }
+    
+    html {
+      overflow-x: hidden !important;
+      width: 100% !important;
+    }
+    
+    body {
+      overflow-x: hidden !important;
+      width: 100% !important;
+      position: relative !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    #app {
+      overflow-x: hidden !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+    }
+    
+    main {
+      overflow-x: hidden !important;
+      width: 100% !important;
+      max-width: 100vw !important;
+    }
+    
+    /* Prevent any child from causing overflow */
+    #app > * {
+      max-width: 100vw !important;
+    }
+    
+    img, video, iframe {
+      max-width: 100% !important;
+      height: auto !important;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
