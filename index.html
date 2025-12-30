@@ -3531,18 +3531,6 @@ if (hash.startsWith('#category-')) {
         }
       }
     });
-
-  // Refresh session on any user interaction
-  let lastActivity = Date.now();
-  const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart','click'];
-  
-  activityEvents.forEach(event => {
-    document.addEventListener('visibilitychange', async () => {
-  if (!document.hidden && state.user) {
-    await supabase.auth.refreshSession();
-  }
-});
-    });
     }
     
     init();
