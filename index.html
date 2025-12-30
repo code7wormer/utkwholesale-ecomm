@@ -1302,7 +1302,7 @@ function updateURL(page, slug = null) {
     }
 
     async function handleLogout() {
-      return withValidSession(async () => {
+      
   const overlay = document.getElementById('logout-overlay');
   
   try {
@@ -1350,7 +1350,7 @@ function updateURL(page, slug = null) {
     // Even if everything fails, force reload
     window.location.replace(window.location.origin + window.location.pathname);
   }
-});
+
 }
 
   //LINK GENERATOR
