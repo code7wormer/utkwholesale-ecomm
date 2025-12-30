@@ -1479,7 +1479,14 @@ function updateCartDisplay() {
           if (error) {
               console.error("Supabase Save Error:", error);
           }
-      }
+      }  else {
+            // Save to localStorage for non-logged-in users
+            try {
+                localStorage.setItem('guest_cart', JSON.stringify(state.cart));
+            } catch (e) {
+                console.error("localStorage save error:", e);
+            }
+        }
       pulseCartIcon();
     }
 
@@ -1518,6 +1525,13 @@ function updateCartDisplay() {
                 }
             } catch (err) {
                 console.error("Network Error:", err);
+            }
+        }  else {
+            // Guest: save to localStorage
+            try {
+                localStorage.setItem('guest_cart', JSON.stringify(state.cart));
+            } catch (e) {
+                console.error("localStorage save error:", e);
             }
         }
     };
@@ -1565,18 +1579,26 @@ function updateCartDisplay() {
 
         // 4. Send update to Supabase in the background
         // Note: We do NOT call fetchCart() or render() here anymore
-        try {
-            const { error } = await supabase
-                .from('cart_items')
-                .update({ quantity: newQuantity })
-                .eq('id', id);
-
-            if (error) throw error;
-        } catch (error) {
-            console.error('Error updating quantity:', error);
-            showToast('Failed to update quantity');
-            // If failed, revert UI (Optional, usually not needed for simple apps)
-            fetchCart().then(render); 
+        if (state.user) {
+            try {
+                const { error } = await supabase
+                    .from('cart_items')
+                    .update({ quantity: newQuantity })
+                    .eq('id', id);
+                
+                if (error) throw error;
+            } catch (error) {
+                console.error('Error updating quantity:', error);
+                showToast('Failed to update quantity');
+                fetchCart().then(render); 
+            }
+        } else {
+            // Guest: save to localStorage
+            try {
+                localStorage.setItem('guest_cart', JSON.stringify(state.cart));
+            } catch (e) {
+                console.error("localStorage save error:", e);
+            }
         }
     }
 
@@ -3365,6 +3387,16 @@ window.handleCheckout = handleCheckout;
         const categoriesRes = await supabase.from('categories').select('*').order('display_order');
         state.categories = categoriesRes.data || [];
         await fetchInitialProducts();
+        if (!state.user) {
+        try {
+            const savedCart = localStorage.getItem('guest_cart');
+            if (savedCart) {
+                state.cart = JSON.parse(savedCart);
+            }
+        } catch (e) {
+            console.error("localStorage load error:", e);
+        }
+    }
       } catch (e) { console.error("Init Error:", e); } 
       finally { render(); }
 
