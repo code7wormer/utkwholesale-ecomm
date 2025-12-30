@@ -890,15 +890,22 @@
 
     // Add this helper function
     async function wakeUpDatabase() {
-      console.log("🏓 Pinging database to wake connection...");
-      try {
-        // Do a lightweight query to force connection refresh
-        await supabase.from('categories').select('count').limit(1);
-        console.log("✅ Database connection active");
-      } catch (err) {
-        console.error("Wake-up ping failed:", err);
-      }
+  console.log("🏓 Pinging database to wake connection...");
+  try {
+    // FIRST refresh auth, THEN ping
+    console.log("🔄 Refreshing auth first...");
+    const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+    console.log("🔄 Refresh result:", { hasSession: !!session, error: refreshError });
+    
+    if (session) {
+      // Now try the ping
+      await supabase.from('categories').select('count').limit(1);
+      console.log("✅ Database connection active");
     }
+  } catch (err) {
+    console.error("Wake-up ping failed:", err);
+  }
+}
 
     // ============================================
     // FIX: Get Fresh Client to Avoid Stale Connection
