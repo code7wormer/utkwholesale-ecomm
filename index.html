@@ -3310,7 +3310,6 @@ window.handleConfirmOrder = async function() {
     await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
     console.log("✅ Email sent");
 
-    // ✅ FIX: Use fresh client
     if (state.user) {
   console.log("🗑️ Clearing cart from database...");
        await wakeUpDatabase();
@@ -3336,7 +3335,12 @@ window.handleConfirmOrder = async function() {
     if (err.message === 'timeout') {
       console.log("🔄 Retrying delete...");
       try {
-        const { error } = await supabase.from('cart_items').delete().eq('user_id', state.user.id);
+        // TEST: Force refresh before delete
+console.log("🧪 Testing auth refresh before delete...");
+const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+console.log("🧪 Refresh result:", { session: !!session, error: refreshError });
+
+const { error } = await supabase.from('cart_items').delete().eq('user_id', state.user.id);
         if (!error) console.log("✅ Retry succeeded");
       } catch (retryErr) {
         console.error("Retry also failed:", retryErr);
