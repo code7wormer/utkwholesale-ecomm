@@ -3531,12 +3531,7 @@ if (hash.startsWith('#category-')) {
         }
       }
     });
-       setInterval(async () => {
-    if (state.user) {
-      await ensureValidSession();
-    }
-  }, 2 * 60 * 1000); // Every 5 minutes
-  
+
   // Refresh session on any user interaction
   let lastActivity = Date.now();
   const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart','click'];
