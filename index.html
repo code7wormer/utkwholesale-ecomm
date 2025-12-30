@@ -52,7 +52,7 @@
     }
     
     /* Tablet: 3 columns, square cards */
-    @media (min-width: 768px) and (max-width: 1023px) {
+    @media (min-width: 769px) and (max-width: 1023px) {
       .grid.md\:grid-cols-2 {
         grid-template-columns: repeat(3, 1fr) !important;
       }
@@ -66,7 +66,7 @@
     }
     
     /* Mobile: 2 columns, SQUARE compact cards */
-    @media (max-width: 767px) {
+    @media (max-width: 768px) {
       .grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 0.5rem !important; /* Reduced gap for more space */
@@ -78,18 +78,18 @@
       
       /* SQUARE IMAGE - matches the 220x220 source */
       .product-card-animate img {
-        height: 140px !important; /* Square on mobile */
-        min-height: 140px !important;
-        max-height: 140px !important;
+        height: 160px !important;
+        max-height: 160px !important;
+        min-height: 160px !important;
         width: 100% !important;
         object-fit: cover !important;
-        aspect-ratio: 1 / 1 !important;
       }
-      .product-card-animate > div:first-child,
-      .product-card-animate .relative:first-child {
-        height: 140px !important;
-        min-height: 140px !important;
-        max-height: 140px !important;
+      
+      /* Nuclear option - target all images in product cards */
+      .product-card-animate > div > img,
+      .product-card-animate .relative > img {
+        height: 160px !important;
+        max-height: 160px !important;
       }
       .product-card-animate .p-4 {
         padding: 0.5rem !important;
