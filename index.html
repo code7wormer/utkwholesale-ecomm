@@ -1653,7 +1653,7 @@ window.checkSessionStatus = async function() {
     
   async function handleAddProduct(e) {
   e.preventDefault();
-  return withValidSession(async () => {
+
   if (!state.user || !state.isAdmin) {
     alert("Not logged in as Admin");
     navigate('auth');
@@ -1721,7 +1721,7 @@ window.checkSessionStatus = async function() {
     submitButton.disabled = false;
     submitButton.innerHTML = 'Add Product';
   }
-  });
+  
 }
     window.handleAddProduct = handleAddProduct;
 
@@ -1773,7 +1773,7 @@ window.checkSessionStatus = async function() {
 
     async function handleUpdateProduct(e) {
         e.preventDefault();
-          return withValidSession(async () => {
+        
         
         if (!state.isAdmin) {
             alert("⛔ ACCESS DENIED: The system does not recognize you as the admin.");
@@ -1807,7 +1807,7 @@ window.checkSessionStatus = async function() {
             await fetchAdminProducts();
             await fetchInitialProducts(); 
         }
-          });
+
     }
     window.handleUpdateProduct = handleUpdateProduct;
 
