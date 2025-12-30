@@ -64,47 +64,62 @@
 @media (max-width: 767px) {
   .grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.75rem !important;
+    gap: 0.5rem !important;
   }
   
   .product-card-animate {
-    border-radius: 0.75rem !important;
+    border-radius: 0.5rem !important;
   }
   
   .product-card-animate img {
-    height: 9rem !important; /* Smaller on mobile */
+    height: 7rem !important; /* Much smaller - was 9rem */
   }
   
   .product-card-animate .p-4 {
-    padding: 0.5rem !important;
+    padding: 0.375rem !important;
   }
   
   .product-card-animate h3 {
-    font-size: 0.875rem !important;
-    margin-bottom: 0.25rem !important;
+    font-size: 0.75rem !important;
+    margin-bottom: 0.125rem !important;
+    line-height: 1.1 !important;
   }
   
   .product-card-animate p {
-    font-size: 0.75rem !important;
-    margin-bottom: 0.5rem !important;
-    line-height: 1.2 !important;
+    font-size: 0.625rem !important;
+    margin-bottom: 0.375rem !important;
+    line-height: 1.1 !important;
+    height: auto !important;
   }
   
-  /* Smaller price and stock badge */
+  .product-card-animate .h-10 {
+    height: auto !important;
+    max-height: 2rem !important;
+  }
+  
+  /* Much smaller price */
   .product-card-animate .text-2xl {
-    font-size: 1.25rem !important;
+    font-size: 1rem !important;
   }
   
+  .product-card-animate .text-sm {
+    font-size: 0.625rem !important;
+  }
+  
+  /* Tiny stock badge */
   .product-card-animate .px-3 {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-    font-size: 0.7rem !important;
+    padding: 0.125rem 0.375rem !important;
+    font-size: 0.625rem !important;
   }
   
-  /* Compact buttons in overlay */
-  .product-card-animate .absolute.inset-0 button {
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.75rem !important;
+  /* Hide overlay buttons on mobile - too small */
+  .product-card-animate .absolute.inset-0 {
+    display: none !important;
+  }
+  
+  /* Make card clickable to view details */
+  .product-card-animate {
+    cursor: pointer;
   }
 }
 
