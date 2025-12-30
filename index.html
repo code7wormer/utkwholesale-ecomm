@@ -26,14 +26,19 @@
 
     /* ===== PRODUCT CARD SIZE ADJUSTMENTS ===== */
 
-/* Desktop: 4 columns, smaller cards */
+/* ===== PRODUCT CARD SIZE ADJUSTMENTS ===== */
+
+/* Desktop: 4 columns, square cards */
 @media (min-width: 1024px) {
   .grid.lg\:grid-cols-3 {
     grid-template-columns: repeat(4, 1fr) !important;
   }
   
   .product-card-animate img {
-    height: 12rem !important; /* Reduced from 16rem (h-64) */
+    height: 200px !important;
+    width: 100% !important;
+    object-fit: cover !important;
+    aspect-ratio: 1 / 1 !important;
   }
   
   .product-card-animate .p-4 {
@@ -41,7 +46,7 @@
   }
   
   .product-card-animate h3 {
-    font-size: 1rem !important;
+    font-size: 0.95rem !important;
   }
   
   .product-card-animate p {
@@ -49,30 +54,37 @@
   }
 }
 
-/* Tablet: 3 columns */
+/* Tablet: 3 columns, square cards */
 @media (min-width: 768px) and (max-width: 1023px) {
   .grid.md\:grid-cols-2 {
     grid-template-columns: repeat(3, 1fr) !important;
   }
   
   .product-card-animate img {
-    height: 11rem !important;
+    height: 180px !important;
+    width: 100% !important;
+    object-fit: cover !important;
+    aspect-ratio: 1 / 1 !important;
   }
 }
 
-/* Mobile: 2 columns, compact cards */
+/* Mobile: 2 columns, SQUARE compact cards */
 @media (max-width: 767px) {
   .grid {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.75rem !important;
+    gap: 0.5rem !important; /* Reduced gap for more space */
   }
   
   .product-card-animate {
     border-radius: 0.75rem !important;
   }
   
+  /* SQUARE IMAGE - matches the 220x220 source */
   .product-card-animate img {
-    height: 9rem !important; /* Smaller on mobile */
+    height: 140px !important; /* Square on mobile */
+    width: 100% !important;
+    object-fit: cover !important;
+    aspect-ratio: 1 / 1 !important;
   }
   
   .product-card-animate .p-4 {
@@ -80,34 +92,34 @@
   }
   
   .product-card-animate h3 {
-    font-size: 0.875rem !important;
+    font-size: 0.8rem !important;
     margin-bottom: 0.25rem !important;
+    line-height: 1.1 !important;
   }
   
   .product-card-animate p {
-    font-size: 0.75rem !important;
+    font-size: 0.7rem !important;
     margin-bottom: 0.5rem !important;
     line-height: 1.2 !important;
   }
   
   /* Smaller price and stock badge */
   .product-card-animate .text-2xl {
-    font-size: 1.25rem !important;
+    font-size: 1.1rem !important;
   }
   
   .product-card-animate .px-3 {
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;
-    font-size: 0.7rem !important;
+    font-size: 0.65rem !important;
   }
   
   /* Compact buttons in overlay */
   .product-card-animate .absolute.inset-0 button {
-    padding: 0.5rem 0.75rem !important;
-    font-size: 0.75rem !important;
+    padding: 0.4rem 0.6rem !important;
+    font-size: 0.7rem !important;
   }
 }
-
     /* ===== MOBILE FIX: Prevent Horizontal Scroll ===== */
     * {
       box-sizing: border-box;
