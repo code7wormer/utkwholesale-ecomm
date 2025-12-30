@@ -250,8 +250,7 @@
       left: 0;
       top: 0;
       height: 100%;
-      width: 85vw; 
-      max-width: 320px
+      width: 19rem; 
       background-color: white;
       box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
       z-index: 50;
@@ -531,8 +530,6 @@
       0%, 100% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
     }
-    
-    // REPLACE WITH THIS:
     @keyframes animate-fade-in {
       from { opacity: 0; transform: translateY(-20px); }
       to { opacity: 1; transform: translateY(0); }
@@ -608,6 +605,10 @@
 
     /* ===== MOBILE RESPONSIVE FIXES ===== */
     @media (max-width: 768px) {
+      .sidebar-wrapper {
+    width: 85vw !important;
+    max-width: 320px !important;
+  }
       /* Fix header spacing */
       header .w-full {
         padding-left: 0.75rem !important;
