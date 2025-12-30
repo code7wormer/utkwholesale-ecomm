@@ -904,7 +904,6 @@ async function forceReconnect() {
   
   // Create completely fresh client
   window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  supabase = window.supabaseClient; // Update the global reference
   
   console.log("✅ New connection established");
   return window.supabaseClient;
