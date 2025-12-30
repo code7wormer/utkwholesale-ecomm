@@ -15,7 +15,7 @@
   <link rel="icon"  href="favicon.ico">
 
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <title>UTKWholesale Official Website</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -23,6 +23,28 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
   <style>
+
+    /* ===== MOBILE FIX: Prevent Horizontal Scroll ===== */
+    * {
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      position: relative;
+    }
+    
+    #app, main {
+      overflow-x: hidden;
+      width: 100%;
+    }
+    
+    /* Prevent text from causing overflow */
+    h1, h2, h3, p {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
     /* Styles*/ 
     :root {
       --default-primary: #1a1a2e;      /* Deep charcoal navy */
@@ -342,20 +364,20 @@
   background-position: center;
   background-attachment: fixed;
   transition: opacity 0.5s ease;
-}
-
-.category-page-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5); /* Dark overlay for readability */
-  backdrop-filter: blur(6px);
-}
-
-/* Darker overlay for better contrast */
-.category-page-bg.dark-overlay::before {
-  background: rgba(0, 0, 0, 0.3);
-}
+    }
+    
+    .category-page-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5); /* Dark overlay for readability */
+      backdrop-filter: blur(6px);
+    }
+    
+    /* Darker overlay for better contrast */
+    .category-page-bg.dark-overlay::before {
+      background: rgba(0, 0, 0, 0.3);
+    }
     /* 🍞 TOAST NOTIFICATION STYLES */
     #toast-container {
       position: fixed;
@@ -417,34 +439,34 @@
 
 
     /* Price visibility styles */
-.price-hidden {
-  filter: blur(8px);
-  user-select: none;
-  pointer-events: none;
-}
-
-.price-placeholder {
-  font-size: 0.875rem;
-  color: var(--color-accent);
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.price-placeholder:hover {
-  color: var(--color-accent-dark);
-}
-
-/* GSAP reveal animation styles */
-.price-reveal {
-  display: inline-block;
-  overflow: hidden;
-}
-/* Prevent flash of content before animations */
-    .product-card-animate,
-    .category-card-animate {
-      opacity: 0;
+    .price-hidden {
+      filter: blur(8px);
+      user-select: none;
+      pointer-events: none;
     }
+    
+    .price-placeholder {
+      font-size: 0.875rem;
+      color: var(--color-accent);
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+    
+    .price-placeholder:hover {
+      color: var(--color-accent-dark);
+    }
+    
+    /* GSAP reveal animation styles */
+    .price-reveal {
+      display: inline-block;
+      overflow: hidden;
+    }
+    /* Prevent flash of content before animations */
+        .product-card-animate,
+        .category-card-animate {
+          opacity: 0;
+        }
     
     .hero-title,
     .hero-subtitle,
@@ -465,15 +487,100 @@
     .no-js .hero-cta {
       opacity: 1 !important;
     }
-/* Prevent re-animation */
-.animate-fade-in.animated {
-  animation: none;
-  opacity: 1;
-  transform: translateY(0);
-}
-body {
-  background-color: #f8f9fa;  /* Soft off-white */
-}
+    /* Prevent re-animation */
+    .animate-fade-in.animated {
+      animation: none;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    body {
+      background-color: #f8f9fa;  /* Soft off-white */
+    }
+
+
+    /* ===== MOBILE RESPONSIVE FIXES ===== */
+    @media (max-width: 768px) {
+      /* Fix header spacing */
+      header .w-full {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+      }
+      
+      /* Fix hero text size */
+      .hero-title {
+        font-size: 2.5rem !important;
+        line-height: 1.2;
+      }
+      
+      .hero-subtitle {
+        font-size: 1rem !important;
+      }
+      
+      /* Fix max-width containers */
+      .max-w-7xl,
+      .max-w-4xl {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+      }
+      
+      /* Fix product cards grid */
+      .grid {
+        grid-template-columns: 1fr !important;
+      }
+      
+      /* Fix horizontal scroll sections */
+      #bestsellers-scroll,
+      #deals-scroll {
+         touch-action: pan-x; 
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+      }
+      
+      #bestsellers-scroll > div,
+      #deals-scroll > div {
+        scroll-snap-align: start;
+      }
+      
+      /* Fix cart items */
+      .flex-col.sm\:flex-row {
+        flex-direction: column !important;
+      }
+      
+      /* Fix product image gallery */
+      .traveling-rainbow-border img {
+        max-height: 20rem !important;
+      }
+      
+      /* Fix buttons */
+      button {
+        min-height: 44px; /* Apple's recommended touch target */
+      }
+      
+      /* Fix sidebar width */
+      .sidebar-wrapper {
+        width: 85vw !important;
+        max-width: 320px;
+      }
+    }
+    
+    @media (max-width: 640px) {
+      /* Extra small screens */
+      .hero-title {
+        font-size: 2rem !important;
+      }
+      
+      .text-5xl, .text-6xl {
+        font-size: 2rem !important;
+      }
+      
+      .text-4xl {
+        font-size: 1.75rem !important;
+      }
+      
+      .text-3xl {
+        font-size: 1.5rem !important;
+      }
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
@@ -1491,7 +1598,7 @@ window.checkSessionStatus = async function() {
                 ${Icon.Menu()}
               </button>
               
-              <a href="#" onclick="navigateHomeWithTear(); return false;" class="text-2xl font-extrabold flex items-center gap-1 btn-animate" style="color: var(--color-primary);">
+              <a href="#" onclick="navigateHomeWithTear(); return false;" class="text-xl md:text-2xl font-extrabold flex items-center gap-1 btn-animate" style="color: var(--color-primary);">
                 UTK<span style="color: var(--color-accent);">Wholesale</span>
               </a>
               <button onclick="navigateHomeWithTear(); return false;" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 btn-animate" title="Home">
@@ -1835,7 +1942,7 @@ window.checkSessionStatus = async function() {
       // 🌟 Wrapper to hold the Normal Product Card inside slider logic
       const renderSliderCardWrapper = (product) => {
         return `
-        <div class="min-w-[280px] w-[280px] h-full">
+        <div class="min-w-[260px] w-[260px] sm:min-w-[280px] sm:w-[280px] h-full">
              ${ProductCard(product)}
         </div>
         `;
