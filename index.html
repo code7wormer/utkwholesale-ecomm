@@ -900,26 +900,12 @@ async function withValidSession(operation) {
 }
 async function ensureValidSession() {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      console.log("No session found");
-      return null;
-    }
-    
-    // Always try to refresh - Supabase handles whether it's needed
-    const { data, error } = await supabase.auth.refreshSession();
+    // Supabase automatically handles refresh - just get the session
+    const { data: { session }, error } = await supabase.auth.getSession();
     
     if (error) {
-      console.error("Token refresh failed:", error);
-      // If refresh fails, log user out
-      await handleLogout();
+      console.error("Session error:", error);
       return null;
-    }
-    
-    if (data.session) {
-      console.log("Session refreshed successfully");
-      return data.session;
     }
     
     return session;
@@ -3556,16 +3542,11 @@ if (hash.startsWith('#category-')) {
   const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart','click'];
   
   activityEvents.forEach(event => {
-    document.addEventListener(event, async () => {
-      const now = Date.now();
-      // Only check every 2 minutes to avoid spam
-      if (now - lastActivity > 30 * 1000) {
-        lastActivity = now;
-        if (state.user) {
-          await ensureValidSession();
-        }
-      }
-    }, { passive: true });
+    document.addEventListener('visibilitychange', async () => {
+  if (!document.hidden && state.user) {
+    await supabase.auth.refreshSession();
+  }
+});
     });
     }
     
