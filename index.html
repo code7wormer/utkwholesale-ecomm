@@ -1584,7 +1584,7 @@ function updateCartDisplay() {
                 const { error } = await supabase
                     .from('cart_items')
                     .update({ quantity: newQuantity })
-                    .eq('id', id);
+                    .match({ user_id: state.user.id, product_id: id })
                 
                 if (error) throw error;
             } catch (error) {
