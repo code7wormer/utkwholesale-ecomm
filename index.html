@@ -888,7 +888,17 @@
     window.supabaseClient = supabase;
 
 
-
+    // Add this helper function
+    async function wakeUpDatabase() {
+      console.log("🏓 Pinging database to wake connection...");
+      try {
+        // Do a lightweight query to force connection refresh
+        await supabase.from('categories').select('count').limit(1);
+        console.log("✅ Database connection active");
+      } catch (err) {
+        console.error("Wake-up ping failed:", err);
+      }
+    }
 
     // ============================================
     // FIX: Get Fresh Client to Avoid Stale Connection
@@ -3303,6 +3313,7 @@ window.handleConfirmOrder = async function() {
     // ✅ FIX: Use fresh client
     if (state.user) {
   console.log("🗑️ Clearing cart from database...");
+       await wakeUpDatabase();
   
   try {
     // Simple timeout wrapper
