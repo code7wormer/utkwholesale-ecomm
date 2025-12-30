@@ -74,8 +74,43 @@
     /* Mobile: 2 columns, SQUARE compact cards */
     @media (max-width: 769px) {
       /* Fix cart items */
-      .flex-col.sm\:flex-row {
-        flex-direction: column !important;
+      /* ===== COMPACT HORIZONTAL CART ON MOBILE (like desktop) ===== */
+
+      /* Force horizontal layout on mobile */
+      .flex.flex-col.sm\:flex-row {
+        flex-direction: row !important;
+        gap: 0.5rem !important;
+        padding: 0.75rem !important;
+        align-items: center !important;
+      }
+      
+      /* Smaller thumbnail */
+      .flex.flex-col.sm\:flex-row img {
+        width: 50px !important;
+        height: 50px !important;
+        flex-shrink: 0 !important;
+      }
+      
+      /* Compact text */
+      .flex.flex-col.sm\:flex-row h3 {
+        font-size: 0.75rem !important;
+      }
+      
+      .flex.flex-col.sm\:flex-row p {
+        font-size: 0.7rem !important;
+      }
+      
+      /* Smaller quantity buttons */
+      .flex.flex-col.sm\:flex-row button {
+        width: 28px !important;
+        height: 28px !important;
+        padding: 0 !important;
+        font-size: 0.875rem !important;
+      }
+      
+      /* Smaller total price */
+      .flex.flex-col.sm\:flex-row .text-xl {
+        font-size: 0.95rem !important;
       }
       /* Force ONLY category page and search results to 2 columns on mobile really jugaad fix but alas */
       .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
