@@ -2765,6 +2765,9 @@ window.checkSessionStatus = async function() {
       const heroExists = document.querySelector('.hero-title');
       if (!heroExists) return;
       
+      // Set final state first, then animate from initial state
+      gsap.set(['.hero-title', '.hero-subtitle', '.hero-cta'], { opacity: 1 });
+      
       // Title
       gsap.from('.hero-title', {
         duration: 1,
@@ -2792,7 +2795,6 @@ window.checkSessionStatus = async function() {
         delay: 0.8
       });
     }
-    
     // ==========================================
     // 3️⃣ PRODUCT CARD SCROLL ANIMATIONS
     // ==========================================
