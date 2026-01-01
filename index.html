@@ -3067,7 +3067,7 @@ if (typeof gsap === 'undefined') {
 // Fallback: Show elements if animations don't trigger
 window.addEventListener('load', () => {
   setTimeout(() => {
-    document.querySelectorAll('.product-card-animate, .category-card-animate').forEach(el => {
+    document.querySelectorAll('.product-card-animate, .category-card-animate, .hero-title, .hero-subtitle, .hero-cta').forEach(el => {
       const opacity = window.getComputedStyle(el).opacity;
       if (opacity === '0' || parseFloat(opacity) < 0.1) {
         gsap.to(el, { opacity: 1, duration: 0.5, ease: "power2.out" });
