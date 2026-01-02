@@ -1129,6 +1129,14 @@
           this.clearPendingOperation();
           this.showIndicator('Operation completed successfully!', true);
           
+          // Show success alert based on operation type
+          const successMessages = {
+            'add': 'Product added successfully!',
+            'update': 'Product updated successfully!',
+            'delete': 'Product deleted successfully!'
+          };
+          alert(successMessages[op.type] || 'Operation completed successfully!');
+          
           // Refresh products
           await fetchAdminProducts();
           await fetchInitialProducts();
