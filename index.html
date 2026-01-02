@@ -2040,6 +2040,7 @@ window.checkSessionStatus = async function() {
     const timeoutId = setTimeout(() => {
           console.warn("⏱️ 7 seconds passed - reloading (connection dead)...");
           localStorage.setItem('return_to_admin', 'true');
+          window.location.href = window.location.origin + window.location.pathname + '#admin';
           window.location.reload();
         }, 7000);
 
@@ -2053,6 +2054,7 @@ window.checkSessionStatus = async function() {
       console.error("Insert error:", error);
       // Don't throw - just reload to retry
       localStorage.setItem('return_to_admin', 'true');
+      window.location.href = window.location.origin + window.location.pathname + '#admin';
       window.location.reload();
       return;
     }
@@ -2074,6 +2076,7 @@ window.checkSessionStatus = async function() {
    console.error("Add product error:", err);
     // Any error = reload to retry
     localStorage.setItem('return_to_admin', 'true');
+    window.location.href = window.location.origin + window.location.pathname + '#admin';
     window.location.reload();
   } finally {
     submitButton.disabled = false;
@@ -2121,6 +2124,7 @@ window.checkSessionStatus = async function() {
         document.getElementById('edit-is_bestseller').checked = product.is_bestseller || false;
 
         modal.classList.remove('hidden');
+      AutoSaveSystem.initFormAutoSave('edit-product-form');
     }
 
     function closeEditModal() {
@@ -2168,6 +2172,7 @@ window.checkSessionStatus = async function() {
         const timeoutId = setTimeout(() => {
             console.warn("⏱️ 7 seconds passed - reloading (connection dead)...");
             localStorage.setItem('return_to_admin', 'true');
+            window.location.href = window.location.origin + window.location.pathname + '#admin';
             window.location.reload();
         }, 7000);
 
@@ -2181,6 +2186,7 @@ window.checkSessionStatus = async function() {
             console.error("Update error:", error);
             // Don't throw - just reload to retry
             localStorage.setItem('return_to_admin', 'true');
+            window.location.href = window.location.origin + window.location.pathname + '#admin';
             window.location.reload();
             return;
         }
@@ -2199,6 +2205,7 @@ window.checkSessionStatus = async function() {
         console.error("Update product error:", err);
         // Any error = reload to retry
         localStorage.setItem('return_to_admin', 'true');
+        window.location.href = window.location.origin + window.location.pathname + '#admin';
         window.location.reload();
     }
 }
@@ -2221,6 +2228,7 @@ window.checkSessionStatus = async function() {
                 const timeoutId = setTimeout(() => {
                     console.warn("⏱️ 7 seconds passed - reloading (connection dead)...");
                     localStorage.setItem('return_to_admin', 'true');
+                    window.location.href = window.location.origin + window.location.pathname + '#admin';
                     window.location.reload();
                 }, 7000);
     
@@ -2234,6 +2242,7 @@ window.checkSessionStatus = async function() {
                     console.error("Delete error:", error);
                     // Don't throw - just reload to retry
                     localStorage.setItem('return_to_admin', 'true');
+                    window.location.href = window.location.origin + window.location.pathname + '#admin';
                     window.location.reload();
                     return;
                 }
@@ -2250,6 +2259,7 @@ window.checkSessionStatus = async function() {
                 console.error("Delete product error:", err);
                 // Any error = reload to retry
                 localStorage.setItem('return_to_admin', 'true');
+                window.location.href = window.location.origin + window.location.pathname + '#admin';
                 window.location.reload();
             }
         }
@@ -3820,6 +3830,9 @@ window.handleCheckout = handleCheckout;
       `;
       initAllAnimations();
       if (state.user && window.revealPrices) window.revealPrices();
+      if (state.isAdmin && state.currentPage === 'admin') {
+        AutoSaveSystem.initFormAutoSave('add-product-form');
+      }
     }
 
     window.toggleMenu = () => { 
@@ -3873,7 +3886,31 @@ window.handleCheckout = handleCheckout;
         }
     }
       } catch (e) { console.error("Init Error:", e); } 
-      finally { render(); }
+      finally { render(); 
+                setTimeout(() => {
+                  // Check if we should return to admin page
+                  const returnToAdmin = localStorage.getItem('return_to_admin');
+                  if (returnToAdmin === 'true' && state.isAdmin) {
+                    localStorage.removeItem('return_to_admin');
+                    navigate('admin');
+                  }
+                  
+                  // Check for pending operations
+                  const pending = AutoSaveSystem.getPendingOperation();
+                  if (pending && state.isAdmin) {
+                    // Show retry banner
+                    AutoSaveSystem.showRetryBanner(pending);
+                  }
+                  
+                  // Initialize auto-save for forms (after navigation)
+                  setTimeout(() => {
+                    if (state.currentPage === 'admin') {
+                      AutoSaveSystem.initFormAutoSave('add-product-form');
+                      AutoSaveSystem.initFormAutoSave('edit-product-form');
+                    }
+                  }, 1000);
+                }, 500);
+              }
 
       // 🌟 SETUP AUTH LISTENER
       supabase.auth.onAuthStateChange(async (event, session) => {
@@ -3911,6 +3948,12 @@ window.handleCheckout = handleCheckout;
         } finally {
             // 🌟 ALWAYS RENDER to ensure UI updates
             render();
+            if (state.isAdmin && state.currentPage === 'admin') {
+            setTimeout(() => {
+              AutoSaveSystem.initFormAutoSave('add-product-form');
+              AutoSaveSystem.initFormAutoSave('edit-product-form');
+            }, 500);
+          }
         }
       });
 // Handle direct product links
@@ -3923,6 +3966,9 @@ if (hash.startsWith('#product-')) {
 if (hash.startsWith('#category-')) {
   const slug = hash.replace('#category-', '');
   navigate('category', slug);
+}
+if (hash === '#admin') {
+  navigate('admin');
 }
 // Handle browser back/forward buttons
     window.addEventListener('popstate', () => {
