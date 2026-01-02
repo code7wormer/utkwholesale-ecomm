@@ -3321,34 +3321,28 @@ window.checkSessionStatus = async function() {
     function animateProductCards() {
       const cards = document.querySelectorAll('.product-card-animate');
       if (cards.length === 0) return;
-        if (window.innerWidth <= 769) {
-        cards.forEach((card) => {
-          const rect = card.getBoundingClientRect();
-          const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
-          
-          if (isVisible) {
-            // Card is visible - show immediately
-            gsap.set(card, { opacity: 1, y: 0 });
-          } else {
-            // Card is below fold - animate on scroll
-            gsap.fromTo(card, 
-              { opacity: 0, y: 60 },
-              {
-                scrollTrigger: {
-                  trigger: card,
-                  start: "top 95%",
-                  toggleActions: "play none none none"
-                },
-                duration: 0.5,
-                y: 0,
-                opacity: 1,
-                ease: "power3.out"
+           if (window.innerWidth <= 769) {
+            cards.forEach((card) => {
+              const rect = card.getBoundingClientRect();
+              // Add buffer: consider card visible if any part is within viewport + 100px buffer
+              const isVisible = rect.top < (window.innerHeight + 100) && rect.bottom > -100;
+              
+              if (isVisible) {
+                // Visible cards - set initial state then animate
+                gsap.set(card, { opacity: 0, y: 60 });
+                gsap.to(card, {
+                  duration: 0.5,
+                  y: 0,
+                  opacity: 1,
+                  ease: "power3.out"
+                });
+              } else {
+                // Cards below fold - make sure they're visible (override CSS)
+                gsap.set(card, { opacity: 1, y: 0 });
               }
-            );
+            });
+            return;
           }
-        });
-        return;
-      }
   // Don't reset - keep CSS initial state
   // gsap.set(cards, { opacity: 1, y: 0 }); // REMOVE THIS LINE
   
