@@ -3319,9 +3319,36 @@ window.checkSessionStatus = async function() {
   });
 }
     function animateProductCards() {
-  const cards = document.querySelectorAll('.product-card-animate');
-  if (cards.length === 0) return;
-  
+      const cards = document.querySelectorAll('.product-card-animate');
+      if (cards.length === 0) return;
+        if (window.innerWidth <= 769) {
+        cards.forEach((card) => {
+          const rect = card.getBoundingClientRect();
+          const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+          
+          if (isVisible) {
+            // Card is visible - show immediately
+            gsap.set(card, { opacity: 1, y: 0 });
+          } else {
+            // Card is below fold - animate on scroll
+            gsap.fromTo(card, 
+              { opacity: 0, y: 60 },
+              {
+                scrollTrigger: {
+                  trigger: card,
+                  start: "top 95%",
+                  toggleActions: "play none none none"
+                },
+                duration: 0.5,
+                y: 0,
+                opacity: 1,
+                ease: "power3.out"
+              }
+            );
+          }
+        });
+        return;
+      }
   // Don't reset - keep CSS initial state
   // gsap.set(cards, { opacity: 1, y: 0 }); // REMOVE THIS LINE
   
