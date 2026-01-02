@@ -1184,7 +1184,6 @@
         setTimeout(() => {
           const form = document.getElementById(formId);
           if (!form) return;
-          
           // Load saved data
           const saved = this.loadFormData(formId);
           if (saved) {
@@ -1204,6 +1203,15 @@
               const previewId = formId.includes('edit') ? 'edit-product-preview' : 'add-product-preview';
               if (window.updateMultiImagePreview) {
                 window.updateMultiImagePreview(saved.image_url, previewId);
+              }
+            }
+            
+            // Show/hide deal price container based on is_deal checkbox
+            if (saved.is_deal) {
+              const containerId = formId.includes('edit') ? 'edit-deal-price-container' : 'add-deal-price-container';
+              const container = document.getElementById(containerId);
+              if (container) {
+                container.classList.remove('hidden');
               }
             }
             
