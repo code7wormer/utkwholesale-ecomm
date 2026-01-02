@@ -23,6 +23,87 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
   <style>
+    /* ===== AUTO-SAVE INDICATOR ===== */
+    .autosave-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 50px;
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 10000;
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .autosave-indicator.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .autosave-indicator.success {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .autosave-indicator .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* ===== RETRY BANNER ===== */
+    .retry-banner {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100%);
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      padding: 16px 32px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(245, 87, 108, 0.4);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-weight: 600;
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-width: 90%;
+    }
+    
+    .retry-banner.show {
+      transform: translateX(-50%) translateY(0);
+    }
+    
+    .retry-banner button {
+      background: white;
+      color: #f5576c;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 700;
+      transition: all 0.3s;
+    }
+    
+    .retry-banner button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+    }
     /* ===== PRODUCT CARD SIZE ADJUSTMENTS ===== */
     
     /* Desktop: 4 columns, square cards */
@@ -886,7 +967,260 @@
     const ADMIN_EMAIL = 'utkwholesale.sup@gmail.com'; 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window.supabaseClient = supabase;
-
+    // ==========================================
+    // 🌟 AUTO-SAVE & RETRY SYSTEM
+    // ==========================================
+    
+    const AutoSaveSystem = {
+      TIMEOUT_DURATION: 7000, // 7 seconds
+      
+      // Show auto-save indicator
+      showIndicator(message, isSuccess = false) {
+        let indicator = document.getElementById('autosave-indicator');
+        if (!indicator) {
+          indicator = document.createElement('div');
+          indicator.id = 'autosave-indicator';
+          indicator.className = 'autosave-indicator';
+          document.body.appendChild(indicator);
+        }
+        
+        indicator.className = 'autosave-indicator show' + (isSuccess ? ' success' : '');
+        indicator.innerHTML = isSuccess 
+          ? '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg><span>' + message + '</span>'
+          : '<div class="spinner"></div><span>' + message + '</span>';
+        
+        setTimeout(() => {
+          indicator.classList.remove('show');
+        }, 2000);
+      },
+      
+      // Save form data to localStorage
+      saveFormData(formId, data) {
+        try {
+          const timestamp = Date.now();
+          const saveData = {
+            formId,
+            data,
+            timestamp,
+            url: window.location.href
+          };
+          localStorage.setItem('admin_form_autosave_' + formId, JSON.stringify(saveData));
+          this.showIndicator('Auto-saved', true);
+        } catch (e) {
+          console.error('Auto-save failed:', e);
+        }
+      },
+      
+      // Load saved form data
+      loadFormData(formId) {
+        try {
+          const saved = localStorage.getItem('admin_form_autosave_' + formId);
+          if (saved) {
+            const saveData = JSON.parse(saved);
+            // Only return if saved within last 24 hours
+            if (Date.now() - saveData.timestamp < 24 * 60 * 60 * 1000) {
+              return saveData.data;
+            }
+          }
+        } catch (e) {
+          console.error('Load auto-save failed:', e);
+        }
+        return null;
+      },
+      
+      // Clear saved form data
+      clearFormData(formId) {
+        try {
+          localStorage.removeItem('admin_form_autosave_' + formId);
+        } catch (e) {
+          console.error('Clear auto-save failed:', e);
+        }
+      },
+      
+      // Save pending operation to retry after reload
+      savePendingOperation(operation) {
+        try {
+          const pending = {
+            operation,
+            timestamp: Date.now(),
+            attempts: (operation.attempts || 0) + 1
+          };
+          localStorage.setItem('admin_pending_operation', JSON.stringify(pending));
+        } catch (e) {
+          console.error('Save pending operation failed:', e);
+        }
+      },
+      
+      // Get pending operation
+      getPendingOperation() {
+        try {
+          const pending = localStorage.getItem('admin_pending_operation');
+          if (pending) {
+            const operation = JSON.parse(pending);
+            // Only return if saved within last hour and less than 3 attempts
+            if (Date.now() - operation.timestamp < 60 * 60 * 1000 && operation.attempts < 3) {
+              return operation;
+            } else {
+              this.clearPendingOperation();
+            }
+          }
+        } catch (e) {
+          console.error('Get pending operation failed:', e);
+        }
+        return null;
+      },
+      
+      // Clear pending operation
+      clearPendingOperation() {
+        try {
+          localStorage.removeItem('admin_pending_operation');
+        } catch (e) {
+          console.error('Clear pending operation failed:', e);
+        }
+      },
+      
+      // Show retry banner
+      showRetryBanner(operation) {
+        let banner = document.getElementById('retry-banner');
+        if (!banner) {
+          banner = document.createElement('div');
+          banner.id = 'retry-banner';
+          banner.className = 'retry-banner';
+          document.body.appendChild(banner);
+        }
+        
+        const operationType = operation.operation.type === 'add' ? 'add the product' : 
+                             operation.operation.type === 'update' ? 'update the product' : 
+                             'delete the product';
+        
+        banner.innerHTML = `
+          <div>
+            <div class="font-bold text-lg">Previous operation failed</div>
+            <div class="text-sm opacity-90">Would you like to retry: ${operationType}?</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="AutoSaveSystem.retryOperation()" class="whitespace-nowrap">Retry Now</button>
+            <button onclick="AutoSaveSystem.dismissRetry()" class="whitespace-nowrap opacity-75">Dismiss</button>
+          </div>
+        `;
+        
+        setTimeout(() => banner.classList.add('show'), 100);
+      },
+      
+      // Retry the pending operation
+      async retryOperation() {
+        const pending = this.getPendingOperation();
+        if (!pending) return;
+        
+        this.dismissRetry();
+        this.showIndicator('Retrying operation...');
+        
+        try {
+          const op = pending.operation;
+          
+          if (op.type === 'add') {
+            await this.executeAddProduct(op.data);
+          } else if (op.type === 'update') {
+            await this.executeUpdateProduct(op.data);
+          } else if (op.type === 'delete') {
+            await this.executeDeleteProduct(op.data);
+          }
+          
+          this.clearPendingOperation();
+          this.showIndicator('Operation completed successfully!', true);
+          
+          // Refresh products
+          await fetchAdminProducts();
+          await fetchInitialProducts();
+          render();
+          
+        } catch (error) {
+          console.error('Retry failed:', error);
+          alert('Retry failed: ' + (error.message || 'Unknown error'));
+          this.savePendingOperation(pending.operation);
+        }
+      },
+      
+      // Execute add product operation
+      async executeAddProduct(productData) {
+        const { error } = await supabase.from('products').insert([productData]);
+        if (error) throw error;
+      },
+      
+      // Execute update product operation
+      async executeUpdateProduct(data) {
+        const { id, updates } = data;
+        const { error } = await supabase.from('products').update(updates).eq('id', id);
+        if (error) throw error;
+      },
+      
+      // Execute delete product operation
+      async executeDeleteProduct(data) {
+        const { id } = data;
+        const { error } = await supabase.from('products').delete().eq('id', id);
+        if (error) throw error;
+      },
+      
+      // Dismiss retry banner
+      dismissRetry() {
+        const banner = document.getElementById('retry-banner');
+        if (banner) {
+          banner.classList.remove('show');
+          setTimeout(() => banner.remove(), 500);
+        }
+        this.clearPendingOperation();
+      },
+      
+      // Initialize auto-save for a form
+      initFormAutoSave(formId) {
+        setTimeout(() => {
+          const form = document.getElementById(formId);
+          if (!form) return;
+          
+          // Load saved data
+          const saved = this.loadFormData(formId);
+          if (saved) {
+            Object.keys(saved).forEach(key => {
+              const field = form.elements[key];
+              if (field) {
+                if (field.type === 'checkbox') {
+                  field.checked = saved[key];
+                } else {
+                  field.value = saved[key];
+                }
+              }
+            });
+            
+            // Trigger image preview update if image_url exists
+            if (saved.image_url) {
+              const previewId = formId.includes('edit') ? 'edit-product-preview' : 'add-product-preview';
+              if (window.updateMultiImagePreview) {
+                window.updateMultiImagePreview(saved.image_url, previewId);
+              }
+            }
+            
+            this.showIndicator('Form data restored', true);
+          }
+          
+          // Add auto-save listeners
+          const inputs = form.querySelectorAll('input, textarea, select');
+          inputs.forEach(input => {
+            input.addEventListener('change', () => {
+              const formData = {};
+              Array.from(form.elements).forEach(el => {
+                if (el.name) {
+                  formData[el.name] = el.type === 'checkbox' ? el.checked : el.value;
+                }
+              });
+              this.saveFormData(formId, formData);
+            });
+          });
+        }, 500);
+      }
+    };
+    
+    // Make it globally accessible
+    window.AutoSaveSystem = AutoSaveSystem;
 
     // Add this helper function
     async function wakeUpDatabase() {
@@ -1682,12 +2016,7 @@ window.checkSessionStatus = async function() {
     submitButton.disabled = true;
     submitButton.innerHTML = '<div class="loader mx-auto"></div>';
     
-    // ADD THIS: Set a timeout to refresh if it takes too long
-    const timeoutId = setTimeout(() => {
-      alert("Request is taking too long. Refreshing page...");
-      window.location.reload();
-    }, 10000); // 10 seconds
-    
+    AutoSaveSystem.showIndicator('Adding product...');    
     // Build product
     const isDeal = form.is_deal.checked;
     const newProduct = {
@@ -1704,6 +2033,15 @@ window.checkSessionStatus = async function() {
       deal_price: isDeal && form.deal_price.value ? parseFloat(form.deal_price.value) : null,
       is_bestseller: form.is_bestseller.checked
     };
+    AutoSaveSystem.savePendingOperation({
+          type: 'add',
+          data: newProduct
+        });
+    const timeoutId = setTimeout(() => {
+          console.warn("⏱️ 7 seconds passed - reloading (connection dead)...");
+          localStorage.setItem('return_to_admin', 'true');
+          window.location.reload();
+        }, 7000);
 
     // Insert
     const { error } = await supabase.from('products').insert([newProduct]);
@@ -1711,26 +2049,32 @@ window.checkSessionStatus = async function() {
     // CLEAR THE TIMEOUT if successful
     clearTimeout(timeoutId);
     
-    if (error) {
-      if (error.message?.includes('JWT') || error.code === 'PGRST301') {
-        alert("Session expired. Refreshing page...");
-        window.location.reload();
-        return;
-      }
-      throw error;
+     if (error) {
+      console.error("Insert error:", error);
+      // Don't throw - just reload to retry
+      localStorage.setItem('return_to_admin', 'true');
+      window.location.reload();
+      return;
     }
     
     // Success
+    AutoSaveSystem.clearPendingOperation();
+    AutoSaveSystem.clearFormData('add-product-form');
+    AutoSaveSystem.showIndicator('Product added successfully!', true);
+    
     showToast("Product added!");
     form.reset();
     document.getElementById('add-deal-price-container')?.classList.add('hidden');
+    document.getElementById('add-product-preview')?.classList.add('hidden');
     
     await fetchAdminProducts();
     await fetchInitialProducts();
     
   } catch (err) {
-    console.error("Add product error:", err);
-    alert("Error: " + (err.message || 'Failed to add product'));
+   console.error("Add product error:", err);
+    // Any error = reload to retry
+    localStorage.setItem('return_to_admin', 'true');
+    window.location.reload();
   } finally {
     submitButton.disabled = false;
     submitButton.innerHTML = 'Add Product';
@@ -1786,56 +2130,127 @@ window.checkSessionStatus = async function() {
     window.closeEditModal = closeEditModal;
 
     async function handleUpdateProduct(e) {
-        e.preventDefault();
+    e.preventDefault();
+    
+    if (!state.isAdmin) {
+        alert("⛔ ACCESS DENIED: The system does not recognize you as the admin.");
+        return;
+    }
+
+    const form = e.target;
+    const id = form.id.value;
+    const isDeal = form.is_deal.checked;
+
+    const updates = {
+        name: form.name.value,
+        description: form.description.value,
+        detailed_description: form.detailed_description.value || null,
+        price: parseFloat(form.price.value),
+        image_url: form.image_url.value,
+        category_id: form.category_id.value,
+        stock_status: form.stock_status.value,
+        is_active: form.is_active.checked,
+        is_deal: isDeal,
+        deal_price: isDeal && form.deal_price.value ? parseFloat(form.deal_price.value) : null,
+        is_bestseller: form.is_bestseller.checked
+    };
+
+    try {
+        AutoSaveSystem.showIndicator('Updating product...');
         
+        // Save operation for retry BEFORE attempting
+        AutoSaveSystem.savePendingOperation({
+            type: 'update',
+            data: { id, updates }
+        });
+
+        // ⏱️ PURE TIME-BASED TIMEOUT - Reload after 7 seconds NO MATTER WHAT
+        const timeoutId = setTimeout(() => {
+            console.warn("⏱️ 7 seconds passed - reloading (connection dead)...");
+            localStorage.setItem('return_to_admin', 'true');
+            window.location.reload();
+        }, 7000);
+
+        // Try to update (but timeout will fire regardless)
+        const { error } = await supabase.from('products').update(updates).eq('id', id);
         
-        if (!state.isAdmin) {
-            alert("⛔ ACCESS DENIED: The system does not recognize you as the admin.");
+        // If we get here before timeout, clear it
+        clearTimeout(timeoutId);
+        
+        if (error) {
+            console.error("Update error:", error);
+            // Don't throw - just reload to retry
+            localStorage.setItem('return_to_admin', 'true');
+            window.location.reload();
             return;
         }
-
-        const form = e.target;
-        const id = form.id.value;
-        const isDeal = form.is_deal.checked;
-
-        const updates = {
-            name: form.name.value,
-            description: form.description.value,
-            detailed_description: form.detailed_description.value || null,
-            price: parseFloat(form.price.value),
-            image_url: form.image_url.value,
-            category_id: form.category_id.value,
-            stock_status: form.stock_status.value,
-            is_active: form.is_active.checked,
-            is_deal: isDeal,
-            deal_price: isDeal && form.deal_price.value ? parseFloat(form.deal_price.value) : null,
-            is_bestseller: form.is_bestseller.checked
-        };
-
-        const { error } = await supabase.from('products').update(updates).eq('id', id);
-        if (error) {
-            alert("Error updating product: " + error.message);
-        } else {
-            alert("Product updated successfully!");
-            closeEditModal();
-            await fetchAdminProducts();
-            await fetchInitialProducts(); 
-        }
-
+        
+        // Success
+        AutoSaveSystem.clearPendingOperation();
+        AutoSaveSystem.clearFormData('edit-product-form');
+        AutoSaveSystem.showIndicator('Product updated successfully!', true);
+        
+        alert("Product updated successfully!");
+        closeEditModal();
+        await fetchAdminProducts();
+        await fetchInitialProducts();
+        
+    } catch (err) {
+        console.error("Update product error:", err);
+        // Any error = reload to retry
+        localStorage.setItem('return_to_admin', 'true');
+        window.location.reload();
     }
+}
     window.handleUpdateProduct = handleUpdateProduct;
 
     async function handleDeleteProduct(id) {
         if (!state.isAdmin) return;
-
+    
         if (confirm("Are you sure you want to delete this product?")) {
-            const { error } = await supabase.from('products').delete().eq('id', id);
-            if (error) {
-                alert("Error deleting product: " + error.message);
-            } else {
+            try {
+                AutoSaveSystem.showIndicator('Deleting product...');
+                
+                // Save operation for retry BEFORE attempting
+                AutoSaveSystem.savePendingOperation({
+                    type: 'delete',
+                    data: { id }
+                });
+    
+                // ⏱️ PURE TIME-BASED TIMEOUT - Reload after 7 seconds NO MATTER WHAT
+                const timeoutId = setTimeout(() => {
+                    console.warn("⏱️ 7 seconds passed - reloading (connection dead)...");
+                    localStorage.setItem('return_to_admin', 'true');
+                    window.location.reload();
+                }, 7000);
+    
+                // Try to delete (but timeout will fire regardless)
+                const { error } = await supabase.from('products').delete().eq('id', id);
+                
+                // If we get here before timeout, clear it
+                clearTimeout(timeoutId);
+                
+                if (error) {
+                    console.error("Delete error:", error);
+                    // Don't throw - just reload to retry
+                    localStorage.setItem('return_to_admin', 'true');
+                    window.location.reload();
+                    return;
+                }
+                
+                // Success
+                AutoSaveSystem.clearPendingOperation();
+                AutoSaveSystem.showIndicator('Product deleted successfully!', true);
+                
                 alert("Product deleted successfully!");
                 await fetchAdminProducts();
-                await fetchInitialProducts(); 
+                await fetchInitialProducts();
+                
+            } catch (err) {
+                console.error("Delete product error:", err);
+                // Any error = reload to retry
+                localStorage.setItem('return_to_admin', 'true');
+                window.location.reload();
             }
         }
     }
