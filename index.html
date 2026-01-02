@@ -944,17 +944,17 @@ async function ensureValidSession() {
 }
     // --- 🎨 Theme Configuration ---
     const CATEGORY_THEMES = {
-      'candies-chocolates': { primary: '#034204', secondary: '#046305', icon: '🍬',background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272445/Gemini_Generated_Image_ui863xui863xui86_xfx52o.png'  },
-      'tobacco-products':   { primary: '#034204', secondary: '#046305', icon: '🚬',background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272469/Gemini_Generated_Image_emrepyemrepyemre_i82nns.png' },
-      'automotive':         { primary: '#034204', secondary: '#046305', icon: '🚗', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272445/Gemini_Generated_Image_ui863xui863xui86_xfx52o.png'},
-      'medicines':          { primary: '#034204', secondary: '#046305', icon: '💊', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272469/Gemini_Generated_Image_emrepyemrepyemre_i82nns.png'},
-      'toys':               { primary: '#034204', secondary: '#046305', icon: '🧸', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272445/Gemini_Generated_Image_ui863xui863xui86_xfx52o.png'},
-      'household':          { primary: '#034204', secondary: '#046305', icon: '🏠', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272469/Gemini_Generated_Image_emrepyemrepyemre_i82nns.png'},
-      'general-grocery':    { primary: '#034204', secondary: '#046305', icon: '🥦', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272445/Gemini_Generated_Image_ui863xui863xui86_xfx52o.png'},
-      'snacks':             { primary: '#034204', secondary: '#046305', icon: '🍿', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272469/Gemini_Generated_Image_emrepyemrepyemre_i82nns.png'},
-      'supplies':           { primary: '#034204', secondary: '#046305', icon: '📦', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272445/Gemini_Generated_Image_ui863xui863xui86_xfx52o.png' },
-      'non-groceries':      { primary: '#034204', secondary: '#046305', icon: '🛍️', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272469/Gemini_Generated_Image_emrepyemrepyemre_i82nns.png' },
-      'default':            { primary: '#034204', secondary: '#046305', icon: '✨', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272445/Gemini_Generated_Image_ui863xui863xui86_xfx52o.png'}
+      'candies-chocolates': { primary: '#034204', secondary: '#046305', icon: '🍬',background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272761/ok_hbvks2.png' },
+      'tobacco-products':   { primary: '#034204', secondary: '#046305', icon: '🚬',background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272761/ok_hbvks2.png' },
+      'automotive':         { primary: '#034204', secondary: '#046305', icon: '🚗', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272761/ok_hbvks2.png'},
+      'medicines':          { primary: '#034204', secondary: '#046305', icon: '💊', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272761/ok_hbvks2.png'},
+      'toys':               { primary: '#034204', secondary: '#046305', icon: '🧸', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272761/ok_hbvks2.png'},
+      'household':          { primary: '#034204', secondary: '#046305', icon: '🏠', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272761/ok_hbvks2.png'},
+      'general-grocery':    { primary: '#034204', secondary: '#046305', icon: '🥦', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272761/ok_hbvks2.png'},
+      'snacks':             { primary: '#034204', secondary: '#046305', icon: '🍿', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272761/ok_hbvks2.png'},
+      'supplies':           { primary: '#034204', secondary: '#046305', icon: '📦', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272761/ok_hbvks2.png' },
+      'non-groceries':      { primary: '#034204', secondary: '#046305', icon: '🛍️', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272761/ok_hbvks2.png' },
+      'default':            { primary: '#034204', secondary: '#046305', icon: '✨', background: 'https://res.cloudinary.com/dxw0q9nb3/image/upload/v1767272761/ok_hbvks2.png'}
     };
 
     // --- Icons ---
@@ -2156,7 +2156,7 @@ window.checkSessionStatus = async function() {
             ${isDeal ? '<div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse z-10">DEAL</div>' : ''}
             <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center gap-3 opacity-0 transition-all duration-300">
               <button onclick="navigate('product', '${product.slug}'); return false;" class="bg-white text-gray-900 px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-gray-50 shadow-lg transform hover:scale-105 transition-all">View Details</button>
-              <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg transform hover:scale-105 transition-all" style="background: linear-gradient(135deg, #D5C58A 0%, #33732a 69%, #034204 100%); color: white;">Add to Cart</button>
+              <button onclick='addToCart(${JSON.stringify(product).replace(/'/g, "&#39;")})' class="px-5 py-2.5 rounded-full font-semibold text-sm shadow-lg transform hover:scale-105 transition-all" style="background: #034204 ; color: white;">Add to Cart</button>
     
             </div>
             </div>
@@ -2301,7 +2301,7 @@ window.checkSessionStatus = async function() {
             <div class="relative max-w-7xl mx-auto px-6 text-center">
               <h1 class="hero-title text-5xl md:text-6xl font-bold mb-6 drop-shadow-2xl tracking-tight" style="letter-spacing: -0.02em;">UTK1 Distributors</h1>
               <p class="hero-subtitle text-lg md:text-xl opacity-90 mb-8 max-w-2xl mx-auto font-light">Curated just for you.</p>
-            <button onclick="smoothScrollTo('bestsellers-section')" class="hero-cta px-8 py-4 rounded-full font-semibold text-base hover:scale-105 transition-all shadow-xl" style="background: #034204; color: #1a1a2e;">
+            <button onclick="smoothScrollTo('bestsellers-section')" class="hero-cta px-8 py-4 rounded-full font-semibold text-base hover:scale-105 transition-all shadow-xl" style="background: ##FFE6E6; color: #1a1a2e;">
               Explore Collection
             </button>
             </div>
@@ -2552,9 +2552,11 @@ window.checkSessionStatus = async function() {
               ` : `
                   <p class="text-3xl font-bold mb-6 price-reveal" style="color: var(--color-primary);">$${displayPrice.toFixed(2)}</p>
               `}
-                
+
               <div class="text-gray-600 mb-8 space-y-4">
-                <p class="text-lg leading-relaxed">${product.description}</p>
+                <div class="p-4 bg-gray-50 border-l-4" style="border-color: var(--color-secondary);">
+                <p>${product.description}</p>
+                </div>}
                 ${product.detailed_description ? `<div class="p-4 bg-gray-50 border-l-4" style="border-color: var(--color-accent);"><p>${product.detailed_description}</p></div>` : ''}
               </div>
 
