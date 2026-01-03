@@ -1672,21 +1672,26 @@ function updateURL(page, slug = null) {
     
     window.handleForgotPassword = handleForgotPassword;
 
-    async function handlePasswordReset() {
-      // Wait a moment for Supabase to process the recovery token
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Check if we have a valid session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        alert('❌ Session expired or invalid\n\nPlease request a new password reset link.');
-        navigate('auth');
-        return;
-      }
-      
-      const newPassword = prompt('🔐 Enter your new password:\n\n(Must be at least 6 characters)');
-      
+
+      async function handlePasswordReset() {
+          console.log('🔐 handlePasswordReset called');
+          
+          // Wait a moment for Supabase to process the recovery token
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Check if we have a valid session
+          const { data: { session } } = await supabase.auth.getSession();
+          console.log('Session check:', session ? 'Valid session' : 'No session');
+          
+          if (!session) {
+            alert('❌ Session expired or invalid\n\nPlease request a new password reset link.');
+            navigate('auth');
+            return;
+          }
+          
+          console.log('Showing password prompt...');
+          const newPassword = prompt('🔐 Enter your new password:\n\n(Must be at least 6 characters)'););
+          
       if (!newPassword) {
         alert('Password reset cancelled.');
         navigate('auth');
@@ -4108,11 +4113,19 @@ window.handleCheckout = handleCheckout;
                   }
                   // Check for password reset from email link
                   const hash = window.location.hash;
+                  console.log('Current hash:', hash);
                   const hashParams = new URLSearchParams(hash.substring(1));
                   const recoveryType = hashParams.get('type');
+                  console.log('Recovery type:', recoveryType);
                   
                   if (recoveryType === 'recovery') {
-                    handlePasswordReset();
+                    console.log('🔐 Password reset detected, showing prompt...');
+                    // Clear the hash to prevent navigation issues
+                    window.history.replaceState(null, '', window.location.pathname);
+                    // Wait a bit longer for session to be fully established
+                    setTimeout(() => {
+                      handlePasswordReset();
+                    }, 1500);
                   }
                   // Initialize auto-save for forms (after navigation)
                   setTimeout(() => {
