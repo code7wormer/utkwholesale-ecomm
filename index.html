@@ -4085,7 +4085,9 @@ window.handleCheckout = handleCheckout;
       console.log('Initial hash on page load:', initialHash);
       const hashParams = new URLSearchParams(initialHash.substring(1));
       const recoveryType = hashParams.get('type');
-      const hasRecoveryToken = recoveryType === 'recovery'
+      const hasRecoveryToken = recoveryType === 'recovery';
+      
+      console.log('Has recovery token:', hasRecoveryToken);
       try {
         const categoriesRes = await supabase.from('categories').select('*').order('display_order');
         state.categories = categoriesRes.data || [];
@@ -4116,6 +4118,11 @@ window.handleCheckout = handleCheckout;
                     // Show retry banner
                     AutoSaveSystem.showRetryBanner(pending);
                   }
+                  // Check for password reset from email link
+                  if (hasRecoveryToken) {
+                    console.log('Triggering password reset now...');
+                    handlePasswordReset();
+                  }
                   // Initialize auto-save for forms (after navigation)
                   setTimeout(() => {
                     if (state.currentPage === 'admin') {
@@ -4124,11 +4131,6 @@ window.handleCheckout = handleCheckout;
                     }
                   }, 1000);
                 }, 500);
-               if (recoveryType === 'recovery') {
-                    console.log('Triggering password reset...');
-                    setTimeout(() => {
-                      handlePasswordReset();
-                    }, 1500);
               }
 
       // 🌟 SETUP AUTH LISTENER
