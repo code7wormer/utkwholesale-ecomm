@@ -4081,6 +4081,11 @@ window.handleCheckout = handleCheckout;
     }
 
     async function init() {
+      const initialHash = window.location.hash;
+      console.log('Initial hash on page load:', initialHash);
+      const hashParams = new URLSearchParams(initialHash.substring(1));
+      const recoveryType = hashParams.get('type');
+      const hasRecoveryToken = recoveryType === 'recovery'
       try {
         const categoriesRes = await supabase.from('categories').select('*').order('display_order');
         state.categories = categoriesRes.data || [];
@@ -4111,22 +4116,6 @@ window.handleCheckout = handleCheckout;
                     // Show retry banner
                     AutoSaveSystem.showRetryBanner(pending);
                   }
-                  // Check for password reset from email link
-                  const hash = window.location.hash;
-                  console.log('Current hash:', hash);
-                  const hashParams = new URLSearchParams(hash.substring(1));
-                  const recoveryType = hashParams.get('type');
-                  console.log('Recovery type:', recoveryType);
-                  
-                  if (recoveryType === 'recovery') {
-                    console.log('🔐 Password reset detected, showing prompt...');
-                    // Clear the hash to prevent navigation issues
-                    window.history.replaceState(null, '', window.location.pathname);
-                    // Wait a bit longer for session to be fully established
-                    setTimeout(() => {
-                      handlePasswordReset();
-                    }, 1500);
-                  }
                   // Initialize auto-save for forms (after navigation)
                   setTimeout(() => {
                     if (state.currentPage === 'admin') {
@@ -4135,6 +4124,11 @@ window.handleCheckout = handleCheckout;
                     }
                   }, 1000);
                 }, 500);
+               if (recoveryType === 'recovery') {
+                    console.log('Triggering password reset...');
+                    setTimeout(() => {
+                      handlePasswordReset();
+                    }, 1500);
               }
 
       // 🌟 SETUP AUTH LISTENER
