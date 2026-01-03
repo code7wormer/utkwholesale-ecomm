@@ -3492,7 +3492,7 @@ window.checkSessionStatus = async function() {
   
   // Don't reset - keep CSS initial state
   // gsap.set(cards, { opacity: 1, scale: 1 }); // REMOVE THIS LINE
-  
+  gsap.set(cards, { opacity: 1, y: 0, scale: 1 });
   gsap.fromTo('.category-card-animate',
     { opacity: 0, scale: 0.9 },
     {
