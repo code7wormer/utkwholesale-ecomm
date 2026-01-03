@@ -4106,7 +4106,14 @@ window.handleCheckout = handleCheckout;
                     // Show retry banner
                     AutoSaveSystem.showRetryBanner(pending);
                   }
+                  // Check for password reset from email link
+                  const hash = window.location.hash;
+                  const hashParams = new URLSearchParams(hash.substring(1));
+                  const recoveryType = hashParams.get('type');
                   
+                  if (recoveryType === 'recovery') {
+                    handlePasswordReset();
+                  }
                   // Initialize auto-save for forms (after navigation)
                   setTimeout(() => {
                     if (state.currentPage === 'admin') {
@@ -4178,15 +4185,7 @@ if (hash === '#admin') {
 if (hash === '#cart') {
  navigate('cart');
 }
-// Handle password reset from email link
-const hashParams = new URLSearchParams(hash.substring(1));
-const recoveryType = hashParams.get('type');
 
-if (recoveryType === 'recovery') {
-  setTimeout(() => {
-    handlePasswordReset();
-  }, 1000);
-}
 // Handle browser back/forward buttons
     window.addEventListener('popstate', () => {
       const hash = window.location.hash;
