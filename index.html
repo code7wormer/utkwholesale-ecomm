@@ -1660,7 +1660,7 @@ function updateURL(page, slug = null) {
       if (!email) return;
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}${window.location.pathname}#reset-password`,
+        redirectTo: `${window.location.origin}${window.location.pathname}`,
       });
       
       if (error) {
@@ -4156,7 +4156,11 @@ if (hash === '#cart') {
  navigate('cart');
 }
       // Handle password reset from email link
-if (hash === '#reset-password') {
+// Handle password reset from email link
+const hashParams = new URLSearchParams(hash.substring(1));
+const recoveryType = hashParams.get('type');
+
+if (recoveryType === 'recovery') {
   setTimeout(() => {
     handlePasswordReset();
   }, 500);
