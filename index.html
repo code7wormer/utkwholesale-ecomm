@@ -2662,13 +2662,13 @@ window.checkSessionStatus = async function() {
       `;
     }
 
-    //Modified ProductCard
+
     function ProductCard(product) {
       const isDeal = product.is_deal && product.deal_price;
       const displayPrice = isDeal ? product.deal_price : product.price;
       
       return `
-            <div class="product-card-animate bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-2xl group flex flex-col h-full">          
+            <div class="product-card-animate bg-white rounded-2xl shadow-md border-4 border-green-900 overflow-hidden transition-all duration-300 hover:shadow-2xl group flex flex-col h-full">          
             <div class="relative overflow-hidden">
             <img src="${product.image_url.split(',')[0].trim()}" alt="${product.name}" class="w-full object-cover transition-all duration-500 group-hover:scale-110 product-card-img">
             ${isDeal ? '<div class="absolute top-2 right-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse z-10">DEAL</div>' : ''}
@@ -2678,7 +2678,7 @@ window.checkSessionStatus = async function() {
     
             </div>
             </div>
-          <div class="p-4 flex flex-col flex-grow">
+          <div class="p-4 flex flex-col flex-grow bg-green-300">
             <h3 class="font-extrabold text-xl mb-1 truncate" style="color: var(--color-primary);">${product.name}</h3>
             <p class="text-gray-500 text-sm mb-3 line-clamp-2 h-10">${product.description}</p>
             <div class="mt-auto flex items-center justify-between">
