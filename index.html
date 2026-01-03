@@ -3478,7 +3478,6 @@ window.checkSessionStatus = async function() {
   const gap = 24; // gap-6 = 24px
   
   // Scroll by container width for smooth full-screen scrolling
-  const newScrollLeft = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
   const isMobile = window.innerWidth <= 768;
   const scrollAmount = isMobile ? (cardWidth + gap) : container.offsetWidth * 0.8;
   const newScrollLeft = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
