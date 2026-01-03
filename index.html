@@ -1640,7 +1640,7 @@ function updateURL(page, slug = null) {
       let error = null;
       if (state.authMode === 'signup') {
         const { error: suError } = await supabase.auth.signUp({ email, password });
-        if (!suError) alert('Registration successful! Check email.');
+        if (!suError) alert('Registration successful! You can Sign-In now');
         error = suError;
       } else {
         const { error: siError } = await supabase.auth.signInWithPassword({ email, password });
