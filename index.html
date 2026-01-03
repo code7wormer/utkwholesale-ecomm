@@ -819,7 +819,13 @@
       #deals-scroll > div {
         scroll-snap-align: start;
       }
-      
+      #bestsellers-scroll,
+      #deals-scroll {
+        -webkit-overflow-scrolling: touch;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        will-change: scroll-position;
+      }
       
       
       /* Fix product image gallery */
@@ -3474,12 +3480,17 @@ window.checkSessionStatus = async function() {
   // Scroll by container width for smooth full-screen scrolling
   const scrollAmount = container.offsetWidth * 0.8; // Scroll 80% of visible area
   const newScrollLeft = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+  const isMobile = window.innerWidth <= 768;
+  const scrollAmount = isMobile ? (cardWidth + gap) : container.offsetWidth * 0.8;
+  const newScrollLeft = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
   
   // Use the same sexy easing as the hero button
   gsap.to(container, {
     scrollLeft: newScrollLeft,
     duration: 1.2,
-    ease: "power3.inOut" // Same as smoothScrollTo
+    ease: isMobile ? "power2.out" : "power3.inOut",
+     force3D: true,
+    overwrite: 'auto'
   });
 };
     
