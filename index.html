@@ -3572,58 +3572,7 @@ window.checkSessionStatus = async function() {
       // Set initial visible state as fallback
       gsap.set(cards, { opacity: 1, y: 0, scale: 1 });
       
-      const isMobile = window.innerWidth <= 768;
-      
-      if (isMobile) {
-        // Mobile: Faster animation with mobile-specific fixes
-        gsap.fromTo('.category-card-animate',
-          { opacity: 0, y: 30, scale: 0.95 },
-          {
-            scrollTrigger: {
-              trigger: '.category-section',
-              start: "top 90%",
-              toggleActions: "play none none none",
-              once: true,
-              invalidateOnRefresh: true,
-              refreshPriority: 1
-            },
-            duration: 0.5,
-            y: 0,
-            scale: 1,
-            opacity: 1,
-            stagger: 0.06,
-            ease: "power2.out",
-            clearProps: "all"
-          }
-        );
-        
-        // Force ScrollTrigger refresh for mobile
-        setTimeout(() => {
-          if (window.ScrollTrigger) {
-            window.ScrollTrigger.refresh();
-          }
-        }, 100);
-      } else {
-        // Desktop: Original animation (your old version)
-        gsap.fromTo('.category-card-animate',
-          { opacity: 0, y: 30, scale: 0.95 },
-          {
-            scrollTrigger: {
-              trigger: '.category-section',
-              start: "top 95%",
-              end: "top 20%",
-              toggleActions: "play none none reverse"
-            },
-            duration: 0.7,
-            y: 0,
-            scale: 1,
-            opacity: 1,
-            stagger: 0.1,
-            ease: "power3.out",
-            clearProps: "all"
-          }
-        );
-      }
+     
     }
     
     // ==========================================
