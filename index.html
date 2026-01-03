@@ -3569,24 +3569,29 @@ window.checkSessionStatus = async function() {
   const cards = document.querySelectorAll('.category-card-animate');
   if (cards.length === 0) return;
   
-  // Don't reset - keep CSS initial state
-  // gsap.set(cards, { opacity: 1, scale: 1 }); // REMOVE THIS LINE
-  gsap.set(cards, { opacity: 1, y: 0, scale: 1 });
-  gsap.fromTo('.category-card-animate',
-    { opacity: 0, scale: 0.9 },
-    {
-      scrollTrigger: {
-        trigger: '.category-section',
-        start: "top 95%",
-        toggleActions: "play none none none"
-      },
-      duration: 0.6,
-      scale: 1,
-      opacity: 1,
-      stagger: 0.08,
-      ease: "power2.out"
-    }
-  );
+  const isMobile = window.innerWidth <= 768;
+  
+  if (isMobile) {
+      // Mobile: No animation, just show cards immediately
+      gsap.set(cards, { opacity: 1, y: 0, scale: 1 });
+    } else {
+    // Desktop: Keep the animation
+        gsap.set(cards, { opacity: 1, y: 0, scale: 1 });
+        gsap.fromTo('.category-card-animate',
+        { opacity: 0, scale: 0.9 },
+        {
+          scrollTrigger: {
+            trigger: '.category-section',
+            start: "top 95%",
+            toggleActions: "play none none none"
+          },
+          duration: 0.6,
+          scale: 1,
+          opacity: 1,
+          stagger: 0.08,
+          ease: "power2.out"
+        }
+      );
 }
     
     // ==========================================
