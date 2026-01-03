@@ -1674,7 +1674,7 @@ function updateURL(page, slug = null) {
 
 
       async function handlePasswordReset() {
-          console.log('🔐 handlePasswordReset called');
+          console.log('handlePasswordReset called');
           
           // Wait a moment for Supabase to process the recovery token
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1690,7 +1690,7 @@ function updateURL(page, slug = null) {
           }
           
           console.log('Showing password prompt...');
-          const newPassword = prompt('🔐 Enter your new password:\n\n(Must be at least 6 characters)');
+          const newPassword = prompt('Enter your new password:\n\n(Must be at least 6 characters)');
           
       if (!newPassword) {
         alert('Password reset cancelled.');
@@ -4119,7 +4119,7 @@ window.handleCheckout = handleCheckout;
                   console.log('Recovery type:', recoveryType);
                   
                   if (recoveryType === 'recovery') {
-                    console.log('🔐 Password reset detected, showing prompt...');
+                    console.log(' Password reset detected, showing prompt...');
                     // Clear the hash to prevent navigation issues
                     window.history.replaceState(null, '', window.location.pathname);
                     // Wait a bit longer for session to be fully established
