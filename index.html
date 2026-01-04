@@ -1608,6 +1608,10 @@ function updateURL(page, slug = null) {
         history.pushState(null, '', '#admin');
       } else if (page === 'about') {
         history.pushState(null, '', '#about');
+      } else if (page === 'bestsellers') {
+        history.pushState(null, '', '#bestsellers');
+      } else if (page === 'deals') {
+        history.pushState(null, '', '#deals');
       } else if (page === 'search-results') {
         const query = encodeURIComponent(state.searchQuery || '');
         const category = state.searchCategory || 'all';
@@ -2475,6 +2479,16 @@ window.checkSessionStatus = async function() {
                 </div>
               </div>
 
+              <!-- Bestsellers Link -->
+              <a href="#" onclick="navigate('bestsellers'); return false;" class="hidden lg:block px-4 py-2 font-semibold text-gray-600 hover:text-indigo-600 transition-colors">
+                ✨ Bestsellers
+              </a>
+
+              <!-- Deals Link -->
+              <a href="#" onclick="navigate('deals'); return false;" class="hidden lg:block px-4 py-2 font-semibold text-gray-600 hover:text-red-600 transition-colors">
+                💎 Deals
+              </a>
+
             </div>
             
             <div class="flex items-center gap-1 sm:gap-3 flex-shrink-0">
@@ -2577,6 +2591,20 @@ window.checkSessionStatus = async function() {
                 </a>
                 </div>
               ` : ''}
+              
+               <div class="staggered-item">
+                <a href="#" onclick="navigate('bestsellers'); return false;" class="flex items-center gap-3 py-3 px-3 font-bold text-lg hover:bg-gray-50 rounded-xl transition-colors text-gray-700">
+                  <span class="text-2xl">✨</span>
+                  Bestsellers
+                </a>
+              </div>
+
+              <div class="staggered-item">
+                <a href="#" onclick="navigate('deals'); return false;" class="flex items-center gap-3 py-3 px-3 font-bold text-lg hover:bg-gray-50 rounded-xl transition-colors text-gray-700">
+                  <span class="text-2xl">💎</span>
+                  Monthly Deals
+                </a>
+              </div>
 
               <div class="staggered-item">
                 <button onclick="toggleSidebarCat()" class="w-full flex items-center justify-between py-3 px-3 rounded-xl hover:bg-gray-100 transition-colors group">
@@ -2828,7 +2856,12 @@ window.checkSessionStatus = async function() {
             <div class="flex items-center justify-between mb-4 px-2">
                  <h2 class="section-header-animate text-3xl font-extrabold text-gray-900 flex items-center gap-3">
                   <span class="text-2xl">✨</span> Bestsellers
-                </h2>
+                  </h2>
+                  <div class="flex items-center gap-2">
+                    <a href="#" onclick="navigate('bestsellers'); return false;" class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm hidden sm:inline-flex items-center gap-1">
+                      See All
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
                  <div class="hidden md:flex gap-2">
                     <button onclick="smoothScrollSection('bestsellers-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
                     <button onclick="smoothScrollSection('bestsellers-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
@@ -2853,6 +2886,11 @@ window.checkSessionStatus = async function() {
                  <h2 class="section-header-animate text-3xl font-extrabold text-gray-900 flex items-center gap-3">
                   <span class="text-2xl">💎</span> Limited Time Deals
                 </h2>
+                <div class="flex items-center gap-2">
+                  <a href="#" onclick="navigate('deals'); return false;" class="text-red-600 hover:text-red-800 font-semibold text-sm hidden sm:inline-flex items-center gap-1">
+                    See All
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                  </a>
                  <div class="hidden md:flex gap-2">
                     <button onclick="smoothScrollSection('deals-scroll', 'left')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronLeft()}</button>
                     <button onclick="smoothScrollSection('deals-scroll', 'right')" class="p-2 rounded-full bg-white shadow border hover:bg-gray-50">${Icon.ChevronRight()}</button>
@@ -2995,17 +3033,11 @@ window.checkSessionStatus = async function() {
       
       // Get theme for this category
       const theme = CATEGORY_THEMES[category.slug] || CATEGORY_THEMES['default'];
-      
-      // Set background dynamically
       setTimeout(() => {
-        let bgElement = document.querySelector('.category-page-bg');
-        if (!bgElement) {
-          bgElement = document.createElement('div');
-          bgElement.className = 'category-page-bg';
-          document.body.appendChild(bgElement);
+        const bgElement = document.querySelector('.category-page-bg');
+        if (bgElement) {
+          bgElement.style.opacity = '0';
         }
-        bgElement.style.backgroundImage = `url('${theme.background}')`;
-        bgElement.style.opacity = '1';
       }, 0);
       const products = state.products.filter(p => p.category_id === category.id);
       
@@ -3030,7 +3062,55 @@ window.checkSessionStatus = async function() {
         </div>
       `;
     }
-
+    function BestsellersPage() {
+      const bestsellers = state.products.filter(p => p.is_bestseller);
+      
+      return `
+        <div class="flex-1 page-enter">
+          <div class="text-white py-12 transition-colors duration-500" style="background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);">
+            <div class="max-w-7xl mx-auto px-4">
+              <h1 class="text-5xl font-extrabold flex items-center gap-4">
+                <span class="text-4xl">✨</span> Bestsellers
+              </h1>
+              <p class="mt-4 text-xl opacity-90 max-w-2xl">Our most popular products loved by customers</p>
+            </div>
+          </div>
+          <div class="max-w-7xl mx-auto px-4 py-12">
+            ${bestsellers.length === 0 ? 
+              '<p class="text-center text-gray-600 py-12 text-lg">No bestsellers marked yet.</p>' :
+              `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                ${bestsellers.map(product => ProductCard(product)).join('')}
+              </div>`
+            }
+          </div>
+        </div>
+      `;
+    }
+    
+    function DealsPage() {
+      const deals = state.products.filter(p => p.is_deal);
+      
+      return `
+        <div class="flex-1 page-enter">
+          <div class="text-white py-12 transition-colors duration-500" style="background: linear-gradient(135deg, #FF6B6B 0%, #C92A2A 100%);">
+            <div class="max-w-7xl mx-auto px-4">
+              <h1 class="text-5xl font-extrabold flex items-center gap-4">
+                <span class="text-4xl">💎</span> Limited Time Deals
+              </h1>
+              <p class="mt-4 text-xl opacity-90 max-w-2xl">Exclusive offers you don't want to miss</p>
+            </div>
+          </div>
+          <div class="max-w-7xl mx-auto px-4 py-12">
+            ${deals.length === 0 ? 
+              '<p class="text-center text-gray-600 py-12 text-lg">No active deals right now.</p>' :
+              `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                ${deals.map(product => ProductCard(product)).join('')}
+              </div>`
+            }
+          </div>
+        </div>
+      `;
+    }
     function SearchResultsPage() {
         return `
         <div class="flex-1 max-w-7xl mx-auto px-4 py-12 page-enter">
@@ -4010,6 +4090,8 @@ window.handleCheckout = handleCheckout;
         case 'auth': content = AuthPage(); break;
         case 'admin': content = AdminPage(); break;
         case 'search-results': content = SearchResultsPage(); break;
+        case 'bestsellers': content = BestsellersPage(); break;
+        case 'deals': content = DealsPage(); break;
       }
 
       const appContainer = document.getElementById('app');
@@ -4181,6 +4263,12 @@ if (hash === '#admin') {
 if (hash === '#cart') {
  navigate('cart');
 }
+if (hash === '#bestsellers') {
+  navigate('bestsellers');
+}
+if (hash === '#deals') {
+  navigate('deals');
+}
 
 // Handle browser back/forward buttons
     window.addEventListener('popstate', () => {
@@ -4202,6 +4290,10 @@ if (hash === '#cart') {
         navigate('admin');
       } else if (hash === '#about') {
         navigate('about');
+      } else if (hash === '#bestsellers') {
+        navigate('bestsellers');
+      } else if (hash === '#deals') {
+        navigate('deals');
       } else if (hash.startsWith('#search')) {
         // ADD THIS: Parse search parameters from URL
         const params = new URLSearchParams(hash.split('?')[1] || '');
