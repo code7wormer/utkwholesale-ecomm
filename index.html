@@ -24,133 +24,138 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
   <style>
     /* ===== MATERIAL DESIGN + GLASS EFFECT SIDEBAR ===== */
-.category-sidebar-glass {
-  position: fixed;
-  right: 0;
-  top: 80px;
-  width: 90px;
-  height: calc(100vh - 80px);
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(40px) saturate(150%);
-  border-left: 1px solid rgba(255, 255, 255, 0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px 0;
-  gap: 8px;
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.1);
-  z-index: 30;
-  overflow-y: auto;
-  transition: transform 0.3s ease;
-}
-
-@media (max-width: 1024px) {
-  .category-sidebar-glass {
-    transform: translateX(100%);
-  }
-}
-
-@media (min-width: 1025px) {
-  .main-with-sidebar {
-    margin-right: 90px;
-  }
-}
-
-.material-glass-item {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  cursor: pointer;
-  border-radius: 16px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.material-glass-item:hover {
-  background: rgba(255, 255, 255, 0.5);
-  transform: translateX(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.material-glass-item.active {
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
-  transform: translateX(-4px) scale(1.05);
-}
-
-.material-glass-item.active::before {
-  content: '';
-  position: absolute;
-  right: -1px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 40px;
-  background: #10b981;
-  border-radius: 4px 0 0 4px;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
-}
-
-.material-glass-icon {
-  width: 36px;
-  height: 36px;
-  background: rgba(245, 245, 245, 0.8);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
-}
-
-.material-glass-item:hover .material-glass-icon {
-  transform: scale(1.1);
-  background: rgba(245, 245, 245, 0.95);
-}
-
-.material-glass-item.active .material-glass-icon {
-  background: linear-gradient(135deg, #10b981, #059669);
-  transform: scale(1.15);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.material-glass-label {
-  font-size: 10px;
-  color: #4b5563;
-  font-weight: 600;
-  text-align: center;
-  line-height: 1.2;
-  transition: all 0.2s;
-}
-
-.material-glass-item.active .material-glass-label {
-  color: #10b981;
-  font-weight: 700;
-}
-
-.category-sidebar-glass::-webkit-scrollbar {
-  width: 4px;
-}
-
-.category-sidebar-glass::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.category-sidebar-glass::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 2px;
-}
-
-.category-sidebar-glass::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
+    .category-sidebar-glass {
+      position: fixed;
+      right: 16px;
+      top: 96px;
+      width: 90px;
+      height: calc(100vh - 112px);
+      background: linear-gradient(180deg, 
+        rgba(20, 184, 166, 0.75) 0%,
+        rgba(16, 185, 129, 0.7) 50%,
+        rgba(5, 150, 105, 0.75) 100%
+      );
+      backdrop-filter: blur(40px) saturate(150%);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 0;
+      gap: 8px;
+      box-shadow: 0 8px 32px rgba(20, 184, 166, 0.2), -4px 0 16px rgba(0, 0, 0, 0.1);
+      z-index: 30;
+      overflow-y: auto;
+      transition: transform 0.3s ease;
+    }
+    
+    @media (max-width: 1024px) {
+      .category-sidebar-glass {
+        transform: translateX(100%);
+      }
+    }
+    
+    @media (min-width: 1025px) {
+      .main-with-sidebar {
+        margin-right: 90px;
+      }
+    }
+    
+    .material-glass-item {
+      width: 64px;
+      height: 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      border-radius: 16px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      background: rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .material-glass-item:hover {
+      background: rgba(255, 255, 255, 0.5);
+      transform: translateX(-4px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .material-glass-item.active {
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+      transform: translateX(-4px) scale(1.05);
+    }
+    
+    .material-glass-item.active::before {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 40px;
+      background: #10b981;
+      border-radius: 4px 0 0 4px;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+    }
+    
+    .material-glass-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(245, 245, 245, 0.8);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+    }
+    
+    .material-glass-item:hover .material-glass-icon {
+      transform: scale(1.1);
+      background: rgba(245, 245, 245, 0.95);
+    }
+    
+    .material-glass-item.active .material-glass-icon {
+      background: linear-gradient(135deg, #10b981, #059669);
+      transform: scale(1.15);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .material-glass-label {
+      font-size: 10px;
+      color: #4b5563;
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.2;
+      transition: all 0.2s;
+    }
+    
+    .material-glass-item.active .material-glass-label {
+      color: #10b981;
+      font-weight: 700;
+    }
+    
+    .category-sidebar-glass::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    .category-sidebar-glass::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .category-sidebar-glass::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 2px;
+    }
+    
+    .category-sidebar-glass::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.3);
+    }
     /* ===== AUTO-SAVE INDICATOR ===== */
     .autosave-indicator {
       position: fixed;
