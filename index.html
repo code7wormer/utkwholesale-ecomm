@@ -30,6 +30,7 @@
       top: 96px;
       width: 90px;
       height: calc(100vh - 112px);
+      max-height: calc(100vh - 112px);
       background: linear-gradient(180deg, 
         rgba(20, 184, 166, 0.75) 0%,
         rgba(16, 185, 129, 0.7) 50%,
@@ -49,10 +50,12 @@
       transition: transform 0.3s ease;
     }
     
-    /* Mobile: Smaller sidebar */
+
     @media (max-width: 1024px) {
       .category-sidebar-glass {
         width: 50px !important;
+        height: auto !important;
+        max-height: calc(100vh - 90px) !important;
         right: 4px !important;
         top: 80px !important;
         padding: 8px 0 !important;
