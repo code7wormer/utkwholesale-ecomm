@@ -778,6 +778,9 @@
       background: rgba(0, 0, 0, 0.3);
     } 
     */
+
+
+    
     /* toast style*/
     #toast-container {
       position: fixed;
@@ -1103,7 +1106,7 @@
         <span class="absolute left-4 top-3 text-gray-500 font-medium">+1</span>
         <input 
           type="tel" 
-          id="user-phone" 
+          id="user-phone"
           placeholder="5551234567" 
           maxlength="10"
           class="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-lg transition-all"
@@ -1123,7 +1126,7 @@
   </div>
 </div>
   <script type="module">
-    // config
+    // supabaseconfig
     const SUPABASE_URL = 'https://thzmryhnyzhfewsyamjh.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_Xfi5Ppm2BPqIr0DBPgA8EA_C7ikFNvk';
     const ADMIN_EMAIL = 'utkwholesale.sup@gmail.com'; 
@@ -1131,7 +1134,7 @@
     window.supabaseClient = supabase;
     
     const AutoSaveSystem = {
-      TIMEOUT_DURATION: 7000, // 7 seconds
+      TIMEOUT_DURATION: 7000,
       
       //auto-save indicator, should look into replacing with toast in future
       showIndicator(message, isSuccess = false) {
@@ -1153,7 +1156,6 @@
         }, 2000);
       },
       
-      // local persistence workaround
       saveFormData(formId, data) {
         try {
           const timestamp = Date.now();
@@ -1207,13 +1209,12 @@
           console.error('Save pending operation failed:', e);
         }
       },
-      // Retry recovery
       getPendingOperation() {
         try {
           const pending = localStorage.getItem('admin_pending_operation');
           if (pending) {
             const operation = JSON.parse(pending);
-            // Only return if saved within last hour and less than 3 attempts
+       
             if (Date.now() - operation.timestamp < 60 * 60 * 1000 && operation.attempts < 3) {
               return operation;
             } else {
@@ -1348,8 +1349,7 @@
                 }
               }
             });
-            
-
+    
             if (saved.image_url) {
               const previewId = formId.includes('edit') ? 'edit-product-preview' : 'add-product-preview';
               if (window.updateMultiImagePreview) {
@@ -1462,9 +1462,7 @@
       Check: () => '<svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
     };
 
-    /* =================
-       APPLICATION STATE
-       ================= */
+    /*look into improving state logic in the future*/
 
     let state = {
       user: null,
@@ -1481,7 +1479,7 @@
       searchResults: [],
       searchQuery: ''
     };
-    //levenshtein fnc
+   
     function showToast(message) {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
@@ -1490,7 +1488,7 @@
       container.appendChild(toast);
       setTimeout(() => { toast.remove(); }, 3000);
     }
-    //
+     //levenshtein fnc
     function calculateDistance(searchQuery, targetText) {
       if(searchQuery.length === 0) return targetText.length; 
       if(targetText.length === 0) return searchQuery.length; 
@@ -1529,7 +1527,6 @@
         const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
         const thumbnails = document.querySelectorAll('.product-thumbnail');
         
-        // Fade out
         mainImg.style.opacity = '0';
         mainImg.style.transform = 'scale(0.95)';
         
@@ -1537,7 +1534,7 @@
             mainImg.src = images[index];
             mainImg.setAttribute('data-current-index', index);
             
-            // Update thumbnail borders
+
             thumbnails.forEach((thumb, idx) => {
                 if (idx === index) {
                     thumb.classList.remove('border-gray-200');
@@ -1548,7 +1545,6 @@
                 }
             });
             
-            // Fade in with slight delay
             setTimeout(() => {
                 mainImg.style.opacity = '1';
                 mainImg.style.transform = 'scale(1)';
@@ -1652,7 +1648,7 @@
         }
     }
 
-    // Animation handler for Cart Click
+    // Animation handler for Cart Click(switch to a simpler function if it breaks header logic in the future)
     async function handleCartClick() {
       const btn = document.getElementById('cart-icon-container');
       if (btn) {
@@ -1984,12 +1980,10 @@
       const cartContainer = document.getElementById('cart-icon-container');
       
       if (cartContainer) {
-        // Find or create the badge
         let badge = document.getElementById('cart-badge');
         
         if (totalItems > 0) {
           if (!badge) {
-            // Create badge if it doesn't exist
             badge = document.createElement('span');
             badge.id = 'cart-badge';
             badge.className = 'absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white';
@@ -2219,7 +2213,6 @@
     
      if (error) {
       console.error("Insert error:", error);
-      // Don't throw - just reload to retry
       localStorage.setItem('return_to_admin', 'true');
       window.location.href = window.location.origin + window.location.pathname + '#admin';
       window.location.reload();
@@ -2326,13 +2319,13 @@
     try {
         AutoSaveSystem.showIndicator('Updating product...');
         
-        // Save operation for retry BEFORE attempting
+        
         AutoSaveSystem.savePendingOperation({
             type: 'update',
             data: { id, updates }
         });
 
-        // ⏱️ PURE TIME-BASED TIMEOUT - Reload after 7 seconds NO MATTER WHAT
+       
         const timeoutId = setTimeout(() => {
             console.warn("⏱️ 7 seconds passed - reloading (connection dead)...");
             localStorage.setItem('return_to_admin', 'true');
@@ -2479,7 +2472,7 @@
         
         tl.set(layers, { left: "0", width: "0" });
     };
-
+    
     function Header() {
       return `
         <header class="bg-white shadow-md sticky top-0 z-40 border-b border-gray-100">
@@ -2524,14 +2517,11 @@
                 </div>
               </div>
 
-              <!-- Bestsellers Link -->
-              <!-- Bestsellers Link -->
               <a href="#" onclick="navigate('bestsellers'); return false;" class="px-2 sm:px-4 py-2 font-semibold text-amber-400 hover:text-indigo-600 transition-colors text-xs sm:text-base">
                 Bestsellers
               </a>
 
-              <!-- Deals Link -->
-              <!-- Deals Link -->
+    
               <a href="#" onclick="navigate('deals'); return false;" class="px-2 sm:px-4 py-2 font-semibold text-green-400 hover:text-red-600 transition-colors text-xs sm:text-base">
                 Deals
               </a>
@@ -2685,24 +2675,24 @@
       `;
     }
     function CategorySidebarGlass() {
-  const currentCategorySlug = state.currentPage === 'category' ? state.currentSlug : null;
-  
-  return `
-    <aside class="category-sidebar-glass">
-      ${state.categories.map(cat => {
-        const theme = CATEGORY_THEMES[cat.slug] || CATEGORY_THEMES['default'];
-        const isActive = currentCategorySlug === cat.slug;
-        
-        return `
-          <div class="material-glass-item ${isActive ? 'active' : ''}" onclick="navigate('category', '${cat.slug}')">
-            <div class="material-glass-icon">${theme.icon || '📦'}</div>
-            <div class="material-glass-label">${cat.name.length > 8 ? cat.name.substring(0, 7) + '...' : cat.name}</div>
-          </div>
-        `;
-      }).join('')}
-    </aside>
-  `;
-}
+      const currentCategorySlug = state.currentPage === 'category' ? state.currentSlug : null;
+      
+      return `
+        <aside class="category-sidebar-glass">
+          ${state.categories.map(cat => {
+            const theme = CATEGORY_THEMES[cat.slug] || CATEGORY_THEMES['default'];
+            const isActive = currentCategorySlug === cat.slug;
+            
+            return `
+              <div class="material-glass-item ${isActive ? 'active' : ''}" onclick="navigate('category', '${cat.slug}')">
+                <div class="material-glass-icon">${theme.icon || '📦'}</div>
+                <div class="material-glass-label">${cat.name.length > 8 ? cat.name.substring(0, 7) + '...' : cat.name}</div>
+              </div>
+            `;
+          }).join('')}
+        </aside>
+      `;
+    }
     function AuthPage() {
       const isSignIn = state.authMode === 'signin';
       return `
@@ -2918,14 +2908,14 @@
             <h2 class="text-3xl font-extrabold text-gray-900 mb-8 px-2 text-center">Why Choose Us</h2>
             
             <div class="relative">
-              <!-- Background decoration -->
+
               <div class="absolute inset-0 bg-gradient-to-br from-green-50 to-blue-50 rounded-3xl opacity-30"></div>
               
               <div class="relative grid grid-cols-1 md:grid-cols-4 gap-8 p-8">
-                <!-- Card 1: Fast Delivery -->
+
                 <div class="feature-card relative overflow-hidden rounded-3xl p-8 flex flex-col items-center text-center group transition-all duration-500"
                      style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);">
-                  <!-- Gradient overlay on hover -->
+
                   <div class="absolute inset-0 bg-gradient-to-br from-green-400/10 to-green-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   
                   <div class="relative w-24 h-24 mb-6">
@@ -2941,7 +2931,6 @@
                   <p class="relative text-gray-600 text-sm leading-relaxed">100% On-time delivery</p>
                 </div>
 
-                <!-- Card 2: Best Products -->
                 <div class="feature-card relative overflow-hidden rounded-3xl p-8 flex flex-col items-center text-center group transition-all duration-500"
                      style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);">
                   <div class="absolute inset-0 bg-gradient-to-br from-green-400/10 to-green-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -2959,7 +2948,6 @@
                   <p class="relative text-gray-600 text-sm leading-relaxed">Curated premium selection for quality</p>
                 </div>
 
-                <!-- Card 3: Huge Inventory -->
                 <div class="feature-card relative overflow-hidden rounded-3xl p-8 flex flex-col items-center text-center group transition-all duration-500"
                      style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);">
                   <div class="absolute inset-0 bg-gradient-to-br from-green-400/10 to-green-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -2977,7 +2965,6 @@
                   <p class="relative text-gray-600 text-sm leading-relaxed">Extensive catalog across all categories</p>
                 </div>
 
-                <!-- Card 4: 100% Satisfaction -->
                 <div class="feature-card relative overflow-hidden rounded-3xl p-8 flex flex-col items-center text-center group transition-all duration-500"
                      style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);">
                   <div class="absolute inset-0 bg-gradient-to-br from-green-400/10 to-green-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -3490,7 +3477,7 @@
 
     gsap.registerPlugin(ScrollTrigger);
     
-    // Global smooth scroll
+    //smooth scroll
     gsap.to("body", { duration: 0 });
 
 
@@ -3595,27 +3582,27 @@
 
 
     function initShareButtonAnimation() {
-  const shareBtn = document.getElementById('share-product-btn');
-  if (!shareBtn) return;
-      
-    
-      gsap.to(shareBtn, {
-        boxShadow: "0 0 20px rgba(212, 175, 55, 0.8), 0 0 40px rgba(212, 175, 55, 0.4)",
-        duration: 0.8,
-        ease: "power1.inOut",
-        yoyo: true,
-        repeat: -1
-      });
-      
-    
-      gsap.to(shareBtn, {
-        scale: 1.05,
-        duration: 0.8,
-        ease: "power1.inOut",
-        yoyo: true,
-        repeat: -1
-      });
-    }
+      const shareBtn = document.getElementById('share-product-btn');
+      if (!shareBtn) return;
+          
+        
+          gsap.to(shareBtn, {
+            boxShadow: "0 0 20px rgba(212, 175, 55, 0.8), 0 0 40px rgba(212, 175, 55, 0.4)",
+            duration: 0.8,
+            ease: "power1.inOut",
+            yoyo: true,
+            repeat: -1
+          });
+          
+        
+          gsap.to(shareBtn, {
+            scale: 1.05,
+            duration: 0.8,
+            ease: "power1.inOut",
+            yoyo: true,
+            repeat: -1
+          });
+        }
     function animateProductCards() {
       const cards = document.querySelectorAll('.product-card-animate');
       if (cards.length === 0) return;
@@ -3635,7 +3622,6 @@
                   ease: "power3.out"
                 });
               } else {
-                // Cards below fold - make sure they're visible (override CSS)
                 gsap.set(card, { opacity: 1, y: 0 });
               }
             });
@@ -3644,7 +3630,6 @@
 
   // gsap.set(cards, { opacity: 1, y: 0 }); 
   
-  // Animate all product cards as they enter user's view
   gsap.utils.toArray('.product-card-animate').forEach((card, index) => {
     gsap.fromTo(card, 
       { opacity: 0, y: 60 },
@@ -3699,37 +3684,37 @@
     
 
     function animateSectionHeaders() {
-  // keep header visible,no animate
-  const headers = document.querySelectorAll('.section-header-animate');
-  headers.forEach(header => {
-    header.style.opacity = '1';
-  });
-    }
-
-    function animateHeader() {
-      const header = document.querySelector('header');
-      if (!header) return;
-      
-      gsap.from(header, {
-        duration: 0.8,
-        y: -100,
-        opacity: 0,
-        ease: "power3.out"
+      // keep header visible,no animate
+      const headers = document.querySelectorAll('.section-header-animate');
+      headers.forEach(header => {
+        header.style.opacity = '1';
       });
-    }
+        }
     
-    function animateSidebar() {
-      if (!state.menuOpen) return;
-      
-      gsap.from('.sidebar-menu-item', {
-        duration: 0.5,
-        x: -50,
-        opacity: 0,
-        stagger: 0.1,
-        ease: "power3.out",
-        delay: 0.2
-      });
-    }
+        function animateHeader() {
+          const header = document.querySelector('header');
+          if (!header) return;
+          
+          gsap.from(header, {
+            duration: 0.8,
+            y: -100,
+            opacity: 0,
+            ease: "power3.out"
+          });
+        }
+        
+        function animateSidebar() {
+          if (!state.menuOpen) return;
+          
+          gsap.from('.sidebar-menu-item', {
+            duration: 0.5,
+            x: -50,
+            opacity: 0,
+            stagger: 0.1,
+            ease: "power3.out",
+            delay: 0.2
+          });
+        }
     
 
     function pageTransition(callback) {
@@ -4047,7 +4032,7 @@
           console.log("🗑️ Clearing cart from database...");
           
           try {
-            // skip DB delete if connection is stale,only localClear
+            // only Local clear
             const { error } = await Promise.race([
               supabase.from('cart_items').delete().eq('user_id', state.user.id),
               new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
