@@ -6,12 +6,12 @@
   <meta name="keywords" content="wholesale, online store, tobacco, candy, automotive">
   <meta name="author" content="UTK Wholesale">
 
-  <!-- Open Graph for social sharing -->
+  <!--social sharing -->
   <meta property="og:title" content="UTKWholesale Official Website">
   <meta property="og:description" content="Your trusted wholesale shopping destination">
   <meta property="og:url" content="https://utkwholesale-ecomm.pages.dev/">
   
-  <!-- Favicon -->
+  <!-- favicon -->
   <link rel="icon"  href="favicon.ico">
 
   
@@ -237,7 +237,6 @@
       to { transform: rotate(360deg); }
     }
     
-    /* ===== RETRY BANNER ===== */
     .retry-banner {
       position: fixed;
       top: 80px;
@@ -274,7 +273,7 @@
       transform: scale(1.05);
       box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
     }
-    /* ===== PRODUCT CARD SIZE ADJUSTMENTS ===== */
+    /* prdct card adjustments */
     
     /* Desktop: 4 columns, square cards */
     @media (min-width: 1024px) {
@@ -322,12 +321,9 @@
       }
     }
     
-    /* Mobile: 2 columns, SQUARE compact cards */
+    /* Mobile: 2cols, compact cards */
     @media (max-width: 769px) {
-      /* Fix cart items */
-      /* ===== COMPACT HORIZONTAL CART ON MOBILE (like desktop) ===== */
-
-      /* Force horizontal layout on mobile */
+      /*forced hor mobile layout*/
       .flex.flex-col.sm\:flex-row {
         flex-direction: row !important;
         gap: 0.5rem !important;
@@ -335,14 +331,14 @@
         align-items: center !important;
       }
       
-      /* Smaller thumbnail */
+      /* smaller thumbnail */
       .flex.flex-col.sm\:flex-row img {
         width: 50px !important;
         height: 50px !important;
         flex-shrink: 0 !important;
       }
       
-      /* Compact text */
+      /*compact text */
       .flex.flex-col.sm\:flex-row h3 {
         font-size: 0.75rem !important;
       }
@@ -351,7 +347,7 @@
         font-size: 0.7rem !important;
       }
       
-      /* Smaller quantity buttons */
+      /*quantity buttons */
       .flex.flex-col.sm\:flex-row button {
         width: 28px !important;
         height: 28px !important;
@@ -359,11 +355,11 @@
         font-size: 0.875rem !important;
       }
       
-      /* Smaller total price */
+      /* smaller total price */
       .flex.flex-col.sm\:flex-row .text-xl {
         font-size: 0.95rem !important;
       }
-      /* Force ONLY category page and search results to 2 columns on mobile really jugaad fix but alas */
+      /* Force onlyy category page and search results to 2 columns on mobile really jugaad fix but alas */
       .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 0.5rem !important;
@@ -373,7 +369,7 @@
         border-radius: 0.75rem !important;
       }
     
-      /* SQUARE IMAGE - matches the 220x220 source */
+      /* sq img*/
       .product-card-img {
         height: 160px !important;
         width: 100% !important;
@@ -402,7 +398,7 @@
         line-height: 1.2 !important;
       }
       
-      /* Smaller price and stock badge */
+      /* stock and price smaller */
       .product-card-animate .text-2xl {
         font-size: 1.1rem !important;
       }
@@ -413,13 +409,13 @@
         font-size: 0.65rem !important;
       }
       
-      /* Compact buttons in overlay */
+      /* compact buttons in overlay */
       .product-card-animate .absolute.inset-0 button {
         padding: 0.4rem 0.6rem !important;
         font-size: 0.7rem !important;
       }
     }
-    /* ===== MOBILE FIX: Prevent Horizontal Scroll ===== */
+    /*preventinghorizontal scroll on mobile*/
     * {
       box-sizing: border-box;
     }
@@ -436,12 +432,11 @@
       width: 100%;
     }
     
-    /* Prevent text from causing overflow */
     h1, h2, h3, p {
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
-    /* Styles*/ 
+   /*STYLES, most of the styles section was done w the help of ai, so i doubt your bug originates form here XD */
     :root {
       --default-primary:  #046305;     
       --default-secondary: #034204;   
@@ -491,18 +486,18 @@
         background-position: 300% 0%;
     }
 }
-   /* Prevent content flash during tear animation */
+
     #tear-overlay {
       position: fixed;
       inset: 0;
-      z-index: 9999; /* Increased from current value */
+      z-index: 9999; 
       pointer-events: none;
       display: none;
       flex-direction: column;
-      background: transparent; /* Add this */
+      background: transparent; 
     }
     
-    /* Ensure overlay covers everything */
+
     #tear-overlay.active {
       pointer-events: all;
     }
@@ -536,7 +531,6 @@
       left: 100%;
     }
 
-    /* Transition for color changes */
     body, button.transition-enabled, .card {
       transition: background-color 0.5s ease, color 0.5s ease;
     }
@@ -547,7 +541,7 @@
     .text-indigo-600 { color: var(--color-primary); }
     .text-indigo-700 { color: var(--color-secondary); }
     
-    /* ⚙️ Sidebar Styles */
+    /*sidebar styles */
     .sidebar-wrapper {
       position: fixed;
       left: 0;
@@ -562,7 +556,7 @@
       flex-direction: column;
     }
     
-    /* 🔥 CURTAIN TRANSITION - Using proven CodePen technique */
+    /* took from codepen, so refer there*/
     #tear-overlay {
       position: fixed;
       inset: 0;
@@ -589,7 +583,7 @@
     .tear-layer:nth-child(4) {
       background: #0f3460;
     }  
-    /* 🌟 ANIMATION FIX: Use Keyframes so it plays on render */
+
     .sidebar-open .sidebar-wrapper { 
         animation: sidebarSlideIn 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
     }
@@ -611,13 +605,13 @@
     
     .sidebar-open .backdrop { opacity: 1; pointer-events: auto; }
 
-    /* Sidebar Staggered Entry - Made bolder */
+    
     @keyframes slideInUp {
       from { opacity: 0; transform: translateY(50px); }
       to { opacity: 1; transform: translateY(0); }
     }
     .sidebar-open .staggered-item { 
-        opacity: 0; /* Hidden initially */
+        opacity: 0;
         animation: slideInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
     }
     .sidebar-open .staggered-item:nth-child(1) { animation-delay: 0.15s; }
@@ -627,7 +621,7 @@
 
 
     
-    /* Dropdown Animation */
+    /* dropdown anim*/
     .group:hover .dropdown-menu {
       visibility: visible;
       opacity: 1;
@@ -641,7 +635,7 @@
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 100;
     }
-
+    /* from here to toast animation it's ai gen with edits from me wherever needed, i doubt your bug is from here*/
     /* 🌟 Loading Overlay Animation */
     .overlay-enter { animation: overlayIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
     .overlay-exit { animation: overlayOut 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
@@ -753,28 +747,28 @@
     }
 
     @keyframes slideInFromLeft {
-  0% { opacity: 0; transform: translateX(-30px); }
-  100% { opacity: 1; transform: translateX(0); }
-}
-
-.back-btn-enter {
-  animation: slideInFromLeft 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-
-    /* Category page background */
-.category-page-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  transition: opacity 0.5s ease;
+      0% { opacity: 0; transform: translateX(-30px); }
+      100% { opacity: 1; transform: translateX(0); }
     }
+    
+    .back-btn-enter {
+      animation: slideInFromLeft 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+
+    /* categ page background */
+    .category-page-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      transition: opacity 0.5s ease;
+        }
     
     /* .category-page-bg::before {
       content: '';
@@ -787,7 +781,7 @@
       background: rgba(0, 0, 0, 0.3);
     } 
     */
-    /* 🍞 TOAST NOTIFICATION STYLES */
+    /* toast style*/
     #toast-container {
       position: fixed;
       bottom: 20px;
@@ -886,7 +880,7 @@
       opacity: 1 !important;
     }
     
-    /* Fallback for no-js */
+    /* fallback*/
     .no-js .product-card-animate,
     .no-js .category-card-animate,
     .no-js .hero-title,
@@ -894,55 +888,54 @@
     .no-js .hero-cta {
       opacity: 1 !important;
     }
-    /* Prevent re-animation */
+    /* no re animation */
     .animate-fade-in.animated {
       animation: none;
       opacity: 1;
       transform: translateY(0);
     }
     body {
-      background-color: #f8f9fa;  /* Soft off-white */
+      background-color: #f8f9fa; 
     }
 
 
-    /* ===== MOBILE RESPONSIVE FIXES ===== */
+    /* mobile fixes*/
     @media (max-width: 768px) {
       .sidebar-wrapper {
     width: 85vw !important;
     max-width: 320px !important;
   }
-      /* Fix header spacing */
+      /* header spacing */
       header .w-full {
         padding-left: 0.75rem !important;
         padding-right: 0.75rem !important;
       }
-          /* Prevent max-width container overflow */
-    .max-w-7xl,
-    .max-w-6xl,
-    .max-w-5xl,
-    .max-w-4xl,
-    .max-w-3xl,
-    .max-w-2xl {
-      padding-left: 1rem !important;
-      padding-right: 1rem !important;
-      max-width: 100% !important;
-    }
-    /* FIX: Prevent grid overflow */
-  .grid {
-    width: 100% !important;
-    max-width: 100vw !important;
-  }
-  
-  /* FIX: Constrain images */
-  img {
-    max-width: 100% !important;
-    height: auto !important;
-  }
-  
-  /* FIX: Text overflow */
-  * {
-    max-width: 100%;
-  }
+      /*overflow */
+      .max-w-7xl,
+      .max-w-6xl,
+      .max-w-5xl,
+      .max-w-4xl,
+      .max-w-3xl,
+      .max-w-2xl {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        max-width: 100% !important;
+      }
+
+      .grid {
+        width: 100% !important;
+        max-width: 100vw !important;
+      }
+      
+
+      img {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+      
+      * {
+        max-width: 100%;
+      }
 
     @media (max-width: 640px) {
       .max-w-7xl,
@@ -955,7 +948,7 @@
         padding-right: 0.75rem !important;
       }
     }
-      /* Fix hero text size */
+
       .hero-title {
         font-size: 2.5rem !important;
         line-height: 1.2;
@@ -965,16 +958,16 @@
         font-size: 1rem !important;
       }
       
-      /* Fix max-width containers */
+
       .max-w-7xl,
       .max-w-4xl {
         padding-left: 1rem !important;
         padding-right: 1rem !important;
       }
       
-      /* Fix product cards grid */
+
       
-      /* Fix horizontal scroll sections */
+      /*horizontal scroll sections weird behaviour shit*/
       #bestsellers-scroll,
       #deals-scroll {
         -webkit-overflow-scrolling: touch;
@@ -997,21 +990,19 @@
       }
       
       
-      /* Fix product image gallery */
       .traveling-rainbow-border img {
         max-height: 20rem !important;
       }
       
-      /* Fix buttons */
+
       button {
-        min-height: 44px; /* Apple's recommended touch target */
+        min-height: 44px; 
       }
       
-      /* Fix sidebar width */
+
     }
-    
+    /*extra small screen*/
     @media (max-width: 640px) {
-      /* Extra small screens */
       .hero-title {
         font-size: 2rem !important;
       }
@@ -1030,7 +1021,6 @@
     }
 
 
-    /* ===== FINAL OVERFLOW PREVENTION ===== */
     * {
       box-sizing: border-box !important;
     }
@@ -1060,7 +1050,7 @@
       max-width: 100vw !important;
     }
     
-    /* Prevent any child from causing overflow */
+
     #app > * {
       max-width: 100vw !important;
     }
@@ -1073,7 +1063,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
-  <!-- 🔥 TEAR TRANSITION OVERLAY -->
 <div id="tear-overlay">
   <span class="tear-layer"></span>
   <span class="tear-layer"></span>
@@ -1137,15 +1126,12 @@
   </div>
 </div>
   <script type="module">
-    // --- Configuration ---
+    // config
     const SUPABASE_URL = 'https://thzmryhnyzhfewsyamjh.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_Xfi5Ppm2BPqIr0DBPgA8EA_C7ikFNvk';
     const ADMIN_EMAIL = 'utkwholesale.sup@gmail.com'; 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window.supabaseClient = supabase;
-    // ==========================================
-    // 🌟 AUTO-SAVE & RETRY SYSTEM
-    // ==========================================
     
     const AutoSaveSystem = {
       TIMEOUT_DURATION: 7000, // 7 seconds
@@ -1170,7 +1156,7 @@
         }, 2000);
       },
       
-      // Save form data to localStorage
+      // form data gets into local storage, jugaadu af
       saveFormData(formId, data) {
         try {
           const timestamp = Date.now();
@@ -1187,7 +1173,6 @@
         }
       },
       
-      // Load saved form data
       loadFormData(formId) {
         try {
           const saved = localStorage.getItem('admin_form_autosave_' + formId);
@@ -1203,8 +1188,6 @@
         }
         return null;
       },
-      
-      // Clear saved form data
       clearFormData(formId) {
         try {
           localStorage.removeItem('admin_form_autosave_' + formId);
@@ -1213,7 +1196,7 @@
         }
       },
       
-      // Save pending operation to retry after reload
+      
       savePendingOperation(operation) {
         try {
           const pending = {
@@ -1226,8 +1209,7 @@
           console.error('Save pending operation failed:', e);
         }
       },
-      
-      // Get pending operation
+      // restore if add/edit didnt exec due to timeout
       getPendingOperation() {
         try {
           const pending = localStorage.getItem('admin_pending_operation');
@@ -1245,8 +1227,6 @@
         }
         return null;
       },
-      
-      // Clear pending operation
       clearPendingOperation() {
         try {
           localStorage.removeItem('admin_pending_operation');
@@ -1254,8 +1234,6 @@
           console.error('Clear pending operation failed:', e);
         }
       },
-      
-      // Show retry banner
       showRetryBanner(operation) {
         let banner = document.getElementById('retry-banner');
         if (!banner) {
@@ -1282,8 +1260,9 @@
         
         setTimeout(() => banner.classList.add('show'), 100);
       },
+
+
       
-      // Retry the pending operation
       async retryOperation() {
         const pending = this.getPendingOperation();
         if (!pending) return;
@@ -1304,16 +1283,12 @@
           
           this.clearPendingOperation();
           this.showIndicator('Operation completed successfully!', true);
-          
-          // Show success alert based on operation type
           const successMessages = {
             'add': 'Product added successfully!',
             'update': 'Product updated successfully!',
             'delete': 'Product deleted successfully!'
           };
           alert(successMessages[op.type] || 'Operation completed successfully!');
-          
-          // Refresh products
           await fetchAdminProducts();
           await fetchInitialProducts();
           render();
@@ -1324,21 +1299,22 @@
           this.savePendingOperation(pending.operation);
         }
       },
+
       
-      // Execute add product operation
+      
       async executeAddProduct(productData) {
         const { error } = await supabase.from('products').insert([productData]);
         if (error) throw error;
       },
       
-      // Execute update product operation
       async executeUpdateProduct(data) {
         const { id, updates } = data;
         const { error } = await supabase.from('products').update(updates).eq('id', id);
         if (error) throw error;
       },
+
       
-      // Execute delete product operation
+
       async executeDeleteProduct(data) {
         const { id } = data;
         const { error } = await supabase.from('products').delete().eq('id', id);
@@ -1355,7 +1331,7 @@
         this.clearPendingOperation();
       },
       
-      // Initialize auto-save for a form
+      //autosave for a form
       initFormAutoSave(formId) {
         setTimeout(() => {
           const form = document.getElementById(formId);
@@ -1374,7 +1350,7 @@
               }
             });
             
-            // Trigger image preview update if image_url exists
+
             if (saved.image_url) {
               const previewId = formId.includes('edit') ? 'edit-product-preview' : 'add-product-preview';
               if (window.updateMultiImagePreview) {
@@ -1382,7 +1358,7 @@
               }
             }
             
-            // Show/hide deal price container based on is_deal checkbox
+            // show/hide deal price container depending on if is_deal checkbox is true or fals
             if (saved.is_deal) {
               const containerId = formId.includes('edit') ? 'edit-deal-price-container' : 'add-deal-price-container';
               const container = document.getElementById(containerId);
@@ -1394,7 +1370,6 @@
             this.showIndicator('Form data restored', true);
           }
           
-          // Add auto-save listeners
           const inputs = form.querySelectorAll('input, textarea, select');
           inputs.forEach(input => {
             input.addEventListener('change', () => {
@@ -1410,65 +1385,57 @@
         }, 500);
       }
     };
-    
-    // Make it globally accessible
     window.AutoSaveSystem = AutoSaveSystem;
 
-    // Add this helper function
     async function wakeUpDatabase() {
-  console.log("🏓 Pinging database to wake connection...");
-  try {
-    // FIRST refresh auth, THEN ping
-    console.log("🔄 Refreshing auth first...");
-    const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
-    console.log("🔄 Refresh result:", { hasSession: !!session, error: refreshError });
-    
-    if (session) {
-      // Now try the ping
-      await supabase.from('categories').select('count').limit(1);
-      console.log("✅ Database connection active");
+    console.log("🏓 Pinging database to wake connection...");
+    try {
+      // FIRST refresh auth, THEN ping
+      console.log("🔄 Refreshing auth first...");
+      const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+      console.log("🔄 Refresh result:", { hasSession: !!session, error: refreshError });
+      
+      if (session) {
+        // Now try the ping
+        await supabase.from('categories').select('count').limit(1);
+        console.log("✅ Database connection active");
+      }
+    } catch (err) {
+      console.error("Wake-up ping failed:", err);
     }
-  } catch (err) {
-    console.error("Wake-up ping failed:", err);
   }
-}
 
-    // ============================================
-    // FIX: Get Fresh Client to Avoid Stale Connection
-    // ============================================
     function getFreshClient() {
-      console.log("🔄 Creating fresh Supabase client...");
+      console.log("Creating fresh Supabase client...");
       return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
 
-// Auto-refresh token before operations
-// Auto-refresh token before operations
-async function withValidSession(operation) {
-  const session = await ensureValidSession();
-  if (!session) {
-    showToast("Session expired. Please log in again.");
-    navigate('auth');
-    return null;
-  }
-  return await operation();
-}
-async function ensureValidSession() {
-  try {
-    // Supabase automatically handles refresh - just get the session
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error("Session error:", error);
-      return null;
+    async function withValidSession(operation) {
+      const session = await ensureValidSession();
+      if (!session) {
+        showToast("Session expired. Please log in again.");
+        navigate('auth');
+        return null;
+      }
+      return await operation();
     }
-    
-    return session;
-  } catch (error) {
-    console.error("Session check error:", error);
-    return null;
-  }
-}
-    // --- 🎨 Theme Configuration ---
+    async function ensureValidSession() {
+      try {
+        // Supabase automatically handles refresh - just get the session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Session error:", error);
+          return null;
+        }
+        
+        return session;
+      } catch (error) {
+        console.error("Session check error:", error);
+        return null;
+      }
+    }
+    // themeConfug
     const CATEGORY_THEMES = {
       'candies-chocolates': { primary: '#034204', secondary: '#046305', icon: '🍬'},
       'tobacco-products':   { primary: '#034204', secondary: '#046305', icon: '🚬' },
@@ -1483,7 +1450,7 @@ async function ensureValidSession() {
       'default':            { primary: '#034204', secondary: '#046305', icon: '✨' }
     };
 
-    // --- Icons ---
+    // icon(ic)
     const Icon = {
       Menu: () => '<svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>',
       X: () => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
@@ -1499,7 +1466,7 @@ async function ensureValidSession() {
       Check: () => '<svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
     };
 
-    // --- State ---
+    // state condfig
     let state = {
       user: null,
       currentPage: 'home',
@@ -1516,7 +1483,6 @@ async function ensureValidSession() {
       searchQuery: ''
     };
 
-    // --- Toast Functionality ---
     function showToast(message) {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
@@ -1525,8 +1491,7 @@ async function ensureValidSession() {
       container.appendChild(toast);
       setTimeout(() => { toast.remove(); }, 3000);
     }
-
-    // --- 🔍 Improved Fuzzy Search Logic ---
+    //ai help
     function levenshtein(a, b) {
       if(a.length === 0) return b.length; 
       if(b.length === 0) return a.length; 
@@ -1545,48 +1510,48 @@ async function ensureValidSession() {
       return matrix[b.length][a.length];
     }
 
-          // Image gallery navigation
-window.changeProductImage = (direction) => {
-    const mainImg = document.getElementById('main-product-image');
-    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
-    const currentIndex = parseInt(mainImg.getAttribute('data-current-index'));
-    const newIndex = (currentIndex + direction + images.length) % images.length;
-    
-    setProductImage(newIndex);
-};
 
-window.setProductImage = (index) => {
-    const mainImg = document.getElementById('main-product-image');
-    const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
-    const thumbnails = document.querySelectorAll('.product-thumbnail');
-    
-    // Fade out
-    mainImg.style.opacity = '0';
-    mainImg.style.transform = 'scale(0.95)';
-    
-    setTimeout(() => {
-        mainImg.src = images[index];
-        mainImg.setAttribute('data-current-index', index);
+    window.changeProductImage = (direction) => {
+        const mainImg = document.getElementById('main-product-image');
+        const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
+        const currentIndex = parseInt(mainImg.getAttribute('data-current-index'));
+        const newIndex = (currentIndex + direction + images.length) % images.length;
         
-        // Update thumbnail borders
-        thumbnails.forEach((thumb, idx) => {
-            if (idx === index) {
-                thumb.classList.remove('border-gray-200');
-                thumb.classList.add('border-indigo-600');
-            } else {
-                thumb.classList.remove('border-indigo-600');
-                thumb.classList.add('border-gray-200');
-            }
-        });
+        setProductImage(newIndex);
+    };
+
+    window.setProductImage = (index) => {
+        const mainImg = document.getElementById('main-product-image');
+        const images = JSON.parse(mainImg.getAttribute('data-images').replace(/&quot;/g, '"'));
+        const thumbnails = document.querySelectorAll('.product-thumbnail');
         
-        // Fade in with slight delay
+        // Fade out
+        mainImg.style.opacity = '0';
+        mainImg.style.transform = 'scale(0.95)';
+        
         setTimeout(() => {
-            mainImg.style.opacity = '1';
-            mainImg.style.transform = 'scale(1)';
-        }, 50);
-    }, 250);
-};
-    // 🌟 Helper to update image previews
+            mainImg.src = images[index];
+            mainImg.setAttribute('data-current-index', index);
+            
+            // Update thumbnail borders
+            thumbnails.forEach((thumb, idx) => {
+                if (idx === index) {
+                    thumb.classList.remove('border-gray-200');
+                    thumb.classList.add('border-indigo-600');
+                } else {
+                    thumb.classList.remove('border-indigo-600');
+                    thumb.classList.add('border-gray-200');
+                }
+            });
+            
+            // Fade in with slight delay
+            setTimeout(() => {
+                mainImg.style.opacity = '1';
+                mainImg.style.transform = 'scale(1)';
+            }, 50);
+        }, 250);
+    };
+
     window.updateImagePreview = (url, previewId) => {
         const img = document.getElementById(previewId);
         if (url && url.trim() !== '') {
@@ -1613,6 +1578,9 @@ window.setProductImage = (index) => {
             </div>
         `).join('');
     };
+
+
+    
     window.toggleSearch = () => {
         const modal = document.getElementById('search-modal');
         if (modal.classList.contains('hidden')) {
@@ -1630,35 +1598,30 @@ window.setProductImage = (index) => {
         
         if (!query) return;
 
-        // Filter by Category first
+        // filter by category first
         let candidates = state.products;
         if (catFilter !== 'all') {
             candidates = candidates.filter(p => p.category_id == catFilter);
         }
 
-        // 🌟 REFINED LOGIC: Check words individually
+        
+      
         const results = candidates.filter(p => {
             const name = p.name.toLowerCase();
             const desc = p.description.toLowerCase();
-            const words = name.split(/[\s-]+/); // Split by space or dash
-
-            // 1. Exact or Partial match (Fastest)
+            const words = name.split(/[\s-]+/);
             if (name.includes(query) || desc.includes(query)) return true;
 
-            // 2. Word-based Fuzzy match
-            // "marlrboro" (9) vs "marlboro" (8) -> Dist 1. Match.
-            // "tobaco" (6) vs "tobacco" (7) -> Dist 1. Match.
+        
             const threshold = query.length > 5 ? 2 : 1; 
             
             const wordMatch = words.some(word => {
-                // Skip comparisons if lengths are too different
                 if (Math.abs(word.length - query.length) > 3) return false;
                 return levenshtein(query, word) <= threshold;
             });
             
             if (wordMatch) return true;
 
-            // 3. Start-of-string match (Prefix)
             const prefix = name.substring(0, query.length);
             if (levenshtein(query, prefix) <= threshold) return true;
 
@@ -1672,7 +1635,7 @@ window.setProductImage = (index) => {
         navigate('search-results');
     }
     
-    // Toggle Sidebar Category Dropdown
+
     window.toggleSidebarCat = () => {
         const content = document.getElementById('sidebar-cat-content');
         const icon = document.getElementById('sidebar-cat-icon');
@@ -1697,7 +1660,7 @@ window.setProductImage = (index) => {
     }
     window.handleCartClick = handleCartClick;
 
-    // --- Router with Transitions ---
+    
     async function navigate(page, slug = null) {
       const bgElement = document.querySelector('.category-page-bg');
       if (bgElement && page !== 'category') {
@@ -1761,32 +1724,32 @@ window.setProductImage = (index) => {
 
 
     
-    // Update URL hash when navigating
-function updateURL(page, slug = null) {
-      if (page === 'home') {
-        history.pushState(null, '', window.location.pathname);
-      } else if (page === 'product' && slug) {
-        history.pushState(null, '', `#product-${slug}`);
-      } else if (page === 'category' && slug) {
-        history.pushState(null, '', `#category-${slug}`);
-      } else if (page === 'cart') {
-        history.pushState(null, '', '#cart');
-      } else if (page === 'auth') {
-        history.pushState(null, '', '#auth');
-      } else if (page === 'admin') {
-        history.pushState(null, '', '#admin');
-      } else if (page === 'about') {
-        history.pushState(null, '', '#about');
-      } else if (page === 'bestsellers') {
-        history.pushState(null, '', '#bestsellers');
-      } else if (page === 'deals') {
-        history.pushState(null, '', '#deals');
-      } else if (page === 'search-results') {
-        const query = encodeURIComponent(state.searchQuery || '');
-        const category = state.searchCategory || 'all';
-        history.pushState(null, '', `#search?q=${query}&cat=${category}`);
-      }
-    }
+    // update url during navigation
+    function updateURL(page, slug = null) {
+          if (page === 'home') {
+            history.pushState(null, '', window.location.pathname);
+          } else if (page === 'product' && slug) {
+            history.pushState(null, '', `#product-${slug}`);
+          } else if (page === 'category' && slug) {
+            history.pushState(null, '', `#category-${slug}`);
+          } else if (page === 'cart') {
+            history.pushState(null, '', '#cart');
+          } else if (page === 'auth') {
+            history.pushState(null, '', '#auth');
+          } else if (page === 'admin') {
+            history.pushState(null, '', '#admin');
+          } else if (page === 'about') {
+            history.pushState(null, '', '#about');
+          } else if (page === 'bestsellers') {
+            history.pushState(null, '', '#bestsellers');
+          } else if (page === 'deals') {
+            history.pushState(null, '', '#deals');
+          } else if (page === 'search-results') {
+            const query = encodeURIComponent(state.searchQuery || '');
+            const category = state.searchCategory || 'all';
+            history.pushState(null, '', `#search?q=${query}&cat=${category}`);
+          }
+        }
 
 
     
@@ -1802,7 +1765,6 @@ function updateURL(page, slug = null) {
       document.documentElement.style.setProperty('--color-secondary', theme.secondary);
     }
 
-    // --- Auth & Cart Functions ---
     async function handleAuth(e) {
       e.preventDefault();
       const email = e.target.email.value;
@@ -1828,6 +1790,7 @@ function updateURL(page, slug = null) {
         navigate('home');
       }
     }
+    
     async function handleForgotPassword() {
       const email = prompt('Enter your email address to reset your password:');
       if (!email) return;
@@ -1839,7 +1802,7 @@ function updateURL(page, slug = null) {
       if (error) {
         alert('❌ Error: ' + error.message);
       } else {
-        alert('✅ Password reset email sent!\n\nPlease check your inbox and click the link to reset your password.');
+        alert('Password reset email sent! ✅ \n\nPlease check your inbox and click the link to reset your password.');
       }
     }
     
@@ -1847,7 +1810,7 @@ function updateURL(page, slug = null) {
 
 
       async function handlePasswordReset() {
-          console.log('🔐 handlePasswordReset called');
+          console.log('handlePasswordReset called');
           
           // Wait a moment for Supabase to process the recovery token
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -1857,13 +1820,13 @@ function updateURL(page, slug = null) {
           console.log('Session check:', session ? 'Valid session' : 'No session');
           
           if (!session) {
-            alert('❌ Session expired or invalid\n\nPlease request a new password reset link.');
+            alert('Session expired ❌ or invalid\n\nPlease request a new password reset link.');
             navigate('auth');
             return;
           }
           
           console.log('Showing password prompt...');
-          const newPassword = prompt('🔐 Enter your new password:\n\n(Must be at least 6 characters)');
+          const newPassword = prompt('Enter your new password:\n\n(Must be at least 6 characters)');
           
       if (!newPassword) {
         alert('Password reset cancelled.');
@@ -1872,20 +1835,20 @@ function updateURL(page, slug = null) {
       }
       
       if (newPassword.length < 6) {
-        alert('❌ Password must be at least 6 characters long');
-        handlePasswordReset(); // Try again
+        alert('Password must be at least 6 characters long❌ ');
+        handlePasswordReset(); 
         return;
       }
-      
+      //error handilign
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
       
       if (error) {
-        alert('❌ Error updating password: ' + error.message);
+        alert('Error updating password: ❌ ' + error.message);
         navigate('auth');
       } else {
-        alert('✅ Password updated successfully!\n\nYou can now sign in with your new password.');
+        alert('Password updated successfully!✅ \n\nYou can now sign in with your new password.');
         // Sign out to clear the recovery session
         await supabase.auth.signOut();
         navigate('auth');
@@ -1898,7 +1861,6 @@ function updateURL(page, slug = null) {
         const { error } = await supabase.auth.signInWithOAuth({ 
           provider: 'google', 
           options: { 
-            // Redirect to the current URL, but stripped of any existing hash/query
             redirectTo: window.location.origin + window.location.pathname 
           } 
         });
@@ -1914,7 +1876,6 @@ function updateURL(page, slug = null) {
   const overlay = document.getElementById('logout-overlay');
   
   try {
-    // 1. Show Overlay Animation
     if (overlay) {
         overlay.classList.remove('hidden');
         setTimeout(() => {
@@ -1923,10 +1884,10 @@ function updateURL(page, slug = null) {
         }, 10);
     }
 
-    // 2. Wait for 1.5 seconds so user sees the message
+
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // 3. Force sign out - with timeout protection
+
     const logoutPromise = supabase.auth.signOut();
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error('Logout timeout')), 5000)
@@ -1938,45 +1899,40 @@ function updateURL(page, slug = null) {
       console.warn('Logout had issues, forcing cleanup:', error);
     }
     
-    // 4. Clear ALL local state regardless of Supabase response
     state.cart = [];
     state.user = null;
     state.isAdmin = false;
     
-    // 5. Clear localStorage (in case cart was stored there)
+    // clearing local storage
     try {
       localStorage.clear();
     } catch (e) {
       console.warn('Could not clear localStorage:', e);
     }
     
-    // 6. Force hard reload - this always works
+    // reload
     window.location.replace(window.location.origin + window.location.pathname);
     
   } catch (error) {
     console.error('Logout error:', error);
-    // Even if everything fails, force reload
     window.location.replace(window.location.origin + window.location.pathname);
   }
 
 }
 
-  //LINK GENERATOR
-window.shareProduct = (productSlug) => {
-  const productUrl = `${window.location.origin}${window.location.pathname}#product-${productSlug}`;
-  
-  // Copy to clipboard
-  navigator.clipboard.writeText(productUrl).then(() => {
-    showToast("Product link copied to clipboard!");
-  }).catch(() => {
-    // Fallback if clipboard fails
-    alert(`Share this link:\n${productUrl}`);
-  });
-};
+  //link generator and clipboard copy
+  window.shareProduct = (productSlug) => {
+    const productUrl = `${window.location.origin}${window.location.pathname}#product-${productSlug}`;
+    navigator.clipboard.writeText(productUrl).then(() => {
+      showToast("Product link copied to clipboard!");
+    }).catch(() => {
+      // Fallback if clipboard fails
+      alert(`Share this link:\n${productUrl}`);
+    });
+  };
 
     
     async function fetchCart() {
-      // If not logged in, keep the local guest cart. Do not overwrite it.
       if (!state.user) return; 
 
       const { data, error } = await supabase
@@ -1992,26 +1948,25 @@ window.shareProduct = (productSlug) => {
         return;
       }
 
-      // Flatten structure AND apply Deal Price logic
       state.cart = (data || []).map(item => {
-          if (!item.products) return null; // Skip if product data is missing
+          if (!item.products) return null; 
           
           const product = item.products;
           
-          // 🌟 DEAL CHECK: Applied correctly from server data
+
           const finalPrice = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
 
           return {
-              ...product,           // Spread original product data
-              id: item.product_id,  // ⚠️ CRITICAL: Ensure ID matches the product ID
-              image_url: product.image_url.split(',')[0].trim(),
-              quantity: item.quantity,
-              price: finalPrice     // Use the calculated deal price
-          };
-      }).filter(Boolean); // Remove nulls
-
-      render(); 
-    }
+                ...product,           
+                id: item.product_id,  
+                image_url: product.image_url.split(',')[0].trim(),
+                quantity: item.quantity,
+                price: finalPrice     
+            };
+          }).filter(Boolean); 
+  
+        render(); 
+      }
 
     async function mergeCart() {
       if (state.cart.length === 0) return;
@@ -2023,47 +1978,44 @@ window.shareProduct = (productSlug) => {
       state.cart = [];
       await fetchCart();
     }
-    // Update cart counter without full re-render
-function updateCartDisplay() {
-  const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
-  const cartContainer = document.getElementById('cart-icon-container');
-  
-  if (cartContainer) {
-    // Find or create the badge
-    let badge = document.getElementById('cart-badge');
-    
-    if (totalItems > 0) {
-      if (!badge) {
-        // Create badge if it doesn't exist
-        badge = document.createElement('span');
-        badge.id = 'cart-badge';
-        badge.className = 'absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white';
-        cartContainer.appendChild(badge);
+    function updateCartDisplay() {
+      const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+      const cartContainer = document.getElementById('cart-icon-container');
+      
+      if (cartContainer) {
+        // Find or create the badge
+        let badge = document.getElementById('cart-badge');
+        
+        if (totalItems > 0) {
+          if (!badge) {
+            // Create badge if it doesn't exist
+            badge = document.createElement('span');
+            badge.id = 'cart-badge';
+            badge.className = 'absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center fade-in border-2 border-white';
+            cartContainer.appendChild(badge);
+          }
+          badge.textContent = totalItems;
+          badge.style.display = 'flex';
+        } else if (badge) {
+          badge.style.display = 'none';
+        }
       }
-      badge.textContent = totalItems;
-      badge.style.display = 'flex';
-    } else if (badge) {
-      badge.style.display = 'none';
     }
-  }
-}
     async function addToCart(product) {
-      // 🌟 1. Calculate Price immediately (Deal Check)
+
       const priceToUse = (product.is_deal && product.deal_price) ? product.deal_price : product.price;
 
-      // 🌟 2. Find existing item (Using loose equality '==' to catch string/number mismatches)
+     
       const existingItem = state.cart.find(item => item.id == product.id);
       
       let newQuantity = 1;
 
-      // 🌟 3. Optimistic Update (Update screen instantly for EVERYONE)
+
       if (existingItem) {
           existingItem.quantity += 1;
           newQuantity = existingItem.quantity;
-          // Ensure price is up to date 
           existingItem.price = priceToUse;
       } else {
-          // Add new item to local state
           state.cart.push({
               ...product,
               id: product.id,
@@ -2072,13 +2024,8 @@ function updateCartDisplay() {
               quantity: 1
           });
       }
-
-      // 4. Render & Feedback
-      // 4. Update cart counter only (no full re-render)
       updateCartDisplay();
       showToast(`Added ${product.name} to cart`);
-
-      // Trigger Animation
       const cartIcon = document.getElementById('cart-icon-container');
       if (cartIcon) {
           cartIcon.classList.remove('cart-pulse');
@@ -2096,7 +2043,6 @@ function updateCartDisplay() {
               console.error("Supabase Save Error:", error);
           }
       }  else {
-            // Save to localStorage for non-logged-in users
             try {
                 localStorage.setItem('guest_cart', JSON.stringify(state.cart));
             } catch (e) {
@@ -2106,10 +2052,8 @@ function updateCartDisplay() {
       pulseCartIcon();
     }
 
-    // 🌟 ROBUST REMOVE FUNCTION (Instant Feedback)
+  
     window.removeFromCart = async (id) => {
-        // 1. Optimistic UI Update: Remove it locally first!
-        // We use '!=' (loose inequality) to ensure "5" matches 5
         const itemExists = state.cart.some(item => item.id == id);
         
         if (!itemExists) {
@@ -2117,15 +2061,10 @@ function updateCartDisplay() {
             return; 
         }
 
-        // Filter out the item locally
         state.cart = state.cart.filter(item => item.id != id);
-        
-        // Update the screen immediately
         render();
         showToast("Item removed");
-
-        // 2. Sync with Server (Background)
-        // Only if logged in. If guest, we are done!
+      
         if (state.user) {
             try {
                 const { error } = await supabase
@@ -2136,14 +2075,12 @@ function updateCartDisplay() {
                 if (error) {
                     console.error("Supabase Delete Error:", error);
                     showToast("Error syncing with server");
-                    // Optionally refresh cart if sync fails
                     await fetchCart(); 
                 }
             } catch (err) {
                 console.error("Network Error:", err);
             }
         }  else {
-            // Guest: save to localStorage
             try {
                 localStorage.setItem('guest_cart', JSON.stringify(state.cart));
             } catch (e) {
@@ -2151,50 +2088,33 @@ function updateCartDisplay() {
             }
         }
     };
-    // 🌟 HELPER: Calculates the new quantity dynamically
     function adjustQuantity(id, change) {
         const item = state.cart.find(i => i.id === id);
         if (!item) return;
         
         const newQuantity = item.quantity + change;
         
-        // Prevent going below 1
         if (newQuantity < 1) return;
         
         updateQuantity(id, newQuantity);
     }
-    // Make it accessible to HTML
     window.adjustQuantity = adjustQuantity;
     async function updateQuantity(id, newQuantity) {
         if (newQuantity < 1) return;
-
-        // 1. Find the item in local state
         const item = state.cart.find(i => i.id === id);
         if (!item) return;
-
-        // 2. Optimistic Update: Update Local State immediately
         item.quantity = newQuantity;
-
-        // 3. Direct DOM Manipulation (Update numbers without re-rendering)
         const qtyEl = document.getElementById(`qty-${id}`);
         const itemTotalEl = document.getElementById(`item-total-${id}`);
         const grandTotalEl = document.getElementById(`cart-grand-total`);
 
         if (qtyEl && itemTotalEl && grandTotalEl) {
-            // Update the quantity number
             qtyEl.innerText = newQuantity;
-            
-            // Update the item's total price
             const itemTotal = item.price * newQuantity;
             itemTotalEl.innerText = `$${itemTotal.toFixed(2)}`;
-
-            // Recalculate and update the Grand Total
             const newGrandTotal = state.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
             grandTotalEl.innerText = `$${newGrandTotal.toFixed(2)}`;
         }
-
-        // 4. Send update to Supabase in the background
-        // Note: We do NOT call fetchCart() or render() here anymore
         if (state.user) {
             try {
                 const { error } = await supabase
@@ -2209,7 +2129,6 @@ function updateCartDisplay() {
                 fetchCart().then(render); 
             }
         } else {
-            // Guest: save to localStorage
             try {
                 localStorage.setItem('guest_cart', JSON.stringify(state.cart));
             } catch (e) {
@@ -2217,67 +2136,56 @@ function updateCartDisplay() {
             }
         }
     }
-
-
-
-
-
-    
-    // --- Admin Functions ---
-   async function fetchAdminProducts() {
-  if (!state.isAdmin) return;
-  const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
-  if (data) {
-    state.adminProducts = data;
-    // DON'T call render() - just update the table if we're on admin page
-    if (state.currentPage === 'admin') {
-      const tbody = document.querySelector('#admin-products-table tbody');
-      if (tbody) {
-        tbody.innerHTML = state.adminProducts.map(p => AdminProductRow(p)).join('');
+  async function fetchAdminProducts() {
+      if (!state.isAdmin) return;
+      const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
+      if (data) {
+        state.adminProducts = data;
+        // DON'T call render() - just update the table if we're on admin page
+        if (state.currentPage === 'admin') {
+          const tbody = document.querySelector('#admin-products-table tbody');
+          if (tbody) {
+            tbody.innerHTML = state.adminProducts.map(p => AdminProductRow(p)).join('');
+          }
+        }
       }
+      if (error) console.error("Admin fetch error:", error);
     }
-  }
-  if (error) console.error("Admin fetch error:", error);
-}
-  // 🔍 DIAGNOSTIC: Check session status
-window.checkSessionStatus = async function() {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session) {
-    const expiresAt = session.expires_at * 1000;
-    const now = Date.now();
-    const timeLeft = (expiresAt - now) / 1000 / 60; // minutes
-    console.log("✅ Session valid");
-    console.log("⏰ Time until expiry:", timeLeft.toFixed(1), "minutes");
-    console.log("📅 Expires at:", new Date(expiresAt).toLocaleString());
-    return true;
-  } else {
-    console.log("❌ No session found");
-    return false;
-  }
-};
+      // 🔍 DIAGNOSTIC: Check session status
+    window.checkSessionStatus = async function() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const expiresAt = session.expires_at * 1000;
+        const now = Date.now();
+        const timeLeft = (expiresAt - now) / 1000 / 60; // minutes
+        console.log("✅ Session valid");
+        console.log("⏰ Time until expiry:", timeLeft.toFixed(1), "minutes");
+        console.log("📅 Expires at:", new Date(expiresAt).toLocaleString());
+        return true;
+      } else {
+        console.log("❌ No session found");
+        return false;
+      }
+    };
 
 
 
     
   async function handleAddProduct(e) {
   e.preventDefault();
-
   if (!state.user || !state.isAdmin) {
     alert("Not logged in as Admin");
     navigate('auth');
     return;
   }
-  
   const form = e.target;
   const submitButton = form.querySelector('button[type="submit"]');
   
   try {
-    // Disable button
     submitButton.disabled = true;
     submitButton.innerHTML = '<div class="loader mx-auto"></div>';
     
     AutoSaveSystem.showIndicator('Adding product...');    
-    // Build product
     const isDeal = form.is_deal.checked;
     const newProduct = {
       name: form.name.value,
@@ -2304,10 +2212,8 @@ window.checkSessionStatus = async function() {
           window.location.reload();
         }, 7000);
 
-    // Insert
     const { error } = await supabase.from('products').insert([newProduct]);
     
-    // CLEAR THE TIMEOUT if successful
     clearTimeout(timeoutId);
     
      if (error) {
@@ -2318,8 +2224,6 @@ window.checkSessionStatus = async function() {
       window.location.reload();
       return;
     }
-    
-    // Success
     AutoSaveSystem.clearPendingOperation();
     AutoSaveSystem.clearFormData('add-product-form');
     AutoSaveSystem.showIndicator('Product added successfully!', true);
@@ -2334,7 +2238,6 @@ window.checkSessionStatus = async function() {
     
   } catch (err) {
    console.error("Add product error:", err);
-    // Any error = reload to retry
     localStorage.setItem('return_to_admin', 'true');
     window.location.href = window.location.origin + window.location.pathname + '#admin';
     window.location.reload();
@@ -2436,22 +2339,18 @@ window.checkSessionStatus = async function() {
             window.location.reload();
         }, 7000);
 
-        // Try to update (but timeout will fire regardless)
         const { error } = await supabase.from('products').update(updates).eq('id', id);
         
-        // If we get here before timeout, clear it
         clearTimeout(timeoutId);
         
         if (error) {
             console.error("Update error:", error);
-            // Don't throw - just reload to retry
             localStorage.setItem('return_to_admin', 'true');
             window.location.href = window.location.origin + window.location.pathname + '#admin';
             window.location.reload();
             return;
         }
         
-        // Success
         AutoSaveSystem.clearPendingOperation();
         AutoSaveSystem.clearFormData('edit-product-form');
         AutoSaveSystem.showIndicator('Product updated successfully!', true);
@@ -2463,7 +2362,6 @@ window.checkSessionStatus = async function() {
         
     } catch (err) {
         console.error("Update product error:", err);
-        // Any error = reload to retry
         localStorage.setItem('return_to_admin', 'true');
         window.location.href = window.location.origin + window.location.pathname + '#admin';
         window.location.reload();
@@ -2478,13 +2376,11 @@ window.checkSessionStatus = async function() {
             try {
                 AutoSaveSystem.showIndicator('Deleting product...');
                 
-                // Save operation for retry BEFORE attempting
                 AutoSaveSystem.savePendingOperation({
                     type: 'delete',
                     data: { id }
                 });
     
-                // ⏱️ PURE TIME-BASED TIMEOUT - Reload after 7 seconds NO MATTER WHAT
                 const timeoutId = setTimeout(() => {
                     console.warn("⏱️ 7 seconds passed - reloading (connection dead)...");
                     localStorage.setItem('return_to_admin', 'true');
@@ -2492,22 +2388,18 @@ window.checkSessionStatus = async function() {
                     window.location.reload();
                 }, 7000);
     
-                // Try to delete (but timeout will fire regardless)
                 const { error } = await supabase.from('products').delete().eq('id', id);
                 
-                // If we get here before timeout, clear it
                 clearTimeout(timeoutId);
                 
                 if (error) {
                     console.error("Delete error:", error);
-                    // Don't throw - just reload to retry
                     localStorage.setItem('return_to_admin', 'true');
                     window.location.href = window.location.origin + window.location.pathname + '#admin';
                     window.location.reload();
                     return;
                 }
                 
-                // Success
                 AutoSaveSystem.clearPendingOperation();
                 AutoSaveSystem.showIndicator('Product deleted successfully!', true);
                 
@@ -2517,7 +2409,6 @@ window.checkSessionStatus = async function() {
                 
             } catch (err) {
                 console.error("Delete product error:", err);
-                // Any error = reload to retry
                 localStorage.setItem('return_to_admin', 'true');
                 window.location.href = window.location.origin + window.location.pathname + '#admin';
                 window.location.reload();
@@ -2526,21 +2417,15 @@ window.checkSessionStatus = async function() {
     }
     window.handleDeleteProduct = handleDeleteProduct;
 
-
-
-
-    // ==========================================
-    // 🔥 CURTAIN TRANSITION (Adapted from CodePen)
-    // ==========================================
+    //curtain
     window.navigateHomeWithTear = function() {
         const overlay = document.getElementById('tear-overlay');
         const layers = overlay.querySelectorAll('.tear-layer');
         
-        // ✨ SNAPSHOT the current colors BEFORE starting animation
+        // abandoned logic but alr
         const currentPrimary = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
         const currentSecondary = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim();
-        
-        // Apply the snapshotted colors directly to the layers
+       
         layers.forEach((layer, index) => {
             if (index % 2 === 0) {
                 layer.style.background = currentPrimary;
@@ -2548,35 +2433,29 @@ window.checkSessionStatus = async function() {
                 layer.style.background = currentSecondary;
             }
             
-            // Special colors for middle layers
+
             if (index === 2 || index === 3) {
                 layer.style.background = '#0f3460';
             }
         });
-        
-        // Show overlay
+
         overlay.style.display = 'flex';
-        
-        // Reset all layers
+
         gsap.set(layers, { width: '0%', left: '0%' });
         
-        // Create timeline
         const tl = gsap.timeline({
           ease: "power4.inOut",
           onComplete: () => {
-            // Reset inline styles after animation
             layers.forEach(layer => {
                 layer.style.background = '';
             });
             
-            // KEEP overlay visible for a moment longer
             setTimeout(() => {
               gsap.set(overlay, { display: 'none' });
             }, 100);
           }
         });
         
-        // Step 1: Tiles slide in from left (staggered)
         tl.to(layers, {
           duration: 0.4,
           width: "100%",
@@ -2585,12 +2464,10 @@ window.checkSessionStatus = async function() {
           stagger: 0.05,
         });
         
-        // Step 2: Navigate DURING the animation (at 50% point)
         tl.call(() => {
           navigate('home');
-        }, null, 0.5); // Call at 50% of total animation time
-        
-        // Step 3: Tiles slide out to right (reverse stagger)
+        }, null, 0.5); 
+  
         tl.to(layers, {
           duration: 0.4,
           width: "100%",
@@ -2599,10 +2476,8 @@ window.checkSessionStatus = async function() {
           stagger: -0.05,
         }, "+=0");
         
-        // Step 4: Reset for next time
         tl.set(layers, { left: "0", width: "0" });
     };
-    // --- Components ---
 
     function Header() {
       return `
@@ -2936,7 +2811,6 @@ window.checkSessionStatus = async function() {
       `;
     }
 
-    // 🌟 Helper for Scrolling
     window.scrollSection = (id, direction) => {
     const container = document.getElementById(id);
     if (!container) return;
@@ -2944,17 +2818,16 @@ window.checkSessionStatus = async function() {
     const scrollAmount = container.offsetWidth * 0.7;
     const start = container.scrollLeft;
     const change = direction === 'left' ? -scrollAmount : scrollAmount;
-    const duration = 800; // Longer, more luxurious
+    const duration = 800; // longer, can change
     let startTime = null;
     
-    // Professional cubic-bezier easing (like CSS ease-in-out but better)
     function easeInOutCubic(t) {
         return t < 0.5 
             ? 4 * t * t * t 
             : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
 
-      // Image gallery navigation
+      // img nav
 
 
     window.revealPrices = function() {
@@ -2994,18 +2867,17 @@ window.checkSessionStatus = async function() {
         
         if (progress < 1) {
             requestAnimationFrame(animation);
+            }
         }
-    }
-    
-    requestAnimationFrame(animation);
-};
+        
+        requestAnimationFrame(animation);
+    };
 
     function HomePage() {
-      // Filter Data
+     
       const bestsellers = state.products.filter(p => p.is_bestseller);
       const monthlyDeals = state.products.filter(p => p.is_deal);
 
-      // 🌟 Wrapper to hold the Normal Product Card inside slider logic
       const renderSliderCardWrapper = (product) => {
         return `
         <div class="min-w-[260px] w-[260px] sm:min-w-[280px] sm:w-[280px] h-full">
@@ -3220,7 +3092,7 @@ window.checkSessionStatus = async function() {
       const category = state.categories.find(c => c.slug === state.currentSlug);
       if (!category) return '<div class="flex-1 flex items-center justify-center"><div class="text-xl">Category not found</div></div>';
       
-      // Get theme for this category
+      // Get theme for this category(abandoned now)
       const theme = CATEGORY_THEMES[category.slug] || CATEGORY_THEMES['default'];
       setTimeout(() => {
         const bgElement = document.querySelector('.category-page-bg');
@@ -3327,12 +3199,10 @@ window.checkSessionStatus = async function() {
       
       const isDeal = product.is_deal && product.deal_price;
       const displayPrice = isDeal ? product.deal_price : product.price;
-      // Get the category for this product to apply its theme
+      // Get the category for this product to apply its theme(abandoned)
       const category = state.categories.find(c => c.id === product.category_id);
       const categorySlug = category ? category.slug : 'default';
       const theme = CATEGORY_THEMES[categorySlug] || CATEGORY_THEMES['default'];
-      
-      // Set background dynamically (same as CategoryPage)
       setTimeout(() => {
         let bgElement = document.querySelector('.category-page-bg');
         if (!bgElement) {
@@ -3354,14 +3224,14 @@ window.checkSessionStatus = async function() {
              transition-transform duration-150 ease-out
              hover:-translate-x-1 hover:shadow-md
              active:scale-95"
-    >
-  <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1"
-       fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M15 19l-7-7 7-7" />
-  </svg>
-  Back
-</button>
+        >
+      <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1"
+           fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 19l-7-7 7-7" />
+      </svg>
+      Back
+    </button>
 
 
           <div class="grid md:grid-cols-2 gap-10">
@@ -3376,7 +3246,6 @@ window.checkSessionStatus = async function() {
                 `;
                   }
                   
-                  // Store images in a global variable for this product
                   const imagesJson = JSON.stringify(images).replace(/"/g, '&quot;');
                   
                   return `
@@ -3445,8 +3314,8 @@ window.checkSessionStatus = async function() {
                   Add to Cart
                 </button>
                 <button id="share-product-btn" onclick="shareProduct('${product.slug}')" class="bg-gray-800 text-white px-8 py-4 rounded-lg font-bold transition-all text-lg shadow-lg hover:shadow-xl">
-    Share
-  </button>
+                Share
+              </button>
               </div>
             </div>
           </div>
@@ -3616,19 +3485,15 @@ window.checkSessionStatus = async function() {
           </div>
         `;
     }
-    // ==========================================
-    // 🎨 GSAP ANIMATIONS - INIT
-    // ==========================================
-    
+    // GSAP ANIMATIONS - INIT   (most of this is with ai help, so probably bugless)
     // Configure GSAP
     gsap.registerPlugin(ScrollTrigger);
     
     // Global smooth scroll
     gsap.to("body", { duration: 0 }); // Initialize
-    
-    // ==========================================
-    // 1️⃣ SMOOTH SCROLL FOR HERO BUTTON
-    // ==========================================
+
+    // SMOOTH SCROLL FOR HERO BUTTON
+
     window.smoothScrollTo = (elementId) => {
       const element = document.getElementById(elementId);
       if (!element) return;
@@ -3640,17 +3505,14 @@ window.checkSessionStatus = async function() {
       });
     };
     
-    // ==========================================
-    // 2️⃣ HERO SECTION ANIMATIONS
-    // ==========================================
     function animateHero() {
       const heroExists = document.querySelector('.hero-title');
       if (!heroExists) return;
       
-      // Set final state first, then animate from initial state
+
       gsap.set(['.hero-title', '.hero-subtitle', '.hero-cta'], { opacity: 1 });
       
-      // Title
+
       gsap.from('.hero-title', {
         duration: 1,
         y: 50,
@@ -3659,7 +3521,7 @@ window.checkSessionStatus = async function() {
         delay: 0.2
       });
       
-      // Subtitle
+
       gsap.from('.hero-subtitle', {
         duration: 1,
         y: 30,
@@ -3668,7 +3530,7 @@ window.checkSessionStatus = async function() {
         delay: 0.5
       });
       
-      // Button
+
       gsap.from('.hero-cta', {
         duration: 0.8,
         scale: 0.8,
@@ -3677,9 +3539,6 @@ window.checkSessionStatus = async function() {
         delay: 0.8
       });
     }
-    // ==========================================
-    // 3️⃣ PRODUCT CARD SCROLL ANIMATIONS
-    // ==========================================
 
 
     function initCardHoverAnimations() {
@@ -3737,32 +3596,32 @@ window.checkSessionStatus = async function() {
     function initShareButtonAnimation() {
   const shareBtn = document.getElementById('share-product-btn');
   if (!shareBtn) return;
-  
-  // Continuous pulse glow
-  gsap.to(shareBtn, {
-    boxShadow: "0 0 20px rgba(212, 175, 55, 0.8), 0 0 40px rgba(212, 175, 55, 0.4)",
-    duration: 0.8,
-    ease: "power1.inOut",
-    yoyo: true,
-    repeat: -1
-  });
-  
-  // Small scale pulse
-  gsap.to(shareBtn, {
-    scale: 1.05,
-    duration: 0.8,
-    ease: "power1.inOut",
-    yoyo: true,
-    repeat: -1
-  });
-}
+      
+    
+      gsap.to(shareBtn, {
+        boxShadow: "0 0 20px rgba(212, 175, 55, 0.8), 0 0 40px rgba(212, 175, 55, 0.4)",
+        duration: 0.8,
+        ease: "power1.inOut",
+        yoyo: true,
+        repeat: -1
+      });
+      
+    
+      gsap.to(shareBtn, {
+        scale: 1.05,
+        duration: 0.8,
+        ease: "power1.inOut",
+        yoyo: true,
+        repeat: -1
+      });
+    }
     function animateProductCards() {
       const cards = document.querySelectorAll('.product-card-animate');
       if (cards.length === 0) return;
            if (window.innerWidth <= 769) {
             cards.forEach((card) => {
               const rect = card.getBoundingClientRect();
-              // Add buffer: consider card visible if any part is within viewport + 100px buffer
+              // consider card visible if any part is within viewport + 100px buffer
               const isVisible = rect.top < (window.innerHeight + 100) && rect.bottom > -100;
               
               if (isVisible) {
@@ -3781,10 +3640,10 @@ window.checkSessionStatus = async function() {
             });
             return;
           }
-  // Don't reset - keep CSS initial state
-  // gsap.set(cards, { opacity: 1, y: 0 }); // REMOVE THIS LINE
+
+  // gsap.set(cards, { opacity: 1, y: 0 }); 
   
-  // Animate all product cards as they enter viewport
+  // Animate all product cards as they enter user's view
   gsap.utils.toArray('.product-card-animate').forEach((card, index) => {
     gsap.fromTo(card, 
       { opacity: 0, y: 60 },
@@ -3804,59 +3663,48 @@ window.checkSessionStatus = async function() {
   });
 }
     
-    // ==========================================
-    // 4️⃣ SMOOTH SIDE SCROLL (Bestsellers/Deals)
-    // ==========================================
     window.smoothScrollSection = (id, direction) => {
   const container = document.getElementById(id);
   if (!container) return;
-  
-  // Get the actual card width from first card
+
   const firstCard = container.querySelector('.min-w-\\[280px\\]');
   const cardWidth = firstCard ? firstCard.offsetWidth : 280;
   const gap = 24; // gap-6 = 24px
   
-  // Scroll by container width for smooth full-screen scrolling
+
   const isMobile = window.innerWidth <= 768;
   const scrollAmount = isMobile ? (cardWidth + gap) : container.offsetWidth * 0.8;
   const newScrollLeft = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
   
-  // Use the same sexy easing as the hero button
-  gsap.to(container, {
-    scrollLeft: newScrollLeft,
-    duration: 1.2,
-    ease: isMobile ? "power2.out" : "power3.inOut",
-     force3D: true,
-    overwrite: 'auto'
-  });
-};
-    
-    // ==========================================
-    // 5️⃣ CATEGORY CARDS STAGGER
-    // ==========================================
+
+    gsap.to(container, {
+      scrollLeft: newScrollLeft,
+      duration: 1.2,
+      ease: isMobile ? "power2.out" : "power3.inOut",
+       force3D: true,
+      overwrite: 'auto'
+    });
+  };
+
     function animateCategoryCards() {
       const cards = document.querySelectorAll('.category-card-animate');
       if (cards.length === 0) return;
       
-      // Set initial visible state as fallback
+      // initial visible state as fallback
       gsap.set(cards, { opacity: 1, y: 0, scale: 1 });
       
      
     }
     
-    // ==========================================
-    // 6️⃣ SECTION HEADERS
-    // ==========================================
+
     function animateSectionHeaders() {
-  // Don't animate headers - keep them visible
+  // keep header visible,no animate
   const headers = document.querySelectorAll('.section-header-animate');
   headers.forEach(header => {
     header.style.opacity = '1';
   });
     }
-    // ==========================================
-    // 7️⃣ HEADER SLIDE DOWN
-    // ==========================================
+
     function animateHeader() {
       const header = document.querySelector('header');
       if (!header) return;
@@ -3869,9 +3717,6 @@ window.checkSessionStatus = async function() {
       });
     }
     
-    // ==========================================
-    // 8️⃣ SIDEBAR MENU ITEMS STAGGER
-    // ==========================================
     function animateSidebar() {
       if (!state.menuOpen) return;
       
@@ -3885,11 +3730,9 @@ window.checkSessionStatus = async function() {
       });
     }
     
-    // ==========================================
-    // 9️⃣ PAGE TRANSITION
-    // ==========================================
+
     function pageTransition(callback) {
-      // Fade out current content
+
       gsap.to('#app main', {
         duration: 0.3,
         opacity: 0,
@@ -3897,7 +3740,7 @@ window.checkSessionStatus = async function() {
         ease: "power2.in",
         onComplete: () => {
           callback();
-          // Fade in new content
+
           gsap.from('#app main', {
             duration: 0.5,
             opacity: 0,
@@ -3908,72 +3751,63 @@ window.checkSessionStatus = async function() {
       });
     }
     
-    // ==========================================
-    // 🔄 REFRESH ANIMATIONS ON RENDER
-    // ==========================================
     function initAllAnimations() {
-    // Kill all existing ScrollTriggers to prevent duplicates
+
     ScrollTrigger.getAll().forEach(trigger => trigger.kill());
     
-    // Small delay to ensure DOM is ready
+
     setTimeout(() => {
-      // Only animate hero on home page initial load
-      // Animate hero on home page (always on home page render)
+      // to only animate hero on home page initial load
       if (state.currentPage === 'home') {
         const heroExists = document.querySelector('.hero-title');
         if (heroExists && !window.heroAnimated) {
           animateHero();
           window.heroAnimated = true;
         } else if (heroExists) {
-          // If already animated, just make sure it's visible
           gsap.set(['.hero-title', '.hero-subtitle', '.hero-cta'], { opacity: 1 });
         }
       }
       
-      // Only animate header once
+
       if (!window.headerAnimated) {
         animateHeader();
         window.headerAnimated = true;
       }
       
-      // These can re-animate on scroll
+
       
       animateProductCards();
       animateCategoryCards();
       animateSectionHeaders();
       
-      // Only animate sidebar when it's actually open
+
       if (state.menuOpen) {
         animateSidebar();
+          }
+        }, 50);
+          initCardHoverAnimations();
+          initShareButtonAnimation();
+          ScrollTrigger.refresh();
       }
-    }, 50);
-      initCardHoverAnimations();
-      initShareButtonAnimation();
-      ScrollTrigger.refresh();
-  }
-// Ensure GSAP is loaded before animating
-if (typeof gsap === 'undefined') {
-  // GSAP didn't load, show everything immediately
-  document.querySelectorAll('.product-card-animate, .category-card-animate, .hero-title, .hero-subtitle, .hero-cta').forEach(el => {
-    el.style.opacity = '1';
-  });
-}
+   
+    if (typeof gsap === 'undefined') {
+      document.querySelectorAll('.product-card-animate, .category-card-animate, .hero-title, .hero-subtitle, .hero-cta').forEach(el => {
+        el.style.opacity = '1';
+      });
+    }
 
-// Fallback: Show elements if animations don't trigger
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    document.querySelectorAll('.product-card-animate, .category-card-animate, .hero-title, .hero-subtitle, .hero-cta').forEach(el => {
-      const opacity = window.getComputedStyle(el).opacity;
-      if (opacity === '0' || parseFloat(opacity) < 0.1) {
-        gsap.to(el, { opacity: 1, duration: 0.5, ease: "power2.out" });
-      }
+
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.querySelectorAll('.product-card-animate, .category-card-animate, .hero-title, .hero-subtitle, .hero-cta').forEach(el => {
+          const opacity = window.getComputedStyle(el).opacity;
+          if (opacity === '0' || parseFloat(opacity) < 0.1) {
+            gsap.to(el, { opacity: 1, duration: 0.5, ease: "power2.out" });
+          }
+        });
+      }, 1500);
     });
-  }, 1500);
-});
     
-    // ==========================================
-    // 🎬 CART ICON PULSE (on add to cart)
-    // ==========================================
     window.pulseCartIcon = () => {
       const cartIcon = document.querySelector('.cart-icon');
       if (!cartIcon) return;
@@ -3989,6 +3823,7 @@ window.addEventListener('load', () => {
         }
       );
     };
+    
     function EditProductModal(categoriesHtml) {
         return `
             <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -4104,10 +3939,7 @@ window.addEventListener('load', () => {
       `;
     }
     
-
-    // 🌟 EMAILJS CONFIGURATION
     (function(){
-      // ⚠️ REPLACE WITH YOUR PUBLIC KEY
       emailjs.init("4abn3obf_dhQF5ykh"); 
     })();
     function CartPage() {
@@ -4168,90 +4000,87 @@ window.addEventListener('load', () => {
     }
 
 
-    // --- Phone Popup Functions ---
-window.openPhonePopup = () => {
-    document.getElementById('phone-popup').classList.remove('hidden');
-    // Clear previous input
-    document.getElementById('user-phone').value = '';
-};
-
-window.closePhonePopup = () => {
-    document.getElementById('phone-popup').classList.add('hidden');
-};
-
-window.handleConfirmOrder = async function() {
-  const phoneInput = document.getElementById('user-phone');
-  const btn = document.getElementById('btn-confirm-order');
-  const phoneNumber = phoneInput.value.trim();
-
-  if (phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
-    alert("Please enter a valid 10-digit phone number.");
-    return;
-  }
-
-  btn.innerText = "Processing...";
-  btn.disabled = true;
-
-  try {
-    const fullPhone = '+1' + phoneNumber;
-    const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const orderDetails = state.cart.map(item => 
-      `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
-    ).join('\n');
-
-    const templateParams = {
-      customer_name: state.user.email.split('@')[0],
-      customer_email: state.user.email,
-      reply_to: state.user.email,
-      message: orderDetails,
-      total_amount: `$${total.toFixed(2)}`,
-      contact_phone: fullPhone
+    window.openPhonePopup = () => {
+        document.getElementById('phone-popup').classList.remove('hidden');
+        document.getElementById('user-phone').value = '';
     };
-
-    console.log("📧 Sending order email...");
-    await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
-    console.log("✅ Email sent");
-
-if (state.user) {
-      console.log("🗑️ Clearing cart from database...");
-      
-      try {
-        // Skip DB delete if connection is stale - just clear locally
-        const { error } = await Promise.race([
-          supabase.from('cart_items').delete().eq('user_id', state.user.id),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-        ]);
-        
-        if (error) {
-          console.warn("⚠️ DB clear failed (stale connection), clearing locally only:", error);
-        } else {
-          console.log("✅ Cart cleared from DB");
-        }
-      } catch (err) {
-        console.warn("⚠️ DB delete timed out (stale connection), clearing locally only");
+    
+    window.closePhonePopup = () => {
+        document.getElementById('phone-popup').classList.add('hidden');
+    };
+    
+    window.handleConfirmOrder = async function() {
+      const phoneInput = document.getElementById('user-phone');
+      const btn = document.getElementById('btn-confirm-order');
+      const phoneNumber = phoneInput.value.trim();
+    
+      if (phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
+        alert("Please enter a valid 10-digit phone number.");
+        return;
       }
-    }
-
-    state.cart = [];
-    try {
-      localStorage.removeItem('guest_cart');
-    } catch (e) {
-      console.error("localStorage clear error:", e);
-    }
-
-    closePhonePopup();
-    showToast(`Order Placed Successfully!\nWe will contact you at: ${fullPhone}`);
-    navigate('home');
-
-  } catch (error) {
-    console.error('❌ Order Error:', error);
-    alert("Failed to place order. Please try again.");
-  } finally {
-    btn.innerText = "Confirm Order";
-    btn.disabled = false;
-  }
-};
-    // 🌟 CHECKOUT HANDLER
+    
+      btn.innerText = "Processing...";
+      btn.disabled = true;
+    
+      try {
+        const fullPhone = '+1' + phoneNumber;
+        const total = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const orderDetails = state.cart.map(item => 
+          `${item.name} x ${item.quantity} - $${(item.price * item.quantity).toFixed(2)}`
+        ).join('\n');
+    
+        const templateParams = {
+          customer_name: state.user.email.split('@')[0],
+          customer_email: state.user.email,
+          reply_to: state.user.email,
+          message: orderDetails,
+          total_amount: `$${total.toFixed(2)}`,
+          contact_phone: fullPhone
+        };
+    
+        console.log("📧 Sending order email...");
+        await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
+        console.log("✅ Email sent");
+    
+    if (state.user) {
+          console.log("🗑️ Clearing cart from database...");
+          
+          try {
+            // skip DB delete if connection is stale,only localClear
+            const { error } = await Promise.race([
+              supabase.from('cart_items').delete().eq('user_id', state.user.id),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+            ]);
+            
+            if (error) {
+              console.warn("⚠️ DB clear failed (stale connection), clearing locally only:", error);
+            } else {
+              console.log("✅ Cart cleared from DB");
+            }
+          } catch (err) {
+            console.warn("⚠️ DB delete timed out (stale connection), clearing locally only");
+          }
+        }
+    
+        state.cart = [];
+        try {
+          localStorage.removeItem('guest_cart');
+        } catch (e) {
+          console.error("localStorage clear error:", e);
+        }
+    
+        closePhonePopup();
+        showToast(`Order Placed Successfully!\nWe will contact you at: ${fullPhone}`);
+        navigate('home');
+    
+      } catch (error) {
+        console.error('❌ Order Error:', error);
+        alert("Failed to place order. Please try again.");
+      } finally {
+        btn.innerText = "Confirm Order";
+        btn.disabled = false;
+      }
+    };
     async function handleCheckout() {
     if (!state.user) {
         alert("Please log in to checkout.");
@@ -4263,8 +4092,6 @@ if (state.user) {
         alert("Your cart is empty!");
         return;
     }
-
-    // Simply open the phone popup
     openPhonePopup();
 }
 window.handleCheckout = handleCheckout;
@@ -4374,18 +4201,17 @@ window.handleCheckout = handleCheckout;
                     navigate('admin');
                   }
                   
-                  // Check for pending operations
+
                   const pending = AutoSaveSystem.getPendingOperation();
                   if (pending && state.isAdmin) {
-                    // Show retry banner
                     AutoSaveSystem.showRetryBanner(pending);
                   }
-                  // Check for password reset from email link
+                  // check password reset from email link
                   if (hasRecoveryToken) {
                     console.log('Triggering password reset now...');
                     handlePasswordReset();
                   }
-                  // Initialize auto-save for forms (after navigation)
+           
                   setTimeout(() => {
                     if (state.currentPage === 'admin') {
                       AutoSaveSystem.initFormAutoSave('add-product-form');
@@ -4395,13 +4221,13 @@ window.handleCheckout = handleCheckout;
                 }, 500);
               }
 
-      // 🌟 SETUP AUTH LISTENER
+      
       supabase.auth.onAuthStateChange(async (event, session) => {
         try {
             const previousUser = state.user;
             state.user = session?.user || null;
             
-            // Handle Admin Check
+            // admin chk
             if (state.user && state.user.email) {
                 const userEmail = state.user.email.trim().toLowerCase();
                 const adminEmail = ADMIN_EMAIL.trim().toLowerCase();
@@ -4410,8 +4236,6 @@ window.handleCheckout = handleCheckout;
                 state.isAdmin = false;
             }
             
-            // Handle Data Sync (Cart, Admin Products)
-            // We await these, but if they fail, we catch the error so the UI still updates
             if (state.user) {
                 try {
                     localStorage.removeItem('guest_cart');
@@ -4439,31 +4263,30 @@ window.handleCheckout = handleCheckout;
           }
         }
       });
-// Handle direct product links
-const hash = window.location.hash;
-if (hash.startsWith('#product-')) {
-  const slug = hash.replace('#product-', '');
-  navigate('product', slug);
-}
-// Handle direct category links
-if (hash.startsWith('#category-')) {
-  const slug = hash.replace('#category-', '');
-  navigate('category', slug);
-}
-if (hash === '#admin') {
-  navigate('admin');
-}
-if (hash === '#cart') {
- navigate('cart');
-}
-if (hash === '#bestsellers') {
-  navigate('bestsellers');
-}
-if (hash === '#deals') {
-  navigate('deals');
-}
+    
+    const hash = window.location.hash;
+    if (hash.startsWith('#product-')) {
+      const slug = hash.replace('#product-', '');
+      navigate('product', slug);
+    }
+    // Handle direct category links
+    if (hash.startsWith('#category-')) {
+      const slug = hash.replace('#category-', '');
+      navigate('category', slug);
+    }
+    if (hash === '#admin') {
+      navigate('admin');
+    }
+    if (hash === '#cart') {
+     navigate('cart');
+    }
+    if (hash === '#bestsellers') {
+      navigate('bestsellers');
+    }
+    if (hash === '#deals') {
+      navigate('deals');
+    }
 
-// Handle browser back/forward buttons
     window.addEventListener('popstate', () => {
       const hash = window.location.hash;
       
@@ -4488,13 +4311,10 @@ if (hash === '#deals') {
       } else if (hash === '#deals') {
         navigate('deals');
       } else if (hash.startsWith('#search')) {
-        // ADD THIS: Parse search parameters from URL
         const params = new URLSearchParams(hash.split('?')[1] || '');
         const query = decodeURIComponent(params.get('q') || '');
         const category = params.get('cat') || 'all';
-        
         if (query) {
-          // Re-run the search
           let candidates = state.products;
           if (category !== 'all') {
             candidates = candidates.filter(p => p.category_id == category);
@@ -4530,7 +4350,7 @@ if (hash === '#deals') {
     });
     }
     
-    init();
+    init();//fuckkk let's go bcccc
   </script>
 </body>
 </html>
