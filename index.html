@@ -967,7 +967,7 @@
       
 
       
-      /*horizontal scroll sections weird behaviour shit*/
+      /*trying to fix horizontal scroll sections weird behaviour*/
       #bestsellers-scroll,
       #deals-scroll {
         -webkit-overflow-scrolling: touch;
@@ -1136,7 +1136,7 @@
     const AutoSaveSystem = {
       TIMEOUT_DURATION: 7000, // 7 seconds
       
-      // Show auto-save indicator
+      //auto-save indicator, should look into replacing with toast in future
       showIndicator(message, isSuccess = false) {
         let indicator = document.getElementById('autosave-indicator');
         if (!indicator) {
@@ -1156,7 +1156,7 @@
         }, 2000);
       },
       
-      // form data gets into local storage, jugaadu af
+      // local persistence workaround
       saveFormData(formId, data) {
         try {
           const timestamp = Date.now();
@@ -1178,7 +1178,7 @@
           const saved = localStorage.getItem('admin_form_autosave_' + formId);
           if (saved) {
             const saveData = JSON.parse(saved);
-            // Only return if saved within last 24 hours
+            // 24h validity window
             if (Date.now() - saveData.timestamp < 24 * 60 * 60 * 1000) {
               return saveData.data;
             }
@@ -1189,6 +1189,7 @@
         return null;
       },
       clearFormData(formId) {
+
         try {
           localStorage.removeItem('admin_form_autosave_' + formId);
         } catch (e) {
@@ -1209,7 +1210,7 @@
           console.error('Save pending operation failed:', e);
         }
       },
-      // restore if add/edit didnt exec due to timeout
+      // Retry recovery
       getPendingOperation() {
         try {
           const pending = localStorage.getItem('admin_pending_operation');
@@ -1326,12 +1327,14 @@
         const banner = document.getElementById('retry-banner');
         if (banner) {
           banner.classList.remove('show');
-          setTimeout(() => banner.remove(), 500);
+          const UI_DISMISS_DELAY_MS = 500;
+          setTimeout(() => banner.remove(), UI_DISMISS_DELAY_MS);
+
         }
         this.clearPendingOperation();
       },
       
-      //autosave for a form
+      //form autosave
       initFormAutoSave(formId) {
         setTimeout(() => {
           const form = document.getElementById(formId);
@@ -1390,13 +1393,12 @@
     async function wakeUpDatabase() {
     console.log("🏓 Pinging database to wake connection...");
     try {
-      // FIRST refresh auth, THEN ping
+      // the refresh then ping is being annoying. look into it in the future
       console.log("🔄 Refreshing auth first...");
       const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
       console.log("🔄 Refresh result:", { hasSession: !!session, error: refreshError });
       
       if (session) {
-        // Now try the ping
         await supabase.from('categories').select('count').limit(1);
         console.log("✅ Database connection active");
       }
@@ -1421,7 +1423,6 @@
     }
     async function ensureValidSession() {
       try {
-        // Supabase automatically handles refresh - just get the session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -1450,7 +1451,6 @@
       'default':            { primary: '#034204', secondary: '#046305', icon: '✨' }
     };
 
-    // icon(ic)
     const Icon = {
       Menu: () => '<svg class="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>',
       X: () => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
@@ -1466,7 +1466,10 @@
       Check: () => '<svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
     };
 
-    // state condfig
+    /* =================
+       APPLICATION STATE
+       ================= */
+
     let state = {
       user: null,
       currentPage: 'home',
@@ -1812,10 +1815,8 @@
       async function handlePasswordReset() {
           console.log('handlePasswordReset called');
           
-          // Wait a moment for Supabase to process the recovery token
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          // Check if we have a valid session
           const { data: { session } } = await supabase.auth.getSession();
           console.log('Session check:', session ? 'Valid session' : 'No session');
           
@@ -1849,7 +1850,6 @@
         navigate('auth');
       } else {
         alert('Password updated successfully!✅ \n\nYou can now sign in with your new password.');
-        // Sign out to clear the recovery session
         await supabase.auth.signOut();
         navigate('auth');
       }
@@ -3486,13 +3486,13 @@
         `;
     }
     // GSAP ANIMATIONS - INIT   (most of this is with ai help, so probably bugless)
-    // Configure GSAP
+
     gsap.registerPlugin(ScrollTrigger);
     
     // Global smooth scroll
-    gsap.to("body", { duration: 0 }); // Initialize
+    gsap.to("body", { duration: 0 });
 
-    // SMOOTH SCROLL FOR HERO BUTTON
+
 
     window.smoothScrollTo = (elementId) => {
       const element = document.getElementById(elementId);
