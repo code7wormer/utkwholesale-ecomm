@@ -193,7 +193,7 @@
     .category-sidebar-glass::-webkit-scrollbar-thumb:hover {
       background: rgba(0, 0, 0, 0.3);
     }
-    /* ===== AUTO-SAVE INDICATOR ===== */
+    /*fix tmrw*/
     .autosave-indicator {
       position: fixed;
       bottom: 20px;
@@ -633,7 +633,6 @@
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 100;
     }
-    /* from here to toast animation it's ai anmations,bug isnt from here*/
 
     .overlay-enter { animation: overlayIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
     .overlay-exit { animation: overlayOut 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
@@ -1482,7 +1481,7 @@
       searchResults: [],
       searchQuery: ''
     };
-
+    //levenshtein fnc
     function showToast(message) {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
@@ -1491,23 +1490,28 @@
       container.appendChild(toast);
       setTimeout(() => { toast.remove(); }, 3000);
     }
-    //ai help
-    function levenshtein(a, b) {
-      if(a.length === 0) return b.length; 
-      if(b.length === 0) return a.length; 
+    //
+    function calculateDistance(searchQuery, targetText) {
+      if(searchQuery.length === 0) return targetText.length; 
+      if(targetText.length === 0) return searchQuery.length; 
+      
       const matrix = [];
-      for(let i = 0; i <= b.length; i++){ matrix[i] = [i]; }
-      for(let j = 0; j <= a.length; j++){ matrix[0][j] = j; }
-      for(let i = 1; i <= b.length; i++){
-        for(let j = 1; j <= a.length; j++){
-          if(b.charAt(i-1) == a.charAt(j-1)){
+      for(let i = 0; i <= targetText.length; i++){ matrix[i] = [i]; }
+      for(let j = 0; j <= searchQuery.length; j++){ matrix[0][j] = j; }
+      for(let i = 1; i <= targetText.length; i++){
+        for(let j = 1; j <= searchQuery.length; j++){
+          if(targetText.charAt(i-1) == searchQuery.charAt(j-1)){
             matrix[i][j] = matrix[i-1][j-1];
           } else {
-            matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, Math.min(matrix[i][j-1] + 1, matrix[i-1][j] + 1));
+            matrix[i][j] = Math.min(
+              matrix[i-1][j-1] + 1, 
+              Math.min(matrix[i][j-1] + 1,
+              matrix[i-1][j] + 1)
+            );
           }
         }
       }
-      return matrix[b.length][a.length];
+      return matrix[targetText.length][searchQuery.length];
     }
 
 
@@ -1617,13 +1621,13 @@
             
             const wordMatch = words.some(word => {
                 if (Math.abs(word.length - query.length) > 3) return false;
-                return levenshtein(query, word) <= threshold;
+                return calculateDistance(query, word) <= threshold;
             });
             
             if (wordMatch) return true;
 
             const prefix = name.substring(0, query.length);
-            if (levenshtein(query, prefix) <= threshold) return true;
+            if (calculateDistance(query, prefix) <= threshold) return true;
 
             return false;
         });
@@ -3482,7 +3486,7 @@
           </div>
         `;
     }
-    // GSAP ANIMATIONS - INIT   (most of this is with ai help, so probably bugless)
+    //gsap animations
 
     gsap.registerPlugin(ScrollTrigger);
     
@@ -4326,13 +4330,13 @@ window.handleCheckout = handleCheckout;
             const threshold = query.length > 5 ? 2 : 1;
             const wordMatch = words.some(word => {
               if (Math.abs(word.length - query.length) > 3) return false;
-              return levenshtein(query, word) <= threshold;
+              return calculateDistance(query, word) <= threshold;
             });
             
             if (wordMatch) return true;
             
             const prefix = name.substring(0, query.length);
-            if (levenshtein(query, prefix) <= threshold) return true;
+            if (calculateDistance(query, prefix) <= threshold) return true;
             
             return false;
           });
