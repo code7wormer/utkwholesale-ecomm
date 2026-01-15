@@ -2,7 +2,7 @@
 ## Live Site
 The site is live at: [https://utkwholesale-ecomm.pages.dev/](https://utkwholesale-ecomm.pages.dev/)
 
-##For anyone checking the github
+## For anyone checking the github
 This was a contract, not a passion project cause no shit. Even I'm not this disciplined
 
 ## Support
