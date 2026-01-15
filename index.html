@@ -739,18 +739,17 @@
   transition: opacity 0.5s ease;
     }
     
-    .category-page-bg::before {
+    /* .category-page-bg::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.5); /* Dark overlay for readability */
+      background: rgba(0, 0, 0, 0.5); 
       backdrop-filter: blur(6px);
     }
-    
-    /* Darker overlay for better contrast */
     .category-page-bg.dark-overlay::before {
       background: rgba(0, 0, 0, 0.3);
-    }
+    } 
+    */
     /* 🍞 TOAST NOTIFICATION STYLES */
     #toast-container {
       position: fixed;
@@ -2578,7 +2577,7 @@ window.checkSessionStatus = async function() {
                 ${Icon.Menu()}
               </button>
               
-              <a href="#" onclick="navigateHomeWithTear(); return false;" class="text-xl md:text-2xl font-extrabold flex items-center gap-1 btn-animate" style="color: var(--color-primary);">
+              <a href="#" onclick="navigateHomeWithTear(); return false;" class="text-sm sm:text-xl md:text-2xl font-extrabold flex items-center gap-0.5 sm:gap-1 btn-animate" style="color: var(--color-primary);">
                 UTK<span style="color: var(--color-accent);">Wholesale</span>
               </a>
              <button onclick="navigateHomeWithTear(); return false;" class="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 btn-animate hidden sm:block flex-shrink-0" title="Home">
@@ -2613,12 +2612,14 @@ window.checkSessionStatus = async function() {
               </div>
 
               <!-- Bestsellers Link -->
-              <a href="#" onclick="navigate('bestsellers'); return false;" class="hidden lg:block px-4 py-2 font-semibold text-amber-400 hover:text-indigo-600 transition-colors">
+              <!-- Bestsellers Link -->
+              <a href="#" onclick="navigate('bestsellers'); return false;" class="px-2 sm:px-4 py-2 font-semibold text-amber-400 hover:text-indigo-600 transition-colors text-xs sm:text-base">
                 Bestsellers
               </a>
 
               <!-- Deals Link -->
-              <a href="#" onclick="navigate('deals'); return false;" class="hidden lg:block px-4 py-2 font-semibold text-green-400 hover:text-red-600 transition-colors">
+              <!-- Deals Link -->
+              <a href="#" onclick="navigate('deals'); return false;" class="px-2 sm:px-4 py-2 font-semibold text-green-400 hover:text-red-600 transition-colors text-xs sm:text-base">
                 Deals
               </a>
 
