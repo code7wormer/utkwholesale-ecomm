@@ -23,7 +23,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
   <style>
-    /*sidebar styles, taken from a random stack overflow post*/
+    /*sidebar styles*/
     .category-sidebar-glass {
       position: fixed;
       right: 16px;
@@ -436,7 +436,7 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
-   /*STYLES, most of the styles section was done w the help of ai, so i doubt your bug originates from here*/
+   /*STYLES, most of the styles section was done w the help of ai, so your bug doesnt originate from here*/
         :root {
           --default-primary:  #046305;     
           --default-secondary: #034204;   
@@ -554,7 +554,7 @@
       flex-direction: column;
     }
     
-    /* took from codepen, so refer there*/
+    /* refer to help section in folder if chnging*/
     #tear-overlay {
       position: fixed;
       inset: 0;
@@ -633,8 +633,8 @@
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 100;
     }
-    /* from here to toast animation it's ai gen with edits from me wherever needed, i doubt your bug is from here*/
-    /* Loading Overlay Animation */
+    /* from here to toast animation it's ai anmations,bug isnt from here*/
+
     .overlay-enter { animation: overlayIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
     .overlay-exit { animation: overlayOut 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
@@ -1325,14 +1325,13 @@
         const banner = document.getElementById('retry-banner');
         if (banner) {
           banner.classList.remove('show');
-          const UI_DISMISS_DELAY_MS = 500;
+          const UI_DELAY= 500;
           setTimeout(() => banner.remove(), UI_DISMISS_DELAY_MS);
 
         }
         this.clearPendingOperation();
       },
       
-      //form autosave
       initFormAutoSave(formId) {
         setTimeout(() => {
           const form = document.getElementById(formId);
@@ -1359,7 +1358,7 @@
               }
             }
             
-            // show/hide deal price container depending on if is_deal checkbox is true or fals
+            // hide deal price container depending on if is_deal checkbox is true or fals
             if (saved.is_deal) {
               const containerId = formId.includes('edit') ? 'edit-deal-price-container' : 'add-deal-price-container';
               const container = document.getElementById(containerId);
@@ -2420,7 +2419,7 @@
         const overlay = document.getElementById('tear-overlay');
         const layers = overlay.querySelectorAll('.tear-layer');
         
-        // abandoned logic but alr
+        // abandoned logic due to client request
         const currentPrimary = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
         const currentSecondary = getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim();
        
