@@ -1,28 +1,20 @@
-# ShopHub Deployment Guide
 
 ## Live Site
-Your site is live at: [https://your-project.pages.dev](https://your-project.pages.dev)
+The site is live at: [https://utkwholesale-ecomm.pages.dev/](https://utkwholesale-ecomm.pages.dev/)
 
-## How to Update
-1. Edit the `index.html` file in this repository
-2. Commit and push to GitHub
-3. Cloudflare Pages will auto-deploy in ~30 seconds
+##For anyone checking the github
+This was a contract, not a passion project cause no shit. Even I'm not this disciplined
 
 ## Support
-For technical support, contact: [your-email@example.com]
+For technical support, contact: [shardul.jps@gmail.com]
 
 ## Features
-- ✅ Supabase backend for products & cart
-- ✅ EmailJS for order notifications
-- ✅ Google OAuth login
-- ✅ Admin dashboard for product management
-- ✅ Real-time cart updates
-- ✅ Mobile-responsive design
+ too many to list i put way too much effort in ts
 
 
 
 
-✅ Final Checklist Before Shipping
+Final Checklist Before Shipping
 
 - Test all pages work (home, categories, products, cart, auth)
 - Test login/signup works
@@ -33,3 +25,4 @@ For technical support, contact: [your-email@example.com]
 - Test search functionality
 - Verify email notifications work (EmailJS)
 - Check all images load correctly
+- Check db structure and remove unused tables and buckets from supabase
