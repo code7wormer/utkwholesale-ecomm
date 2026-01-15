@@ -49,12 +49,22 @@
       transition: transform 0.3s ease;
     }
     
+    /* Mobile: Smaller sidebar */
     @media (max-width: 1024px) {
-  .category-sidebar-glass {
-    display: none !important;
-  }
-}
-    
+      .category-sidebar-glass {
+        width: 50px !important;
+        right: 4px !important;
+        top: 80px !important;
+        padding: 8px 0 !important;
+        gap: 4px !important;
+        border-radius: 16px !important;
+      }
+      
+      .main-with-sidebar {
+        margin-right: 54px !important;
+      }
+    }
+        
     @media (min-width: 1025px) {
       .main-with-sidebar {
         margin-right: 90px;
@@ -75,6 +85,15 @@
       position: relative;
       background: rgba(255, 255, 255, 0.3);
       border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    @media (max-width: 1024px) {
+      .material-glass-item {
+        width: 40px !important;
+        height: 40px !important;
+        gap: 2px !important;
+        border-radius: 10px !important;
+      }
     }
     
     .material-glass-item:hover {
@@ -114,6 +133,15 @@
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       backdrop-filter: blur(10px);
     }
+
+    @media (max-width: 1024px) {
+      .material-glass-icon {
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 14px !important;
+        border-radius: 8px !important;
+      }
+    }
     
     .material-glass-item:hover .material-glass-icon {
       transform: scale(1.1);
@@ -133,6 +161,12 @@
       text-align: center;
       line-height: 1.2;
       transition: all 0.2s;
+    }
+    
+    @media (max-width: 1024px) {
+      .material-glass-label {
+        display: none !important;
+      }
     }
     
     .material-glass-item.active .material-glass-label {
