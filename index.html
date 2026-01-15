@@ -359,7 +359,7 @@
       .flex.flex-col.sm\:flex-row .text-xl {
         font-size: 0.95rem !important;
       }
-      /* Force onlyy category page and search results to 2 columns on mobile really jugaad fix but alas */
+      /* Force onlyy category page and search results to 2 columns on mobile, kind of a workaround. */
       .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 0.5rem !important;
@@ -376,7 +376,7 @@
         object-fit: cover !important;
       }
       
-      /* Nuclear option - target all images in product cards */
+    
       .product-card-animate > div > img,
       .product-card-animate .relative > img {
         height: 160px !important;
@@ -398,7 +398,7 @@
         line-height: 1.2 !important;
       }
       
-      /* stock and price smaller */
+
       .product-card-animate .text-2xl {
         font-size: 1.1rem !important;
       }
@@ -409,13 +409,13 @@
         font-size: 0.65rem !important;
       }
       
-      /* compact buttons in overlay */
+
       .product-card-animate .absolute.inset-0 button {
         padding: 0.4rem 0.6rem !important;
         font-size: 0.7rem !important;
       }
     }
-    /*preventinghorizontal scroll on mobile*/
+
     * {
       box-sizing: border-box;
     }
@@ -436,56 +436,56 @@
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
-   /*STYLES, most of the styles section was done w the help of ai, so i doubt your bug originates form here XD */
-    :root {
-      --default-primary:  #046305;     
-      --default-secondary: #034204;   
-      
-      --color-primary: var(--default-primary);
-      --color-secondary: var(--default-secondary);
-      --color-accent: #D5C58A;
-      --color-accent-dark: ##7fcf76;   
+   /*STYLES, most of the styles section was done w the help of ai, so i doubt your bug originates from here*/
+        :root {
+          --default-primary:  #046305;     
+          --default-secondary: #034204;   
+          
+          --color-primary: var(--default-primary);
+          --color-secondary: var(--default-secondary);
+          --color-accent: #D5C58A;
+          --color-accent-dark: ##7fcf76;   
+            }
+        .rotating-rainbow-border {
+        position: relative;
+        padding: 4px;
+        border-radius: 12px;
+        background: white;
     }
-    .rotating-rainbow-border {
-    position: relative;
-    padding: 4px;
-    border-radius: 12px;
-    background: white;
-}
-
-.trb {
-    position: relative;
-    border-radius: 12px;
-    padding: 3px;
-    background: linear-gradient(
-        90deg,
-        #ff0000 0%,
-        #ff7f00 14%,
-        #ffff00 28%,
-        #00ff00 42%,
-        #0000ff 57%,
-        #8b00ff 71%,
-        #ff0000 85%,
-        #ff0000 100%
-    );
-    background-size: 300% 100%;
-    animation: travelLight 3s linear infinite;
-}
-
-.trb img {
-    display: block;
-    border-radius: 10px;
-    background: white;
-}
-
-@keyframes travelLight {
-    0% {
-        background-position: 0% 0%;
+    
+    .trb {
+        position: relative;
+        border-radius: 12px;
+        padding: 3px;
+        background: linear-gradient(
+            90deg,
+            #ff0000 0%,
+            #ff7f00 14%,
+            #ffff00 28%,
+            #00ff00 42%,
+            #0000ff 57%,
+            #8b00ff 71%,
+            #ff0000 85%,
+            #ff0000 100%
+        );
+        background-size: 300% 100%;
+        animation: travelLight 3s linear infinite;
     }
-    100% {
-        background-position: 300% 0%;
+    
+    .trb img {
+        display: block;
+        border-radius: 10px;
+        background: white;
     }
-}
+    
+    @keyframes travelLight {
+        0% {
+            background-position: 0% 0%;
+        }
+        100% {
+            background-position: 300% 0%;
+        }
+    }
 
     #tear-overlay {
       position: fixed;
@@ -534,8 +534,6 @@
     body, button.transition-enabled, .card {
       transition: background-color 0.5s ease, color 0.5s ease;
     }
-
-    /* Tailwind Overrides */
     .bg-indigo-600 { background-color: var(--color-primary); }
     .hover\:bg-indigo-700:hover { background-color: var(--color-secondary); }
     .text-indigo-600 { color: var(--color-primary); }
@@ -574,7 +572,7 @@
       transform-origin: left;
     }
     
-    /* Alternate colors for depth */
+
     .tear-layer:nth-child(even) {
       background: var(--color-secondary);
     }
@@ -636,7 +634,7 @@
       z-index: 100;
     }
     /* from here to toast animation it's ai gen with edits from me wherever needed, i doubt your bug is from here*/
-    /* 🌟 Loading Overlay Animation */
+    /* Loading Overlay Animation */
     .overlay-enter { animation: overlayIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
     .overlay-exit { animation: overlayOut 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
@@ -655,7 +653,7 @@
       50% { transform: translateY(0); }
     }
 
-    /* 🌟 Cart Pulse (Add to Cart) */
+    /* Cart Pulse (Add to Cart) */
     @keyframes pulse-cart {
       0% { transform: scale(1) rotate(0deg); }
       25% { transform: scale(1.1) rotate(-10deg); }
@@ -664,7 +662,7 @@
     }
     .cart-pulse { animation: pulse-cart 0.5s ease-in-out; }
     
-    /* 🌟 Cart Bounce (Click Cart) */
+    /* Cart Bounce (Click Cart) */
     @keyframes cart-bounce {
       0% { transform: scale(1); }
       50% { transform: scale(0.8); }
@@ -672,7 +670,7 @@
     }
     .cart-clicked { animation: cart-bounce 0.2s ease-in-out; }
 
-    /* 🌟 Button Hover Animation */
+    /* Button Hover Animation */
     .btn-animate {
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -685,7 +683,7 @@
         box-shadow: none;
     }
 
-    /* 🌟 Sidebar Dropdown Animation */
+    /* Sidebar Dropdown Animation */
     .dropdown-content {
         max-height: 0;
         overflow: hidden;
@@ -696,7 +694,7 @@
         transition: max-height 0.6s ease-in;
     }
 
-    /* 🌟 Search Modal Animation */
+    /* Search Modal Animation */
     .search-backdrop {
         background-color: rgba(0, 0, 0, 0.5);
         backdrop-filter: blur(4px);
@@ -4194,7 +4192,7 @@ window.handleCheckout = handleCheckout;
       } catch (e) { console.error("Init Error:", e); } 
       finally { render(); 
                 setTimeout(() => {
-                  // Check if we should return to admin page
+                 
                   const returnToAdmin = localStorage.getItem('return_to_admin');
                   if (returnToAdmin === 'true' && state.isAdmin) {
                     localStorage.removeItem('return_to_admin');
@@ -4206,7 +4204,7 @@ window.handleCheckout = handleCheckout;
                   if (pending && state.isAdmin) {
                     AutoSaveSystem.showRetryBanner(pending);
                   }
-                  // check password reset from email link
+                
                   if (hasRecoveryToken) {
                     console.log('Triggering password reset now...');
                     handlePasswordReset();
@@ -4253,7 +4251,7 @@ window.handleCheckout = handleCheckout;
             console.error("Auth State Logic Error:", err);
             // Optional: showToast("Error syncing data, but you are logged in.");
         } finally {
-            // 🌟 ALWAYS RENDER to ensure UI updates
+            // ALWAYS RENDER to ensure UI updates
             render();
             if (state.isAdmin && state.currentPage === 'admin') {
             setTimeout(() => {
@@ -4269,7 +4267,6 @@ window.handleCheckout = handleCheckout;
       const slug = hash.replace('#product-', '');
       navigate('product', slug);
     }
-    // Handle direct category links
     if (hash.startsWith('#category-')) {
       const slug = hash.replace('#category-', '');
       navigate('category', slug);
