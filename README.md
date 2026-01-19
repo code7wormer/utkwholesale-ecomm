@@ -1,4 +1,7 @@
-
+## GUIDES
+ supabase, adding, deleting
+ images
+ email.js
 ## Live Site
 The site is live at: [https://utkwholesale-ecomm.pages.dev/](https://utkwholesale-ecomm.pages.dev/)
 
