@@ -4016,6 +4016,7 @@
       const phoneInput = document.getElementById('user-phone');
       const btn = document.getElementById('btn-confirm-order');
       const phoneNumber = phoneInput.value.trim();
+      const orderId = Math.floor(Math.random() * (99999999 - 10000000 + 1)) + 10000000;
     
       if (phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
         alert("Please enter a valid 10-digit phone number.");
@@ -4033,6 +4034,7 @@
         ).join('\n');
     
         const templateParams = {
+          order_id: orderId,
           customer_name: state.user.email.split('@')[0],
           customer_email: state.user.email,
           reply_to: state.user.email,
