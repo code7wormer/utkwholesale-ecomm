@@ -3546,20 +3546,24 @@
 
 
 
-    window.smoothScrollTo = (elementId) => {
+   window.smoothScrollTo = (elementId) => {
       const element = document.getElementById(elementId);
       if (!element) {
         console.log('Element not found:', elementId);
         return;
       }
       
-      console.log('Scrolling to:', elementId);
+      console.log('Scrolling to:', elementId, element);
       
-      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-      const offsetPosition = elementPosition - 80;
+      // Get actual position
+      const yOffset = -80;
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       
+      console.log('Scroll to position:', y);
+      
+      // Force scroll
       window.scrollTo({
-        top: offsetPosition,
+        top: y,
         behavior: 'smooth'
       });
     };
