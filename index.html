@@ -1078,6 +1078,26 @@
   </div>
 
   <div id="toast-container"></div>
+  <div id="age-verification-overlay" class="fixed inset-0 z-[250] flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-md">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 text-center transform transition-all">
+    <div class="text-6xl mb-4">🔞</div>
+    <h2 class="text-3xl font-extrabold text-gray-900 mb-3">Age Verification Required</h2>
+    <p class="text-gray-600 mb-6">You must be 21 years or older to access this website.</p>
+    
+    <div class="bg-gray-50 rounded-xl p-4 mb-6">
+      <label class="flex items-center justify-center gap-3 cursor-pointer group">
+        <input type="checkbox" id="age-confirm-checkbox" class="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500">
+        <span class="text-gray-800 font-semibold group-hover:text-green-600 transition-colors">I am 21 years of age or older</span>
+      </label>
+    </div>
+    
+    <button id="age-confirm-btn" disabled class="w-full bg-gray-300 text-gray-500 py-3 rounded-xl font-bold cursor-not-allowed transition-all duration-300">
+      Enter Website
+    </button>
+    
+    <p class="text-xs text-gray-400 mt-4">By entering, you agree to our terms and conditions.</p>
+  </div>
+</div>
   <div id="logout-overlay" class="fixed inset-0 z-[200] hidden items-center justify-center text-white transition-opacity duration-500 opacity-0 pointer-events-none" style="background-color: rgba(0, 31, 63, 0.95);">
      <div class="text-center transform scale-110 transition-transform duration-500">
          <div class="text-6xl mb-4 bounce-icon">👋</div>
@@ -1126,16 +1146,60 @@
   </div>
 </div>
   <script type="module">
-    // supabaseconfig
+
     const SUPABASE_URL = 'https://thzmryhnyzhfewsyamjh.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_Xfi5Ppm2BPqIr0DBPgA8EA_C7ikFNvk';
     const ADMIN_EMAIL = 'utkwholesale.sup@gmail.com'; 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     window.supabaseClient = supabase;
-    
+
+
+
+
+
+(function initAgeVerification() {
+  const overlay = document.getElementById('age-verification-overlay');
+  const checkbox = document.getElementById('age-confirm-checkbox');
+  const confirmBtn = document.getElementById('age-confirm-btn');
+  
+
+  const ageVerified = localStorage.getItem('age_verified');
+  
+  if (ageVerified === 'true') {
+    overlay.style.display = 'none';
+    return;
+  }
+  
+
+  overlay.style.display = 'flex';
+  
+
+  checkbox.addEventListener('change', function() {
+    if (this.checked) {
+      confirmBtn.disabled = false;
+      confirmBtn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+      confirmBtn.classList.add('bg-green-600', 'text-white', 'hover:bg-green-700', 'cursor-pointer');
+    } else {
+      confirmBtn.disabled = true;
+      confirmBtn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed');
+      confirmBtn.classList.remove('bg-green-600', 'text-white', 'hover:bg-green-700', 'cursor-pointer');
+    }
+  });
+  
+  
+  confirmBtn.addEventListener('click', function() {
+    if (checkbox.checked) {
+      localStorage.setItem('age_verified', 'true');
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 300);
+    }
+  });
+})();
     const AutoSaveSystem = {
       TIMEOUT_DURATION: 7000,
-      
+    
       //auto-save indicator, should look into replacing with toast in future
       showIndicator(message, isSuccess = false) {
         let indicator = document.getElementById('autosave-indicator');
