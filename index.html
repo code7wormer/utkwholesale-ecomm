@@ -2962,7 +2962,7 @@
             <div class="relative max-w-7xl mx-auto px-6 text-center">
               <h1 class="hero-title text-5xl text-yellow-400 md:text-6xl font-bold mb-6 drop-shadow-2xl tracking-tight" style="letter-spacing: -0.02em;">UTK Wholesale</h1>
               <p class="hero-subtitle text-lg md:text-xl opacity-90 mb-8 max-w-2xl mx-auto font-light">UTK 1 Distributors</p>
-            <button onclick="smoothScrollTo('bestsellers-section')" class="hero-cta px-8 py-4 rounded-full font-semibold text-base hover:scale-105 transition-all shadow-xl text-white" style="background-color: var(--color-primary);">
+            <button onclick="navigate('bestsellers')" class="hero-cta px-8 py-4 rounded-full font-semibold text-base hover:scale-105 transition-all shadow-xl text-white" style="background-color: var(--color-primary);">
               Explore Collection
             </button>
             </div>
@@ -3548,23 +3548,12 @@
 
    window.smoothScrollTo = (elementId) => {
       const element = document.getElementById(elementId);
-      if (!element) {
-        console.log('Element not found:', elementId);
-        return;
-      }
+      if (!element) return;
       
-      console.log('Scrolling to:', elementId, element);
-      
-      // Get actual position
-      const yOffset = -80;
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      
-      console.log('Scroll to position:', y);
-      
-      // Force scroll
-      window.scrollTo({
-        top: y,
-        behavior: 'smooth'
+      gsap.to(window, {
+        duration: 1.5,
+        scrollTo: { y: element, offsetY: 80 },
+        ease: "power3.inOut"
       });
     };
     
