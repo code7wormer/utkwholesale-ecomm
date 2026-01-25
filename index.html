@@ -3548,12 +3548,19 @@
 
     window.smoothScrollTo = (elementId) => {
       const element = document.getElementById(elementId);
-      if (!element) return;
+      if (!element) {
+        console.log('Element not found:', elementId);
+        return;
+      }
       
-      gsap.to(window, {
-        duration: 1.5,
-        scrollTo: { y: element, offsetY: 80 },
-        ease: "power3.inOut"
+      console.log('Scrolling to:', elementId);
+      
+      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+      const offsetPosition = elementPosition - 80;
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
       });
     };
     
