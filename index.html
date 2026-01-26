@@ -4107,7 +4107,7 @@
           contact_phone: fullPhone
         };
     
-        console.log("📧 Sending order email...");
+       // console.log("📧 Sending order email...");
         await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
         console.log("✅ Email sent");
     
@@ -4124,7 +4124,7 @@
             if (error) {
               console.warn("⚠️ DB clear failed (stale connection), clearing locally only:", error);
             } else {
-              console.log("✅ Cart cleared from DB");
+             // console.log("✅ Cart cleared from DB");
             }
           } catch (err) {
             console.warn("⚠️ DB delete timed out (stale connection), clearing locally only");
@@ -4139,7 +4139,7 @@
         }
     
         closePhonePopup();
-        showToast(`Order Placed Successfully!\nWe will contact you at: ${fullPhone}`);
+        showToast(`Order Placed Successfully!\nWe will contact you at: ${fullPhone} & state.user.email`);
         navigate('home');
     
       } catch (error) {
