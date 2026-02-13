@@ -4285,7 +4285,7 @@
           customer_email: state.user.email,
           customer_phone: fullPhone,
           total_amount: total,
-          order_details: order_details: state.cart.map(item => ({
+          order_details: state.cart.map(item => ({
             product_id: item.id,
             name: item.name,
             price: item.deal_price ?? item.price,
