@@ -4285,7 +4285,7 @@
           customer_email: state.user.email,
           customer_phone: fullPhone,
           total_amount: total,
-          order_details: JSON.stringify(state.cart),
+          order_details: state.cart,
           status: 'pending'
         };
     
