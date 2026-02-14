@@ -4642,7 +4642,7 @@ window.handleCheckout = handleCheckout;
                       localStorage.removeItem('guest_cart');
                       localStorage.removeItem('pending_order');
                       
-                      showToast(`Order Placed Successfully!\nOrder ID: ${pendingOrder.orderId}]\nWe will contact you at: ${fullPhone} | ${state.user.email} `);
+                      showToast(`Order Placed Successfully!\nOrder ID: ${pendingOrder.orderId}\nWe will contact you at: ${pendingOrder.templateParams.contact_phone} | ${pendingOrder.templateParams.customer_email}`);
                       navigate('home');
                       
                     } catch (error) {
