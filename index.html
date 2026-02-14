@@ -1693,8 +1693,8 @@
             if (calculateDistance(query, prefix) <= threshold) return true;
 
             return false;
-        });
-
+        }).sort((a, b) => a.name.localeCompare(b.name));
+        
         state.searchResults = results;
         state.searchQuery = query;
         state.searchCategory = catFilter;
