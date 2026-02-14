@@ -4269,10 +4269,21 @@
       const btn = document.getElementById('btn-confirm-order');
       const phoneNumber = phoneInput.value.trim();
       const orderId = Math.floor(Math.random() * (99999999 - 10000000 + 1)) + 10000000;
+
+      const existingPending = localStorage.getItem('pending_order');
+      if (existingPending) {
+        const existing = JSON.parse(existingPending);
+        if (existing.orderId && Date.now() - existing.timestamp < 60000) { // If pending order less than 1 min old
+          alert("Please wait, your previous order is still processing...");
+          btn.innerText = "Confirm Order";
+          btn.disabled = false;
+          return;
+        }
+      }
     
       if (phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
         alert("Please enter a valid 10-digit phone number.");
-        return;
+          return;
       }
     
       btn.innerText = "Processing...";
@@ -4298,23 +4309,6 @@
           })),
           status: 'pending'
         };
-    
-        console.log("💾 Attempting to save order to database...");
-        try {
-          const { error: orderError } = await Promise.race([
-            supabase.from('orders').insert([orderData]),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('DB timeout')), 5000))
-          ]);
-          
-          if (orderError) {
-            console.error("Database save failed:", orderError);
-          } else {
-            console.log("Order saved to database");
-          }
-        } catch (dbErr) {
-          console.error("Database save error:", dbErr);
-        }
-    
         const templateParams = {
           order_id: orderId,
           customer_name: state.user.email.split('@')[0],
@@ -4324,16 +4318,69 @@
           total_amount: `$${total.toFixed(2)}`,
           contact_phone: fullPhone
         };
+        const pendingOrder = {
+          orderData,
+          templateParams,
+          timestamp: Date.now(),
+          orderId: orderId.toString() 
+        };
+
+        try {
+          localStorage.setItem('pending_order', JSON.stringify(pendingOrder));
+        } catch (e) {
+          console.error("Failed to save pending order:", e);
+        }  
+        console.log("💾 Attempting to save order to database...");
+        
+        
+        const timeoutId = setTimeout(() => {
+          console.warn("⏱️ 3 seconds passed - reloading (connection dead)...");
+          localStorage.setItem('needs_order_processing', 'true');
+          window.location.href = window.location.origin + window.location.pathname + '#cart';
+          window.location.reload();
+        }, 3000);
+        
+        try {
+          const { error: orderError } = await supabase.from('orders').insert([orderData]);
+          
+          clearTimeout(timeoutId);
+          
+          if (orderError) {
+            console.error("Database save failed:", orderError);
+      
+            localStorage.setItem('needs_order_processing', 'true');
+            window.location.href = window.location.origin + window.location.pathname + '#cart';
+            window.location.reload();
+            return;
+          }
+          
+          console.log("✅ Order saved to database");
+          
+          // dupe prevention
+          localStorage.setItem('last_processed_order', orderId.toString());
+          localStorage.removeItem('pending_order');
+          
+        } catch (dbErr) {
+          clearTimeout(timeoutId);
+          console.error("Database save error:", dbErr);
+          localStorage.setItem('needs_order_processing', 'true');
+          window.location.href = window.location.origin + window.location.pathname + '#cart';
+          window.location.reload();
+          return;
+        }
     
-       // console.log("📧 Sending order email...");
-        await emailjs.send("service_utkwholesale", "template_dl2jtz7", templateParams);
+        
+    
+       
+        console.log("📧 Sending order email...");
+        await emailjs.send("service_utkwholesale", "template_dl2jtz7", pendingOrder.templateParams);
         console.log("✅ Email sent");
     
     if (state.user) {
           console.log("🗑️ Clearing cart from database...");
           
           try {
-            // only Local clear
+            
             const { error } = await Promise.race([
               supabase.from('cart_items').delete().eq('user_id', state.user.id),
               new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
@@ -4493,7 +4540,119 @@ window.handleCheckout = handleCheckout;
                   if (pending && state.isAdmin) {
                     AutoSaveSystem.showRetryBanner(pending);
                   }
+                                
+                const needsOrderProcessing = localStorage.getItem('needs_order_processing');
+                if (needsOrderProcessing === 'true') {
+                localStorage.removeItem('needs_order_processing');
                 
+                const pendingOrderStr = localStorage.getItem('pending_order');
+                if (pendingOrderStr) {
+                  setTimeout(async () => {
+                    try {
+                      const pendingOrder = JSON.parse(pendingOrderStr);
+                      
+                      // Check if this order was already processed (duplicate prevention)
+                      const lastProcessedOrder = localStorage.getItem('last_processed_order');
+                      if (lastProcessedOrder === pendingOrder.orderId) {
+                        console.log("⚠️ Order already processed, skipping duplicate");
+                        localStorage.removeItem('pending_order');
+                        showToast("Order was already processed successfully!");
+                        navigate('home');
+                        return;
+                      }
+                      
+                      // Check if order is not too old (24 hours)
+                      if (Date.now() - pendingOrder.timestamp > 24 * 60 * 60 * 1000) {
+                        console.warn("Pending order too old, discarding");
+                        localStorage.removeItem('pending_order');
+                        alert("Order expired. Please place a new order.");
+                        return;
+                      }
+                      
+                      // Check if this order already exists in database
+                      const { data: existingOrder } = await supabase
+                        .from('orders')
+                        .select('order_id')
+                        .eq('order_id', pendingOrder.orderId)
+                        .single();
+                      
+                      if (existingOrder) {
+                        console.log("✅ Order already exists in database, skipping");
+                        localStorage.setItem('last_processed_order', pendingOrder.orderId);
+                        localStorage.removeItem('pending_order');
+                        
+                        // Send email if not sent yet
+                        try {
+                          console.log("📧 Sending order confirmation email...");
+                          await emailjs.send("service_utkwholesale", "template_dl2jtz7", pendingOrder.templateParams);
+                          console.log("✅ Email sent");
+                        } catch (emailErr) {
+                          console.error("Email send failed:", emailErr);
+                        }
+                        
+                        // Clear cart
+                        if (state.user) {
+                          try {
+                            await supabase.from('cart_items').delete().eq('user_id', state.user.id);
+                          } catch (err) {
+                            console.warn("Cart clear error:", err);
+                          }
+                        }
+                        
+                        state.cart = [];
+                        localStorage.removeItem('guest_cart');
+                        
+                        showToast(`Order already processed!\nOrder ID: ${pendingOrder.orderId}`);
+                        navigate('home');
+                        return;
+                      }
+                      
+                      console.log("🔄 Retrying order submission after refresh...");
+                      
+                      // Retry database insert
+                      const { error: orderError } = await supabase.from('orders').insert([pendingOrder.orderData]);
+                      
+                      if (orderError) {
+                        console.error("Database save failed again:", orderError);
+                        alert("Failed to save order. Please contact support with order ID: " + pendingOrder.orderId);
+                        localStorage.removeItem('pending_order');
+                        return;
+                      }
+                      
+                      console.log("✅ Order saved to database after retry");
+                      
+                      // Mark as processed to prevent duplicates
+                      localStorage.setItem('last_processed_order', pendingOrder.orderId);
+                      
+                      // Send email after successful database save
+                      console.log("📧 Sending order email...");
+                      await emailjs.send("service_utkwholesale", "template_dl2jtz7", pendingOrder.templateParams);
+                      console.log("✅ Email sent");
+                      
+                      // Clear cart
+                      if (state.user) {
+                        try {
+                          await supabase.from('cart_items').delete().eq('user_id', state.user.id);
+                        } catch (err) {
+                          console.warn("Cart clear error:", err);
+                        }
+                      }
+                      
+                      state.cart = [];
+                      localStorage.removeItem('guest_cart');
+                      localStorage.removeItem('pending_order');
+                      
+                      showToast(`Order Placed Successfully!\nOrder ID: ${pendingOrder.orderId}`);
+                      navigate('home');
+                      
+                    } catch (error) {
+                      console.error("Order retry error:", error);
+                      alert("Failed to process pending order. Please contact support.");
+                      localStorage.removeItem('pending_order');
+                    }
+                  }, 1000);
+                }
+                }
                   if (hasRecoveryToken) {
                     console.log('Triggering password reset now...');
                     handlePasswordReset();
