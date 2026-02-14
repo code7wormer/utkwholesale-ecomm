@@ -3155,7 +3155,9 @@
           bgElement.style.opacity = '0';
         }
       }, 0);
-      const products = state.products.filter(p => p.category_id === category.id);
+     const products = state.products
+      .filter(p => p.category_id === category.id)
+      .sort((a, b) => a.name.localeCompare(b.name));
       
       return `
         <div class="flex-1 page-enter">
