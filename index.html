@@ -1145,6 +1145,27 @@
 
   </div>
 </div>
+  <div id="order-processing-overlay" class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md z-[250] hidden flex-col items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 text-center">
+      <div class="mb-6">
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
+          <svg class="w-10 h-10 text-green-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-extrabold text-gray-900 mb-2">Processing Your Order</h2>
+        <p class="text-gray-600 mb-4" id="order-status-message">Please wait while we confirm your order...</p>
+        <div class="bg-blue-50 rounded-lg p-3 mb-4">
+          <p class="text-sm text-blue-800 font-medium">Order ID: <span id="order-id-display" class="font-bold">---</span></p>
+        </div>
+      </div>
+      <div class="flex items-center justify-center gap-2">
+        <div class="w-2 h-2 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+        <div class="w-2 h-2 bg-green-500 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+        <div class="w-2 h-2 bg-green-500 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+      </div>
+    </div>
+  </div>  
   <script type="module">
 
     const SUPABASE_URL = 'https://thzmryhnyzhfewsyamjh.supabase.co';
@@ -4330,16 +4351,34 @@
         } catch (e) {
           console.error("Failed to save pending order:", e);
         }  
+        // Show loading overlay
+const overlay = document.getElementById('order-processing-overlay');
+const orderIdDisplay = document.getElementById('order-id-display');
+const statusMessage = document.getElementById('order-status-message');
+
+if (overlay && orderIdDisplay) {
+  orderIdDisplay.textContent = orderId;
+  statusMessage.textContent = 'Confirming your order with our servers...';
+  overlay.classList.remove('hidden');
+  overlay.classList.add('flex');
+        }
+        
         console.log("💾 Attempting to save order to database...");
         
         
         const timeoutId = setTimeout(() => {
           console.warn("⏱️ 3 seconds passed - reloading (connection dead)...");
+          if (statusMessage) {
+            statusMessage.textContent = 'Reconnecting... Please wait...';
+          }
           localStorage.setItem('needs_order_processing', 'true');
-          window.location.href = window.location.origin + window.location.pathname + '#cart';
-          window.location.reload();
+          localStorage.setItem('show_order_overlay', 'true');
+          localStorage.setItem('current_order_id', orderId.toString());
+          setTimeout(() => {
+            window.location.href = window.location.origin + window.location.pathname + '#cart';
+            window.location.reload();
+          }, 500);
         }, 3000);
-        
         try {
           const { error: orderError } = await supabase.from('orders').insert([orderData]);
           
@@ -4359,6 +4398,10 @@
           // dupe prevention
           localStorage.setItem('last_processed_order', orderId.toString());
           localStorage.removeItem('pending_order');
+
+          if (statusMessage) {
+            statusMessage.textContent = 'Order confirmed! We will get in touch with you!';
+          }
           
         } catch (dbErr) {
           clearTimeout(timeoutId);
@@ -4403,9 +4446,21 @@
           console.error("localStorage clear error:", e);
         }
     
-        closePhonePopup();
+       closePhonePopup();
+      
+      
+      if (statusMessage && overlay) {
+        statusMessage.textContent = 'Order placed successfully!';
+        setTimeout(() => {
+          overlay.classList.add('hidden');
+          overlay.classList.remove('flex');
+          showToast(`Order Placed Successfully!\nWe will contact you at: ${fullPhone} | ${state.user.email}`);
+          navigate('home');
+        }, 1000);
+      } else {
         showToast(`Order Placed Successfully!\nWe will contact you at: ${fullPhone} | ${state.user.email}`);
         navigate('home');
+      }
     
       } catch (error) {
         console.error('❌ Order Error:', error);
@@ -4544,7 +4599,26 @@ window.handleCheckout = handleCheckout;
                 const needsOrderProcessing = localStorage.getItem('needs_order_processing');
                 if (needsOrderProcessing === 'true') {
                 localStorage.removeItem('needs_order_processing');
-                
+                const showOverlay = localStorage.getItem('show_order_overlay');
+                const currentOrderId = localStorage.getItem('current_order_id');
+                if (showOverlay === 'true') {
+                  const overlay = document.getElementById('order-processing-overlay');
+                  const orderIdDisplay = document.getElementById('order-id-display');
+                  const statusMessage = document.getElementById('order-status-message');
+                  
+                  if (overlay) {
+                    overlay.classList.remove('hidden');
+                    overlay.classList.add('flex');
+                    if (orderIdDisplay && currentOrderId) {
+                      orderIdDisplay.textContent = currentOrderId;
+                    }
+                    if (statusMessage) {
+                      statusMessage.textContent = 'Finalizing your order...';
+                    }
+                  }
+                  localStorage.removeItem('show_order_overlay');
+                  localStorage.removeItem('current_order_id');
+                }
                 const pendingOrderStr = localStorage.getItem('pending_order');
                 if (pendingOrderStr) {
                   setTimeout(async () => {
@@ -4602,6 +4676,11 @@ window.handleCheckout = handleCheckout;
                         state.cart = [];
                         localStorage.removeItem('guest_cart');
                         
+                        const overlay = document.getElementById('order-processing-overlay');
+                        if (overlay) {
+                          overlay.classList.add('hidden');
+                          overlay.classList.remove('flex');
+                        }
                         showToast(`Order already processed!\nOrder ID: ${pendingOrder.orderId}`);
                         navigate('home');
                         return;
@@ -4642,7 +4721,22 @@ window.handleCheckout = handleCheckout;
                       localStorage.removeItem('guest_cart');
                       localStorage.removeItem('pending_order');
                       
-                      showToast(`Order Placed Successfully!\nOrder ID: ${pendingOrder.orderId}\nWe will contact you at: ${pendingOrder.templateParams.contact_phone} | ${pendingOrder.templateParams.customer_email}`);
+                      const overlay = document.getElementById('order-processing-overlay');
+                      const statusMessage = document.getElementById('order-status-message');
+                      
+                      if (overlay && statusMessage) {
+                        statusMessage.textContent = 'Order completed successfully!';
+                        setTimeout(() => {
+                          overlay.classList.add('hidden');
+                          overlay.classList.remove('flex');
+                          showToast(`Order Placed Successfully!\nOrder ID: ${pendingOrder.orderId}\nWe will contact you at: ${pendingOrder.templateParams.contact_phone} | ${pendingOrder.templateParams.customer_email}`);
+                          navigate('home');
+                        }, 1000);
+                      } else {
+                        showToast(`Order Placed Successfully!\nOrder ID: ${pendingOrder.orderId}\nWe will contact you at: ${pendingOrder.templateParams.contact_phone} | ${pendingOrder.templateParams.customer_email}`);
+                        navigate('home');
+                      }
+                      
                       navigate('home');
                       
                     } catch (error) {
