@@ -2513,7 +2513,14 @@
         }
     }
     window.handleDeleteProduct = handleDeleteProduct;
-
+    window.handleBackNavigation = function() {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        // No history, go home
+        navigateHomeWithTear();
+      }
+    };
     //curtain
     window.navigateHomeWithTear = function() {
         const overlay = document.getElementById('tear-overlay');
@@ -3388,7 +3395,7 @@
         <div class="flex-1 max-w-7xl mx-auto px-4 py-12 page-enter">
           <button
       onpointerdown="this.classList.add('scale-95')"
-      onclick="setTimeout(() => window.history.back(), 80)"
+      onclick="handleBackNavigation()"
       class="back-btn-enter mb-6 z-50 relative group flex items-center gap-2
              bg-white px-4 py-2 rounded-lg shadow-sm
              text-gray-500 font-semibold
