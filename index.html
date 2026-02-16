@@ -2514,10 +2514,10 @@
     }
     window.handleDeleteProduct = handleDeleteProduct;
     window.handleBackNavigation = function() {
-      if (window.history.length > 1) {
+      
+      if (document.referrer && document.referrer.startsWith(window.location.origin)) {
         window.history.back();
       } else {
-        // No history, go home
         navigateHomeWithTear();
       }
     };
