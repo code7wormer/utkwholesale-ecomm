@@ -1887,7 +1887,11 @@
             }
           }
         });
-        if (!suError) alert('Registration successful! You can Sign-In now');
+        if (!suError) {
+          alert('Registration successful!');
+          navigate('home');
+          return;
+        }
         error = suError;
       } else {
         const { error: siError } = await supabase.auth.signInWithPassword({ email, password });
