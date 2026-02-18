@@ -2220,7 +2220,11 @@
         const grandTotalEl = document.getElementById(`cart-grand-total`);
 
         if (qtyEl && itemTotalEl && grandTotalEl) {
-            qtyEl.innerText = newQuantity;
+            if (qtyEl.tagName === 'INPUT') {
+              qtyEl.value = newQuantity;
+            } else {
+              qtyEl.innerText = newQuantity;
+            }
             const itemTotal = item.price * newQuantity;
             itemTotalEl.innerText = `$${itemTotal.toFixed(2)}`;
             const newGrandTotal = state.cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
@@ -4358,7 +4362,14 @@
                   
                   <div class="flex items-center gap-2 flex-shrink-0 mt-2 sm:mt-0">
                     <button onclick="adjustQuantity('${item.id}', -1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">-</button>
-                    <span id="qty-${item.id}" class="w-6 text-center font-medium">${item.quantity}</span>
+                    <input 
+                      id="qty-${item.id}" 
+                      type="number" 
+                      min="1" 
+                      value="${item.quantity}" 
+                      onchange="updateQuantity('${item.id}', parseInt(this.value) || 1)"
+                      class="w-14 text-center font-medium border border-gray-300 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
                     <button onclick="adjustQuantity('${item.id}', 1)" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-lg font-bold">+</button>
                   </div>
                   
