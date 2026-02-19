@@ -716,7 +716,7 @@
         }
     }
 
-    // Animation handler for Cart Click(switch to a simpler function if it breaks header logic in the future)
+    // switch to smpler function if i tbureaks header logic in the future
     async function handleCartClick() {
       const btn = document.getElementById('cart-icon-container');
       if (btn) {
@@ -3734,7 +3734,7 @@ window.handleCheckout = handleCheckout;
                     try {
                       const pendingOrder = JSON.parse(pendingOrderStr);
                       
-                      // Check if this order was already processed (duplicate prevention)
+                      
                       const lastProcessedOrder = localStorage.getItem('last_processed_order');
                       if (lastProcessedOrder === pendingOrder.orderId) {
                         console.log("⚠️ Order already processed, skipping duplicate");
@@ -3744,7 +3744,7 @@ window.handleCheckout = handleCheckout;
                         return;
                       }
                       
-                      // Check if order is not too old (24 hours)
+                      
                       if (Date.now() - pendingOrder.timestamp > 24 * 60 * 60 * 1000) {
                         console.warn("Pending order too old, discarding");
                         localStorage.removeItem('pending_order');
@@ -3752,7 +3752,7 @@ window.handleCheckout = handleCheckout;
                         return;
                       }
                       
-                      // Check if this order already exists in database
+                      
                       const { data: existingOrder } = await supabase
                         .from('orders')
                         .select('order_id')
@@ -3764,7 +3764,7 @@ window.handleCheckout = handleCheckout;
                         localStorage.setItem('last_processed_order', pendingOrder.orderId);
                         localStorage.removeItem('pending_order');
                         
-                        // Send email if not sent yet
+                        // send email if not sent yet
                         try {
                           console.log("📧 Sending order confirmation email...");
                           await emailjs.send("service_utkwholesale", "template_dl2jtz7", pendingOrder.templateParams);
@@ -3773,7 +3773,7 @@ window.handleCheckout = handleCheckout;
                           console.error("Email send failed:", emailErr);
                         }
                         
-                        // Clear cart
+                        
                         if (state.user) {
                           try {
                             await supabase.from('cart_items').delete().eq('user_id', state.user.id);
@@ -3797,7 +3797,7 @@ window.handleCheckout = handleCheckout;
                       
                       console.log("🔄 Retrying order submission after refresh...");
                       
-                      // Retry database insert
+                      
                       const { error: orderError } = await supabase.from('orders').insert([pendingOrder.orderData]);
                       
                       if (orderError) {
@@ -3809,10 +3809,10 @@ window.handleCheckout = handleCheckout;
                       
                       console.log("✅ Order saved to database after retry");
                       
-                      // Mark as processed to prevent duplicates
+                      
                       localStorage.setItem('last_processed_order', pendingOrder.orderId);
                       
-                      // Send email after successful database save
+                      
                       console.log("📧 Sending order email...");
                       await emailjs.send("service_utkwholesale", "template_dl2jtz7", pendingOrder.templateParams);
                       console.log("✅ Email sent");
@@ -4008,7 +4008,7 @@ window.handleCheckout = handleCheckout;
     });
     }
     
-    init();//fuckkk let's go bcccc
+    init();// :))))) 
   </script>
 </body>
 </html>
