@@ -3419,7 +3419,15 @@
   btn.disabled = true;
   btn.textContent = 'Saving...';
 
-  await supabase.auth.updateUser({ data: { store_name, store_address } });
+  await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${window._currentSession.access_token}`,
+      'apikey': SUPABASE_ANON_KEY
+    },
+    body: JSON.stringify({ data: { store_name, store_address } })
+  });
 
   showToast('Store info saved!');
   setTimeout(() => window.location.reload(), 1500);
