@@ -3948,10 +3948,17 @@ window.handleCheckout = handleCheckout;
                 if (state.user?.user_metadata?.store_name) {
                   localStorage.removeItem('store_info_saved');
                 }
-                if (!previousUser && state.user.app_metadata.provider === 'google' && !state.user.user_metadata?.store_name) {
-                  showStoreInfoModal();
-                }
-                
+                if (state.user?.user_metadata?.store_name) {
+  localStorage.removeItem('store_info_saved');
+}
+
+const isGoogleUser = state.user.app_metadata.provider === 'google';
+const hasStoreInfo = !!state.user.user_metadata?.store_name;
+const justSaved = localStorage.getItem('store_info_saved') === 'true';
+
+if (!previousUser && isGoogleUser && !hasStoreInfo && !justSaved) {
+  showStoreInfoModal();
+}
                 if (state.isAdmin && state.currentPage === 'admin') {
                     await fetchAdminProducts();
                 }
