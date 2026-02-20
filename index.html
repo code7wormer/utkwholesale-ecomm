@@ -3407,21 +3407,23 @@
       }
       
       window.submitStoreInfo = async function() {
-        const store_name = document.getElementById('modal-store-name').value.trim();
-        const store_address = document.getElementById('modal-store-address').value.trim();
-        
-        if (!store_name || !store_address) {
-          alert('Please fill in both fields.');
-          return;
-        }
-        
-        await supabase.auth.updateUser({
-          data: { store_name, store_address }
-        });
-        
-        document.getElementById('store-info-modal')?.remove();
-        showToast('Store info saved!');
-      };
+  const store_name = document.getElementById('modal-store-name').value.trim();
+  const store_address = document.getElementById('modal-store-address').value.trim();
+  
+  if (!store_name || !store_address) {
+    alert('Please fill in both fields.');
+    return;
+  }
+
+  const btn = document.querySelector('#store-info-modal button');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  await supabase.auth.updateUser({ data: { store_name, store_address } });
+
+  showToast('Store info saved!');
+  setTimeout(() => window.location.reload(), 1500);
+};
     window.openPhonePopup = () => {
         document.getElementById('phone-popup').classList.remove('hidden');
         document.getElementById('user-phone').value = '';
