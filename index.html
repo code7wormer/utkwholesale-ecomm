@@ -1902,23 +1902,23 @@
         </footer>
       `;
     }
-
-    window.scrollSection = (id, direction) => {
-    const container = document.getElementById(id);
-    if (!container) return;
+    // can use if gsap smooth scroll fails
+    // window.scrollSection = (id, direction) => {
+    // const container = document.getElementById(id);
+    // if (!container) return;
     
-    const scrollAmount = container.offsetWidth * 0.7;
-    const start = container.scrollLeft;
-    const change = direction === 'left' ? -scrollAmount : scrollAmount;
-    const duration = 800; // longer, can change
-    let startTime = null;
+    // const scrollAmount = container.offsetWidth * 0.7;
+    // const start = container.scrollLeft;
+    // const change = direction === 'left' ? -scrollAmount : scrollAmount;
+    // const duration = 800; // longer, can change
+    // let startTime = null;
     
-    function easeInOutCubic(t) {
-        return t < 0.5 
-            ? 4 * t * t * t 
-            : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
-    }
+    // function easeInOutCubic(t) {
+    //     return t < 0.5 
+    //         ? 4 * t * t * t 
+    //         : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    // }
+    // }
       // img nav
 
 
@@ -1949,20 +1949,20 @@
 
 
       
-    function animation(currentTime) {
-        if (!startTime) startTime = currentTime;
-        const timeElapsed = currentTime - startTime;
-        const progress = Math.min(timeElapsed / duration, 1);
+    // function animation(currentTime) {
+    //     if (!startTime) startTime = currentTime;
+    //     const timeElapsed = currentTime - startTime;
+    //     const progress = Math.min(timeElapsed / duration, 1);
         
-        const ease = easeInOutCubic(progress);
-        container.scrollLeft = start + (change * ease);
+    //     const ease = easeInOutCubic(progress);
+    //     container.scrollLeft = start + (change * ease);
         
-        if (progress < 1) {
-            requestAnimationFrame(animation);
-            }
-        }
+    //     if (progress < 1) {
+    //         requestAnimationFrame(animation);
+    //         }
+    //     }
         
-        requestAnimationFrame(animation);
+    //     requestAnimationFrame(animation);
   
 
     function HomePage() {
