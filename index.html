@@ -3428,7 +3428,7 @@
     },
     body: JSON.stringify({ data: { store_name, store_address } })
   });
-
+  localStorage.setItem('store_info_saved', 'true');
   showToast('Store info saved!');
   setTimeout(() => window.location.reload(), 1500);
 };
@@ -3945,9 +3945,12 @@ window.handleCheckout = handleCheckout;
                 }
                 if (!previousUser) await mergeCart();
                 await fetchCart();
+                if (state.user?.user_metadata?.store_name) {
+                  localStorage.removeItem('store_info_saved');
+                }
                 if (!previousUser && state.user.app_metadata.provider === 'google' && !state.user.user_metadata?.store_name) {
-  showStoreInfoModal();
-}
+                  showStoreInfoModal();
+                }
                 
                 if (state.isAdmin && state.currentPage === 'admin') {
                     await fetchAdminProducts();
