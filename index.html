@@ -3926,6 +3926,7 @@ window.handleCheckout = handleCheckout;
         try {
             const previousUser = state.user;
             state.user = session?.user || null;
+            if (session) window._currentSession = session;
             
             // admin chk
             if (state.user && state.user.email) {
